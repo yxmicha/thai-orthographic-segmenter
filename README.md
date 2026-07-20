@@ -48,3 +48,16 @@ and the tokens spent on that review. Labelling and reviewing more text with a st
 would give better training data, and distilling it into the same architecture should give much
 better results.
 
+## Usage
+
+```rust
+use thai_word_segmenter::WordSegmenter;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let segmenter = WordSegmenter::new()?;
+    let words = segmenter.split("ในปฐมกาลพระวาทะทรงดำรงอยู่")?;
+    assert_eq!(words, ["ในปฐมกาล", "พระวาทะ", "ทรงดำรง", "อยู่"]);
+    Ok(())
+}
+```
+
