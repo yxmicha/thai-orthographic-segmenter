@@ -61,3 +61,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+## Development
+
+The repository ships a Nix flake with the pinned Rust toolchain (from `rust-toolchain.toml`), a
+C linker, `cargo-deny`, `cargo-hack` and `gitleaks`. With [direnv](https://direnv.net/) run
+`direnv allow`; otherwise run `nix develop`. The checks CI runs:
+
+```sh
+cargo fmt --all --check
+cargo clippy --all-targets --all-features -- -D warnings
+cargo test --all-targets --all-features
+cargo test --no-default-features
+cargo deny check
+cargo hack check --feature-powerset
+```
+
+The Python package has its own checks, run in `thai-segmenter-python/` with
+[maturin](https://www.maturin.rs/) and [pytest](https://pytest.org/):
+
+```sh
+maturin develop --release
+pytest
+```
+
