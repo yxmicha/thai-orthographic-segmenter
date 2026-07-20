@@ -1,0 +1,5 @@
+# thai-syllable-rules
+
+Deterministic Thai orthographic candidates with explicit attachment uncertainty. It uses no
+model, dictionary, frequency data or training corpus; its only dependency is `winnow`.
+
