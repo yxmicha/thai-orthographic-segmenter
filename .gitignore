@@ -1,0 +1,9 @@
+/target
+/Cargo.lock
+/.direnv
+/result
+__pycache__/
+*.so
+.pytest_cache/
+.ruff_cache/
+.venv/
