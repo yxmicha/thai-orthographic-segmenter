@@ -53,3 +53,20 @@ instead of being guessed. The rules eliminate illegal local combinations first, 
 attachments that have exactly one legal owner second, and leave every remaining choice for
 a later resolver. `thai-syllable-segmenter` is that resolver.
 
+## Other public API
+
+- `RuleAnalysis::new(source)` finds readings the stable `split` projection cannot express
+  (weak initials, shared consonants, รร, preposed-vowel scope). `reading_alternatives()`,
+  `r_han_patterns()` and `permits_weak_initial(range)` expose them, and
+  `recover_parts(&parts)` re-exposes those positions in an existing `split` result without
+  changing byte ownership.
+- `SyllablePattern::inspect(source)` counts vowel nuclei in one candidate (`None` for empty,
+  non-Thai or unparseable text). `inspect_substantial` does the same without counting
+  consonant-only silent-mark continuations such as `มพ์` in `พิมพ์`.
+- `is_one_syllable_or_more` is a predicate over a single candidate string, and
+  `SyllablePattern::is_candidate(source)` is the stricter check on a candidate whose pattern
+  you already hold.
+- `ThaiScalar::new(character)` classifies one scalar: `is_accepted` is the accepted alphabet, and
+  `is_base`, `is_dependent`, `is_leading_vowel`, `is_independent_vowel` and
+  `forms_initial_cluster_with` expose its orthographic role.
+
