@@ -75,3 +75,9 @@ a later resolver. `thai-syllable-segmenter` is that resolver.
 `cargo test -p thai-syllable-rules --features test-support` also runs the architecture tests, which
 use the hidden `test_support` module (stage snapshots) that only exists under that feature.
 
+## Cargo features
+
+| Feature | Effect |
+| --- | --- |
+| `serde` | Implements `Serialize` and `Deserialize` for `Part`, `ReadingAlternative`, `RHanPattern`, `RuleAnalysis`, `SyllablePattern` and `ThaiScalar`. |
+| `test-support` | Exposes internal stage snapshots for this repository's integration tests. Not part of the stable API. |
