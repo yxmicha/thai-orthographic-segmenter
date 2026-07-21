@@ -64,3 +64,4 @@
 
 
 mod character;
+mod character_sequence;
