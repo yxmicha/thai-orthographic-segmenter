@@ -62,3 +62,5 @@
 //! - `test-support`: exposes internal stage snapshots for this repository's integration tests; it is not
 //!   part of the stable API.
 
+
+mod character;
