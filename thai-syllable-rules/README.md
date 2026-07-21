@@ -70,3 +70,8 @@ a later resolver. `thai-syllable-segmenter` is that resolver.
   `is_base`, `is_dependent`, `is_leading_vowel`, `is_independent_vowel` and
   `forms_initial_cluster_with` expose its orthographic role.
 
+## Testing
+
+`cargo test -p thai-syllable-rules --features test-support` also runs the architecture tests, which
+use the hidden `test_support` module (stage snapshots) that only exists under that feature.
+
