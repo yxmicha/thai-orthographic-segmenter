@@ -21,3 +21,9 @@ pub(crate) struct ThaiCharacter {
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ThaiScalar(pub(crate) char);
+
+impl From<char> for ThaiScalar {
+    fn from(character: char) -> Self {
+        Self(character)
+    }
+}
