@@ -67,4 +67,35 @@ impl ThaiScalar {
                 | '\u{0e47}'..='\u{0e4e}' // อ็ อ่ อ้ อ๊ อ๋ อ์ อํ อ๎
         )
     }
+
+    /// Returns whether a Thai character is a preposed vowel.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::ThaiScalar;
+    ///
+    /// assert!(ThaiScalar::new('เ').is_leading_vowel());
+    /// assert!(!ThaiScalar::new('ะ').is_leading_vowel());
+    /// ```
+    //
+    // Rule: these vowels begin an atom and are resolved together with the base
+    // that follows them.
+    // Examples: `เกา`, `แสง`, `โก`, `ใจ`, and `ไตร` begin with `เ`, `แ`, `โ`,
+    // `ใ`, or `ไ`; the following base and any legal marks are considered by the
+    // same atomization step. A leading vowel without a base, such as `เแท`'s
+    // first `เ`, is later preserved as malformed `Text` rather than joined to a
+    // different vowel pattern.
+    #[must_use]
+    pub const fn is_leading_vowel(self) -> bool {
+        let character = self.0;
+        matches!(
+            character,
+            '\u{0e40}' // เ
+                | '\u{0e41}' // แ
+                | '\u{0e42}' // โ
+                | '\u{0e43}' // ใ
+                | '\u{0e44}' // ไ
+        )
+    }
 }
