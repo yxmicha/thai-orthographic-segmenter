@@ -66,3 +66,4 @@
 mod character;
 mod character_sequence;
 mod part;
+mod r_han;
