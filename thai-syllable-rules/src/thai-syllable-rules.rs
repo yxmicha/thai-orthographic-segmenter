@@ -68,6 +68,7 @@ mod character_sequence;
 mod part;
 mod r_han;
 mod reading_alternative;
+mod rule_analysis;
 
 pub use r_han::RHanPattern;
 pub use reading_alternative::ReadingAlternative;
