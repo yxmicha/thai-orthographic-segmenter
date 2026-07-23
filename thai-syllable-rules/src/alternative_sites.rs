@@ -3,6 +3,14 @@ use crate::character_sequence::CharacterSequence;
 use crate::{RHanPattern, ReadingAlternative};
 
 impl CharacterSequence<'_> {
+    pub(crate) fn reading_alternatives(self, r_han: &[RHanPattern]) -> Vec<ReadingAlternative> {
+        let mut alternatives = Vec::new();
+        for index in 0..self.0.len() {
+            self.push_adjacent_alternatives(index, r_han, &mut alternatives);
+        }
+        self.push_r_han_alternatives(r_han, &mut alternatives);
+        alternatives
+    }
 
     /// Adds the alternatives suggested by the scalar at `index` and the ones after it.
     fn push_adjacent_alternatives(
