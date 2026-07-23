@@ -19,3 +19,24 @@ pub struct RuleAnalysis {
     alternatives: Vec<ReadingAlternative>,
     r_han: Vec<RHanPattern>,
 }
+
+impl RuleAnalysis {
+
+    /// Returns unresolved pronunciation relationships, never a chosen reading.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::{ReadingAlternative, RuleAnalysis};
+    ///
+    /// let analysis = RuleAnalysis::new("เกรียน");
+    /// assert!(matches!(
+    ///     analysis.reading_alternatives()[0],
+    ///     ReadingAlternative::WeakInitial { boundary: 6, .. }
+    /// ));
+    /// ```
+    #[must_use]
+    pub fn reading_alternatives(&self) -> &[ReadingAlternative] {
+        &self.alternatives
+    }
+}
