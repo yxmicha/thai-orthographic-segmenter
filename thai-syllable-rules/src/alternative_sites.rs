@@ -76,4 +76,44 @@ impl CharacterSequence<'_> {
             });
         }
     }
+
+    /// Adds the shared consonants that the recognised R-Han patterns leave open.
+    fn push_r_han_alternatives(
+        self,
+        r_han: &[RHanPattern],
+        alternatives: &mut Vec<ReadingAlternative>,
+    ) {
+        let characters = self.0;
+        for pattern in r_han {
+            let end = pattern.nucleus_range.end;
+            if let Some(last) = characters.iter().find(|value| value.end == end)
+                && characters.iter().any(|value| {
+                    value.start == end
+                        && (ThaiScalar(value.character).is_base()
+                            || ThaiScalar(value.character).is_leading_vowel())
+                })
+            {
+                let alternative = ReadingAlternative::SharedConsonant {
+                    source_range: last.start..last.end,
+                    boundary: end,
+                };
+                if !alternatives.contains(&alternative) {
+                    alternatives.push(alternative);
+                }
+            }
+            if let Some(final_range) = &pattern.possible_final
+                && characters.iter().any(|value| {
+                    value.start == final_range.end && ThaiScalar(value.character).is_base()
+                })
+            {
+                let alternative = ReadingAlternative::SharedConsonant {
+                    source_range: final_range.clone(),
+                    boundary: final_range.end,
+                };
+                if !alternatives.contains(&alternative) {
+                    alternatives.push(alternative);
+                }
+            }
+        }
+    }
 }
