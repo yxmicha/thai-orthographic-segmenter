@@ -98,4 +98,29 @@ impl ThaiScalar {
                 | '\u{0e44}' // ไ
         )
     }
+
+    /// Returns whether a Thai character is a consonant base.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::ThaiScalar;
+    ///
+    /// assert!(ThaiScalar::new('ก').is_base());
+    /// assert!(!ThaiScalar::new('เ').is_base());
+    /// ```
+    //
+    // Rule: ฤ and ฦ are independent vowels, not consonant bases, so they are
+    // excluded from this predicate even though they are in the letter range.
+    // Examples: `ฤดู` starts with an independent nucleus, whereas `ก` is a base
+    // and can begin an implicit or explicit consonant-led construction. This
+    // distinction prevents `ฤ` from being mistaken for an onset in `ฤทธิ์`.
+    #[must_use]
+    pub const fn is_base(self) -> bool {
+        let character = self.0;
+        character >= '\u{0e01}'
+            && character <= '\u{0e2e}' // ก ข ฃ ค ฅ ฆ ง จ ฉ ช ซ ฌ ญ ฎ ฏ ฐ ฑ ฒ ณ ด ต ถ ท ธ น บ ป ผ ฝ พ ฟ ภ ม ย ร ฤ ล ฦ ว ศ ษ ส ห ฬ อ ฮ
+            && character != '\u{0e24}' // ฤ
+            && character != '\u{0e26}' // ฦ
+    }
 }
