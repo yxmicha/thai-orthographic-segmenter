@@ -62,9 +62,12 @@
 //! - `test-support`: exposes internal stage snapshots for this repository's integration tests; it is not
 //!   part of the stable API.
 
-
+mod alternative_sites;
 mod character;
 mod character_sequence;
 mod part;
 mod r_han;
 mod reading_alternative;
+
+pub use r_han::RHanPattern;
+pub use reading_alternative::ReadingAlternative;
