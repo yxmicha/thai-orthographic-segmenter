@@ -123,4 +123,53 @@ impl ThaiScalar {
             && character != '\u{0e24}' // ฤ
             && character != '\u{0e26}' // ฦ
     }
+
+    pub(crate) const fn is_coda(self) -> bool {
+        let character = self.0;
+        // Rule: only consonants with a Thai final-sound spelling can attach as a
+        // coda. The complete accepted-base set that cannot be a bare coda is
+        // ฃ, ฅ, ฉ, ฌ, ผ, ฝ, ห, อ, and ฮ; these must move into a following onset
+        // or carrier construction, or remain with a garan-bearing spelling.
+        // Examples: `แกหรอก` moves ห into `หรอก` because ห cannot close `แก`,
+        // while `แกกรอก` keeps ก available as a possible coda; `แกห์รอก` keeps
+        // ห with its garan construction instead of treating it as a bare coda.
+        matches!(
+            character,
+            '\u{0e01}' // ก
+                | '\u{0e02}' // ข
+                | '\u{0e04}' // ค
+                | '\u{0e06}' // ฆ
+                | '\u{0e07}' // ง
+                | '\u{0e08}' // จ
+                | '\u{0e0a}' // ช
+                | '\u{0e0b}' // ซ
+                | '\u{0e0d}' // ญ
+                | '\u{0e0e}' // ฎ
+                | '\u{0e0f}' // ฏ
+                | '\u{0e10}' // ฐ
+                | '\u{0e11}' // ฑ
+                | '\u{0e12}' // ฒ
+                | '\u{0e13}' // ณ
+                | '\u{0e14}' // ด
+                | '\u{0e15}' // ต
+                | '\u{0e16}' // ถ
+                | '\u{0e17}' // ท
+                | '\u{0e18}' // ธ
+                | '\u{0e19}' // น
+                | '\u{0e1a}' // บ
+                | '\u{0e1b}' // ป
+                | '\u{0e1e}' // พ
+                | '\u{0e1f}' // ฟ
+                | '\u{0e20}' // ภ
+                | '\u{0e21}' // ม
+                | '\u{0e22}' // ย
+                | '\u{0e23}' // ร
+                | '\u{0e25}' // ล
+                | '\u{0e27}' // ว
+                | '\u{0e28}' // ศ
+                | '\u{0e29}' // ษ
+                | '\u{0e2a}' // ส
+                | '\u{0e2c}' // ฬ
+        )
+    }
 }
