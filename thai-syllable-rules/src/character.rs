@@ -173,6 +173,12 @@ impl ThaiScalar {
         )
     }
 
+    pub(crate) const fn is_vowel_carrier(self) -> bool {
+        let character = self.0;
+        // Thai vowel carrier: อ (U+0E2D).
+        character == '\u{0e2d}' // อ
+    }
+
     /// Returns whether two adjacent Thai bases form an attested initial cluster.
     ///
     /// This is the shared orthographic inventory used by the rules and by bounded
