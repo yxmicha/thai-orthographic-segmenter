@@ -191,4 +191,13 @@ impl ThaiAtom {
             },
         }
     }
+
+    // Rule: translate this atom-relative range only when a public part is
+    // emitted, keeping byte-offset ownership in the atom type.
+    // Example: the atom for `เกิน` is measured from the Thai-run start; when
+    // the run follows text such as `Xเกิน`, adding the run offset still emits
+    // exactly `เกิน` and never includes the preceding `X`.
+    pub(crate) fn absolute_range(&self, source_offset: usize) -> ByteRange {
+        (source_offset + self.range.start)..(source_offset + self.range.end)
+    }
 }
