@@ -200,4 +200,8 @@ impl ThaiAtom {
     pub(crate) fn absolute_range(&self, source_offset: usize) -> ByteRange {
         (source_offset + self.range.start)..(source_offset + self.range.end)
     }
+
+    pub(crate) fn relative_range(&self) -> &ByteRange {
+        &self.range
+    }
 }
