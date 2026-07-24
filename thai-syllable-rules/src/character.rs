@@ -179,6 +179,15 @@ impl ThaiScalar {
         character == '\u{0e2d}' // อ
     }
 
+    pub(crate) const fn is_garan_mark(self) -> bool {
+        let character = self.0;
+        // Thai garan mark: ์ (U+0E4C).
+        // The mark silences the preceding base sequence; it is never a nucleus or
+        // a public part by itself. Keeping this category in one predicate prevents
+        // suffix scanners from disagreeing about what counts as garan.
+        character == '\u{0e4c}' // ์
+    }
+
     /// Returns whether two adjacent Thai bases form an attested initial cluster.
     ///
     /// This is the shared orthographic inventory used by the rules and by bounded
