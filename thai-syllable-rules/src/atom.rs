@@ -1,3 +1,5 @@
+use crate::character::ThaiCharacter;
+use crate::character::ThaiScalar;
 use crate::part::ByteRange;
 
 // Atomization recognizes the local orthographic constructions.
@@ -95,4 +97,98 @@ pub(crate) enum SilentMarkShape {
         has_carrier: bool,
         has_initial_cluster: bool,
     },
+}
+
+impl ThaiAtom {
+    /// Interprets the source-local facts of one scanned construction as an atom. The scanner
+    /// owns only those facts; their meaning as onset, nucleus, ending, and silent-mark shapes
+    /// is decided here, so atomization never builds a partially classified flag bag that
+    /// resolution would have to repair.
+    ///
+    /// Examples: `เกิน` gets a leading-vowel onset and explicit rime; `กำ` gets hard-ending
+    /// evidence; and `ฟิล์ม` gets an opaque mark shape with its carrier and cluster properties
+    /// derived once here. `characters` are the scalars the scan consumed.
+    pub(crate) fn from_scan(scan: AtomScan, characters: &[ThaiCharacter]) -> Self {
+        let has_structural_nucleus =
+            scan.has_nucleus && (scan.first_base.is_some() || scan.has_independent_vowel);
+        let onset = if scan.has_leading_vowel {
+            OnsetShape::LeadingVowel {
+                base: scan.first_base,
+            }
+        } else if let Some(first_base) = scan.first_base {
+            OnsetShape::Base(first_base)
+        } else if scan.has_independent_vowel {
+            OnsetShape::IndependentVowel(scan.character)
+        } else if characters
+            .first()
+            .is_some_and(|value| ThaiScalar(value.character).is_dependent())
+        {
+            OnsetShape::DependentMark
+        } else {
+            OnsetShape::None
+        };
+        // Rule: dependent vowel material without a consonant base is a distinct
+        // malformed shape. It must not become `None`, because resolution needs to
+        // preserve it as text rather than absorb it into the preceding vowel.
+        // Example: `กีา` atomizes as `กี` plus an `OrphanRime("า")`, so the latter
+        // cannot be mistaken for a valid second syllable or a second rime.
+        let is_orphan_rime = scan.has_nucleus
+            && scan.first_base.is_none()
+            && !scan.has_independent_vowel
+            && (scan.has_vowel_rime || scan.has_ue_rime);
+        let nucleus = if is_orphan_rime {
+            NucleusShape::OrphanRime
+        } else if !has_structural_nucleus {
+            NucleusShape::None
+        } else if scan.has_independent_vowel {
+            NucleusShape::IndependentVowel
+        } else if scan.has_vowel_rime || scan.has_ue_rime || scan.has_carrier || scan.has_glide {
+            NucleusShape::Rime {
+                explicit: scan.has_vowel_rime || scan.has_ue_rime,
+                carrier: scan.has_carrier,
+                completed_ue_carrier: scan.consumed_ue_carrier,
+                glide: scan.has_glide,
+            }
+        } else {
+            NucleusShape::Implicit
+        };
+
+        ThaiAtom {
+            range: scan.range,
+            onset,
+            nucleus,
+            has_tone_mark: scan.has_tone_mark,
+            deferred_silent_coda: scan.deferred_silent_coda,
+            // Thai PHINTHU (U+0E3A) suppresses the inherent vowel in Pali/Sanskrit
+            // transcription and therefore never supplies nucleus evidence.
+            has_phinthu: characters.iter().any(|value| value.character == '\u{0e3a}'),
+            ending: if scan.has_hard_ending
+                || characters
+                    .iter()
+                    .any(|value| ThaiScalar(value.character).is_garan_mark())
+            {
+                EndingShape::Hard
+            } else {
+                EndingShape::Open
+            },
+            silent_mark: if !characters
+                .iter()
+                .any(|value| ThaiScalar(value.character).is_garan_mark())
+            {
+                SilentMarkShape::None
+            } else if scan.is_opaque {
+                SilentMarkShape::Opaque {
+                    has_carrier: characters
+                        .iter()
+                        .any(|value| ThaiScalar(value.character).is_vowel_carrier()),
+                    has_initial_cluster: characters.get(..2).is_some_and(|values| {
+                        ThaiScalar(values[0].character)
+                            .forms_initial_cluster_with(ThaiScalar(values[1].character))
+                    }),
+                }
+            } else {
+                SilentMarkShape::Attached
+            },
+        }
+    }
 }
