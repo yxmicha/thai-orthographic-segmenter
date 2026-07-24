@@ -31,3 +31,13 @@ pub(crate) enum EndingShape {
     Open,
     Hard,
 }
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum SilentMarkShape {
+    None,
+    Attached,
+    Opaque {
+        has_carrier: bool,
+        has_initial_cluster: bool,
+    },
+}
