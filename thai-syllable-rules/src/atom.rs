@@ -25,6 +25,34 @@ pub(crate) struct ThaiAtom {
     pub(crate) silent_mark: SilentMarkShape,
 }
 
+/// The complete result of scanning one local orthographic construction.
+///
+/// Keeping the scan facts together gives atom construction one ownership
+/// boundary: atomization discovers the source shape, while this module turns
+/// that shape into the semantic atom used by resolution.
+#[derive(Clone, Debug)]
+#[allow(
+    clippy::struct_excessive_bools,
+    reason = "independent facts of one scan, each tested on its own"
+)]
+pub(crate) struct AtomScan {
+    pub(crate) range: ByteRange,
+    pub(crate) character: char,
+    pub(crate) first_base: Option<char>,
+    pub(crate) has_nucleus: bool,
+    pub(crate) has_vowel_rime: bool,
+    pub(crate) has_ue_rime: bool,
+    pub(crate) has_independent_vowel: bool,
+    pub(crate) has_tone_mark: bool,
+    pub(crate) has_hard_ending: bool,
+    pub(crate) deferred_silent_coda: bool,
+    pub(crate) is_opaque: bool,
+    pub(crate) has_leading_vowel: bool,
+    pub(crate) has_carrier: bool,
+    pub(crate) has_glide: bool,
+    pub(crate) consumed_ue_carrier: bool,
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum OnsetShape {
     None,
