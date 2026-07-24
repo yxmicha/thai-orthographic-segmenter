@@ -25,3 +25,9 @@ pub(crate) enum NucleusShape {
     },
     IndependentVowel,
 }
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum EndingShape {
+    Open,
+    Hard,
+}
