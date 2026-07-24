@@ -172,4 +172,67 @@ impl ThaiScalar {
                 | '\u{0e2c}' // ฬ
         )
     }
+
+    /// Returns whether two adjacent Thai bases form an attested initial cluster.
+    ///
+    /// This is the shared orthographic inventory used by the rules and by bounded
+    /// downstream resolvers when deciding whether an undecided base may become the
+    /// onset of a following candidate. A non-cluster pair must remain available as
+    /// a syllable boundary; it must not be accepted merely because the concatenated
+    /// text resembles a dictionary word.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::ThaiScalar;
+    ///
+    /// // กร is a listed initial cluster; ขก is not.
+    /// assert!(ThaiScalar::new('ก').forms_initial_cluster_with(ThaiScalar::new('ร')));
+    /// assert!(!ThaiScalar::new('ข').forms_initial_cluster_with(ThaiScalar::new('ก')));
+    /// ```
+    #[must_use]
+    pub const fn forms_initial_cluster_with(self, second: Self) -> bool {
+        let (first, second) = (self.0, second.0);
+        // Rule: only this explicit onset inventory may keep two adjacent bases in
+        // one initial cluster. Other adjacent bases remain attachment candidates.
+        // Examples: `กร`, `กล`, `กว`, `คร`, `ตร`, `พล`, `หญ`, and `อย` are listed
+        // pairs, so `กรา` can keep `กร` in one onset. A neighboring pair such as `กม`
+        // is not silently promoted to a cluster; its attachment remains visible to
+        // the implicit and ambiguity resolvers.
+        matches!(
+            (first, second),
+            (
+                '\u{0e01}' | '\u{0e02}' | '\u{0e04}',
+                '\u{0e23}' | '\u{0e25}' | '\u{0e27}'
+            ) | (
+                '\u{0e08}'
+                    | '\u{0e0b}'
+                    | '\u{0e15}'
+                    | '\u{0e14}'
+                    | '\u{0e17}'
+                    | '\u{0e28}'
+                    | '\u{0e2a}',
+                '\u{0e23}'
+            ) | (
+                '\u{0e1b}' | '\u{0e1e}' | '\u{0e1a}' | '\u{0e1f}',
+                '\u{0e23}' | '\u{0e25}'
+            ) | ('\u{0e1c}', '\u{0e25}')
+                | ('\u{0e2d}', '\u{0e22}')
+                | (
+                    '\u{0e01}' | '\u{0e15}' | '\u{0e1b}' | '\u{0e1e}' | '\u{0e17}',
+                    '\u{0e24}'
+                )
+                | (
+                    '\u{0e2b}',
+                    '\u{0e07}'
+                        | '\u{0e0d}'
+                        | '\u{0e19}'
+                        | '\u{0e21}'
+                        | '\u{0e22}'
+                        | '\u{0e23}'
+                        | '\u{0e25}'
+                        | '\u{0e27}'
+                )
+        )
+    }
 }
