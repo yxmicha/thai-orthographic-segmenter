@@ -244,4 +244,8 @@ impl ThaiAtom {
     pub(crate) fn has_hard_ending(&self) -> bool {
         matches!(self.ending, EndingShape::Hard)
     }
+
+    pub(crate) fn has_carrier(&self) -> bool {
+        matches!(self.nucleus, NucleusShape::Rime { carrier: true, .. })
+    }
 }
