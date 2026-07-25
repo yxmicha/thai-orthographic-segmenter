@@ -236,4 +236,8 @@ impl ThaiAtom {
     pub(crate) fn has_glide(&self) -> bool {
         matches!(self.nucleus, NucleusShape::Rime { glide: true, .. })
     }
+
+    pub(crate) fn has_silent_mark(&self) -> bool {
+        !matches!(self.silent_mark, SilentMarkShape::None)
+    }
 }
