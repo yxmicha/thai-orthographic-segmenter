@@ -204,4 +204,14 @@ impl ThaiAtom {
     pub(crate) fn relative_range(&self) -> &ByteRange {
         &self.range
     }
+
+    pub(crate) fn first_base(&self) -> Option<char> {
+        match self.onset {
+            OnsetShape::Base(base) | OnsetShape::LeadingVowel { base: Some(base) } => Some(base),
+            OnsetShape::None
+            | OnsetShape::LeadingVowel { base: None }
+            | OnsetShape::IndependentVowel(_)
+            | OnsetShape::DependentMark => None,
+        }
+    }
 }
