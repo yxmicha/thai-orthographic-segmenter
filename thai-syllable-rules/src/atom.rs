@@ -252,4 +252,8 @@ impl ThaiAtom {
     pub(crate) fn starts_with_leading_vowel(&self) -> bool {
         matches!(self.onset, OnsetShape::LeadingVowel { .. })
     }
+
+    pub(crate) fn is_opaque(&self) -> bool {
+        matches!(self.silent_mark, SilentMarkShape::Opaque { .. })
+    }
 }
