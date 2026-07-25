@@ -240,4 +240,8 @@ impl ThaiAtom {
     pub(crate) fn has_silent_mark(&self) -> bool {
         !matches!(self.silent_mark, SilentMarkShape::None)
     }
+
+    pub(crate) fn has_hard_ending(&self) -> bool {
+        matches!(self.ending, EndingShape::Hard)
+    }
 }
