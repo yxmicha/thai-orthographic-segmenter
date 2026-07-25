@@ -214,4 +214,11 @@ impl ThaiAtom {
             | OnsetShape::DependentMark => None,
         }
     }
+
+    pub(crate) fn has_nucleus(&self) -> bool {
+        matches!(
+            self.nucleus,
+            NucleusShape::Implicit | NucleusShape::Rime { .. } | NucleusShape::IndependentVowel
+        )
+    }
 }
