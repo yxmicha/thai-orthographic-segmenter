@@ -228,4 +228,8 @@ impl ThaiAtom {
             NucleusShape::Rime { explicit: true, .. } | NucleusShape::IndependentVowel
         )
     }
+
+    pub(crate) fn has_phinthu(&self) -> bool {
+        self.has_phinthu
+    }
 }
