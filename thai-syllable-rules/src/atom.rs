@@ -232,4 +232,8 @@ impl ThaiAtom {
     pub(crate) fn has_phinthu(&self) -> bool {
         self.has_phinthu
     }
+
+    pub(crate) fn has_glide(&self) -> bool {
+        matches!(self.nucleus, NucleusShape::Rime { glide: true, .. })
+    }
 }
