@@ -248,4 +248,8 @@ impl ThaiAtom {
     pub(crate) fn has_carrier(&self) -> bool {
         matches!(self.nucleus, NucleusShape::Rime { carrier: true, .. })
     }
+
+    pub(crate) fn starts_with_leading_vowel(&self) -> bool {
+        matches!(self.onset, OnsetShape::LeadingVowel { .. })
+    }
 }
