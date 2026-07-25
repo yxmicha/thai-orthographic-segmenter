@@ -221,4 +221,11 @@ impl ThaiAtom {
             NucleusShape::Implicit | NucleusShape::Rime { .. } | NucleusShape::IndependentVowel
         )
     }
+
+    pub(crate) fn has_explicit_rime(&self) -> bool {
+        matches!(
+            self.nucleus,
+            NucleusShape::Rime { explicit: true, .. } | NucleusShape::IndependentVowel
+        )
+    }
 }
