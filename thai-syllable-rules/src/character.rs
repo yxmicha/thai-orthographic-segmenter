@@ -188,6 +188,26 @@ impl ThaiScalar {
         character == '\u{0e4c}' // ์
     }
 
+    pub(crate) const fn is_vowel(self) -> bool {
+        let character = self.0;
+        // Rule: this predicate identifies every scalar that can supply a vowel
+        // nucleus, including independent vowels and the long-vowel mark.
+        // Examples: `ะ`, `า`, `ิ`, `ื`, `เ`, `ไ`, `ฤ`, and `ๅ` count as vowel-bearing
+        // material for atomization. Tone marks such as `่` modify an atom but do not
+        // themselves make a nucleus, so `ก่` still depends on its base structure.
+        matches!(
+            character,
+            '\u{0e24}' // ฤ
+                | '\u{0e26}' // ฦ
+                | '\u{0e30}' // ะ
+                | '\u{0e31}' // อั
+                | '\u{0e32}' // า
+                | '\u{0e33}' // ำ
+                | ('\u{0e34}'..='\u{0e39}') /* อิ อี อึ อื อุ อู */
+                | '\u{0e45}' // ๅ
+        )
+    }
+
     pub(crate) const fn is_tone_mark(self) -> bool {
         let character = self.0;
         // Rule: tone marks modify the current onset and do not start a part.
