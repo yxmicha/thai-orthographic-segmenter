@@ -20,3 +20,25 @@ pub(crate) struct ConstructionScan {
     pub(crate) consumed_short_a_glide: bool,
     pub(crate) consumed_ue_carrier: bool,
 }
+
+impl ConstructionScan {
+    pub(crate) fn new(start: usize, character: char) -> Self {
+        Self {
+            start,
+            index: start,
+            character,
+            first_base: None,
+            has_nucleus: false,
+            has_vowel_rime: false,
+            has_ue_rime: false,
+            has_independent_vowel: false,
+            is_opaque: false,
+            has_leading_vowel: false,
+            has_carrier: false,
+            has_glide: false,
+            consumed_short_a_coda: false,
+            consumed_short_a_glide: false,
+            consumed_ue_carrier: false,
+        }
+    }
+}
