@@ -67,6 +67,7 @@ mod atom;
 mod atom_sequence;
 mod character;
 mod character_sequence;
+mod construction_scan;
 mod part;
 mod r_han;
 mod reading_alternative;
