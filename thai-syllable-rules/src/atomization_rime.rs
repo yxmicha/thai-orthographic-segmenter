@@ -1,5 +1,11 @@
+use crate::character::ThaiCharacter;
 use crate::character::ThaiScalar;
 use crate::character_sequence::CharacterSequence;
+use winnow::{
+    ModalResult, Parser,
+    combinator::{alt, opt, repeat},
+    token::any,
+};
 
 impl CharacterSequence<'_> {
     pub(crate) fn rime_has_explicit_hard_vowel(self, start: usize, end: usize) -> bool {
@@ -22,4 +28,11 @@ impl CharacterSequence<'_> {
                     && triple[2].character == 'า'
             })
     }
+}
+
+fn vowel_dependent_character(input: &mut &[ThaiCharacter]) -> ModalResult<ThaiCharacter> {
+    any.verify(|value: &ThaiCharacter| {
+        ThaiScalar(value.character).is_dependent() && ThaiScalar(value.character).is_vowel()
+    })
+    .parse_next(input)
 }
