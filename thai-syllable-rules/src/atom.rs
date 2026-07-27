@@ -266,4 +266,42 @@ impl ThaiAtom {
             }
         )
     }
+
+    // Rule: synthesize an implicit-vowel candidate only from a non-empty
+    // contiguous atom slice whose final base can close the implicit rime (or
+    // whose final atom has a garan suffix). This is the final construction
+    // guard shared by terminal promotion and resolution; no caller may turn
+    // an onset-only base into an implicit coda by choosing a larger range.
+    // Examples: a bare `จม` slice can become one synthetic candidate inside
+    // `จมก`, while `นห` returns no candidate because ห cannot be a bare coda
+    // and must remain available to the following `หน...` onset. A garan
+    // spelling such as `นห์` remains eligible because ์ gives the suffix
+    // explicit local ownership. An empty slice produces no candidate. The
+    // synthetic object marks the range already present in the source; it does
+    // not invent a vowel character or join non-adjacent atoms.
+    pub(crate) fn synthetic_implicit(atoms: &[Self]) -> Option<Self> {
+        let first = atoms.first()?;
+        let last = atoms.last()?;
+        if atoms.iter().any(Self::has_phinthu) {
+            return None;
+        }
+        let last_base = last.first_base()?;
+        if !last.has_silent_mark() && !ThaiScalar(last_base).is_coda() {
+            return None;
+        }
+        Some(Self {
+            range: first.range.start..last.range.end,
+            onset: OnsetShape::Base(first.first_base()?),
+            nucleus: NucleusShape::Implicit,
+            has_tone_mark: false,
+            has_phinthu: false,
+            deferred_silent_coda: false,
+            ending: EndingShape::Open,
+            silent_mark: if atoms.iter().any(ThaiAtom::has_silent_mark) {
+                SilentMarkShape::Attached
+            } else {
+                SilentMarkShape::None
+            },
+        })
+    }
 }
