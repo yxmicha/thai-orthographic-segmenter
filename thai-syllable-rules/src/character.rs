@@ -188,6 +188,21 @@ impl ThaiScalar {
         character == '\u{0e4c}' // ์
     }
 
+    pub(crate) const fn is_tone_mark(self) -> bool {
+        let character = self.0;
+        // Rule: tone marks modify the current onset and do not start a part.
+        // Examples: `ก้`, `ก่`, and `ฟอร์ม` keep `้`/`่` with the surrounding spelling;
+        // no `Part::Syllable("้")` or `Part::Undecided("่")` can be emitted. A tone
+        // mark on a bare consonant may affect later attachment, but not its category.
+        matches!(
+            character,
+            '\u{0e48}' // อ่
+                | '\u{0e49}' // อ้
+                | '\u{0e4a}' // อ๊
+                | '\u{0e4b}' // อ๋
+        )
+    }
+
     /// Returns whether two adjacent Thai bases form an attested initial cluster.
     ///
     /// This is the shared orthographic inventory used by the rules and by bounded
