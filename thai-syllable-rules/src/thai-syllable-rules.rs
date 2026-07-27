@@ -65,6 +65,7 @@
 mod alternative_sites;
 mod atom;
 mod atom_sequence;
+mod atomization_rime;
 mod character;
 mod character_sequence;
 mod construction_scan;
