@@ -256,4 +256,14 @@ impl ThaiAtom {
     pub(crate) fn is_opaque(&self) -> bool {
         matches!(self.silent_mark, SilentMarkShape::Opaque { .. })
     }
+
+    pub(crate) fn opaque_has_carrier(&self) -> bool {
+        matches!(
+            self.silent_mark,
+            SilentMarkShape::Opaque {
+                has_carrier: true,
+                ..
+            }
+        )
+    }
 }
