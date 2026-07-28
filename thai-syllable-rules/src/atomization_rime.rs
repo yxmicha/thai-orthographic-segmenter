@@ -36,3 +36,10 @@ fn vowel_dependent_character(input: &mut &[ThaiCharacter]) -> ModalResult<ThaiCh
     })
     .parse_next(input)
 }
+
+fn non_vowel_dependent_character(input: &mut &[ThaiCharacter]) -> ModalResult<ThaiCharacter> {
+    any.verify(|value: &ThaiCharacter| {
+        ThaiScalar(value.character).is_dependent() && !ThaiScalar(value.character).is_vowel()
+    })
+    .parse_next(input)
+}
