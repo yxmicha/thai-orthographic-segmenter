@@ -28,6 +28,83 @@ impl CharacterSequence<'_> {
                     && triple[2].character == 'า'
             })
     }
+
+    pub(crate) fn consume_dependent_characters(
+        self,
+        index: &mut usize,
+        has_nucleus: &mut bool,
+        allow_compound_vowel: bool,
+    ) -> bool {
+        let characters = self.0;
+        // Rule: parse one dependent-mark sequence as one vowel pattern plus any
+        // surrounding tone, garan, or other non-vowel marks; stop before a second
+        // spoken-vowel mark so it cannot be hidden in the same atom. The parser
+        // admits only the explicit compound `าะ` pattern and repeated `า`
+        // lengthening as additional vowel-shape forms.
+        // Examples: `เกิน` consumes its one `ิ` pattern, `เคราะห์` keeps `าะ`,
+        // and `ค่าา` keeps repeated `า`; malformed `กีา` stops before the second
+        // `า`, allowing resolution to preserve that orphan mark as `Text` instead
+        // of emitting one syllable with two unrelated spoken vowels.
+        let rime_start = *index;
+        let mut input = &characters[*index..];
+        let mut parser = alt((
+            (
+                vowel_dependent_character,
+                repeat::<_, ThaiCharacter, (), _, _>(0.., non_vowel_dependent_character).void(),
+            )
+                .map(|_| true),
+            (
+                repeat::<_, ThaiCharacter, (), _, _>(1.., non_vowel_dependent_character).void(),
+                opt(vowel_dependent_character),
+                repeat::<_, ThaiCharacter, (), _, _>(0.., non_vowel_dependent_character).void(),
+            )
+                .map(|((), vowel, ())| vowel.is_some()),
+        ));
+        let Ok(has_vowel_rime) = parser.parse_next(&mut input) else {
+            return false;
+        };
+        *index += characters[*index..].len() - input.len();
+        let closed_rime = self.rime_has_explicit_hard_vowel(rime_start, *index);
+        if allow_compound_vowel
+            && !closed_rime
+            && characters[*index - 1].character == '\u{0e32}' // า
+            && characters
+                .get(*index)
+                .is_some_and(|value| value.character == '\u{0e30}')
+        // ะ
+        {
+            // Rule: the `าะ` spelling is one compound vowel pattern, even though
+            // its tail contains both า and ะ. Consume only that recognized pair;
+            // malformed adjacent dependent vowels elsewhere remain outside the
+            // atom.
+            // Examples: `พาะ` and the second spelling in `เฉพาะ` keep `าะ`
+            // together, while `กีา` and `กุา` still stop before their second,
+            // unsupported dependent vowel.
+            let mut parser = short_a_dependent_character;
+            if parser.parse_next(&mut input).is_ok() {
+                *index += 1;
+            }
+        } else if !closed_rime && characters[*index - 1].character == '\u{0e32}' // า
+            && characters
+                .get(*index)
+                .is_some_and(|value| value.character == '\u{0e32}')
+        // า
+        {
+            // Rule: repeated long-า marks are an orthographic lengthening of the
+            // same vowel pattern, not a new base-less syllable. Consume the run
+            // only when it repeats the exact preceding vowel mark.
+            // Example: informal `ค่าา` remains one candidate, while unlike-mark
+            // sequences such as `กีา` still stop before the second vowel.
+            let remaining_before = input.len();
+            let mut parser =
+                repeat::<_, ThaiCharacter, (), _, _>(1.., long_a_dependent_character).void();
+            if parser.parse_next(&mut input).is_ok() {
+                *index += remaining_before - input.len();
+            }
+        }
+        *has_nucleus |= has_vowel_rime;
+        has_vowel_rime
+    }
 }
 
 fn vowel_dependent_character(input: &mut &[ThaiCharacter]) -> ModalResult<ThaiCharacter> {
