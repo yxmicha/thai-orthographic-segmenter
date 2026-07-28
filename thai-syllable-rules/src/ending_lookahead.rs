@@ -38,4 +38,16 @@ impl CharacterSequence<'_> {
                 .get(index + 2)
                 .is_some_and(|value| ThaiScalar(value.character).is_dependent())
     }
+
+    pub(crate) fn starts_following_carrier_syllable(self, index: usize) -> bool {
+        let characters = self.0;
+        // Rule: base + อ + base is a following carrier syllable shape.
+        // Examples: `กอน` has the `ก + อ + น` carrier shape after a preceding
+        // candidate, while `กะ` has no such three-base lookahead. The test is
+        // structural and does not claim that every possible spelling is lexical.
+        self.starts_following_open_carrier_syllable(index)
+            && characters
+                .get(index + 2)
+                .is_some_and(|value| ThaiScalar(value.character).is_base())
+    }
 }
