@@ -50,3 +50,10 @@ pub(crate) fn short_a_dependent_character(
     any.verify(|value: &ThaiCharacter| value.character == '\u{0e30}') // ะ
         .parse_next(input)
 }
+
+pub(crate) fn long_a_dependent_character(
+    input: &mut &[ThaiCharacter],
+) -> ModalResult<ThaiCharacter> {
+    any.verify(|value: &ThaiCharacter| value.character == '\u{0e32}') // า
+        .parse_next(input)
+}
