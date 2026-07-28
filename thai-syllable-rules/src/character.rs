@@ -204,6 +204,14 @@ impl ThaiScalar {
         character == '\u{0e4c}' // ์
     }
 
+    pub(crate) const fn is_glide_base(self) -> bool {
+        let character = self.0;
+        // Thai glide bases: ย (U+0E22) and ว (U+0E27).
+        // The surrounding vowel pattern still decides whether either base is a
+        // glide or the onset/coda of another candidate.
+        matches!(character, '\u{0e22}' | '\u{0e27}') // ย ว
+    }
+
     pub(crate) const fn is_vowel(self) -> bool {
         let character = self.0;
         // Rule: this predicate identifies every scalar that can supply a vowel
