@@ -69,6 +69,7 @@ mod atomization_rime;
 mod character;
 mod character_sequence;
 mod construction_scan;
+mod ending_lookahead;
 mod part;
 mod r_han;
 mod reading_alternative;
