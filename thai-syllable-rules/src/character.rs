@@ -1,8 +1,24 @@
+use crate::character_sequence::CharacterSequence;
+
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct ThaiCharacter {
     pub(crate) character: char,
     pub(crate) start: usize,
     pub(crate) end: usize,
+}
+
+impl CharacterSequence<'_> {
+    pub(crate) fn contains_character(self, start: usize, end: usize, character: char) -> bool {
+        let characters = self.0;
+        // Rule helpers inspect only the current atom's scalar range; a matching
+        // mark elsewhere in the Thai run cannot affect this construction.
+        // Example: when checking `กะ` inside `กะกำ`, `contains_character` sees the
+        // first `ะ` but not the later `ำ`; each atom's hard-ending decision stays
+        // local to its own scalar range.
+        characters[start..end]
+            .iter()
+            .any(|value| value.character == character)
+    }
 }
 
 /// A Unicode scalar classified by its role in Thai orthography.
