@@ -50,4 +50,19 @@ impl CharacterSequence<'_> {
                 .get(index + 2)
                 .is_some_and(|value| ThaiScalar(value.character).is_base())
     }
+
+    pub(crate) fn starts_carrier_syllable_at(self, index: usize) -> bool {
+        let characters = self.0;
+        // Rule: a bare อ plus a following base is one implicit carrier spelling;
+        // keep that prefix out of the preceding vowel's final-coda slot.
+        // Examples: `อน` is one carrier candidate, and `ขออน` can expose `ขอ | อน`.
+        // The guard prevents the preceding vowel from consuming `อ` as if it were
+        // an ordinary final consonant.
+        characters
+            .get(index)
+            .is_some_and(|value| ThaiScalar(value.character).is_vowel_carrier())
+            && characters
+                .get(index + 1)
+                .is_some_and(|value| ThaiScalar(value.character).is_base())
+    }
 }
