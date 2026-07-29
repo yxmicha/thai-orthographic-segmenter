@@ -95,4 +95,37 @@ impl CharacterSequence<'_> {
                 .get(index + 1)
                 .is_some_and(|value| ThaiScalar(value.character).is_base())
     }
+
+    pub(crate) fn starts_syllable_after_final(self, index: usize) -> bool {
+        let characters = self.0;
+        // Rule: after a consumed final, a dependent-mark base or listed cluster
+        // marks the next syllable and prevents final-base absorption. Check the
+        // current position as well as the position after it: when the current
+        // base is the first member of a cluster, it is the next onset, not the
+        // previous syllable's coda. Examples: after `คืน`, a marked next base
+        // starts its own candidate; `เพื่อ` must leave `ตร` available in
+        // `เพื่อตรวจ`; and `เป็นอยู่` must not become one overlong spelling.
+        if self.starts_following_initial_cluster(index) {
+            return true;
+        }
+
+        let next = index + 1;
+        if characters
+            .get(next)
+            .is_some_and(|value| ThaiScalar(value.character).is_leading_vowel())
+            && characters
+                .get(next + 1)
+                .is_some_and(|value| ThaiScalar(value.character).is_base())
+        {
+            // Rule: after a completed ือ carrier, a valid leading-vowel spelling
+            // is enough to keep the ordinary final unresolved. The final may close
+            // the carrier or begin the following orthographic run, and the parser
+            // must preserve that choice instead of silently consuming it.
+            // Examples: `เหมือนแส` becomes `เหมือ | ?น | แส`, while the same
+            // `น` before a following base-led carrier remains governed by the
+            // ordinary carrier lookahead below, as in `เหมือนน้ำ`.
+            return true;
+        }
+        self.starts_following_syllable(next)
+    }
 }
