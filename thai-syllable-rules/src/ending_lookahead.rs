@@ -96,6 +96,46 @@ impl CharacterSequence<'_> {
                 .is_some_and(|value| ThaiScalar(value.character).is_base())
     }
 
+    pub(crate) fn starts_following_implicit_syllable(self, index: usize) -> bool {
+        let characters = self.0;
+        // Rule: two adjacent bases provide an implicit-vowel candidate only when
+        // the second base is itself bare. If a dependent mark follows that second
+        // base, it already begins an explicit rime and the first base cannot be
+        // consumed as part of an implicit pair. Examples: `จม` is a two-base
+        // implicit candidate, while the `ภา` in `สุขภาพ` is an explicit following
+        // rime and keeps `ข` available to ownership resolution instead of proving
+        // it belongs to `สุข`. At the end of a run there is no right-hand anchor
+        // for a new candidate, so `พุทธ` consumes `ท` as the final of `พุท` and
+        // leaves the terminal `ธ` to normal resolution. The listed-cluster rule
+        // still requires a third bare base before it treats a cluster as a
+        // three-base implicit candidate.
+        let Some(first) = characters.get(index).map(|value| value.character) else {
+            return false;
+        };
+        let Some(second) = characters.get(index + 1).map(|value| value.character) else {
+            return false;
+        };
+        if characters.get(index + 2).is_none()
+            || !ThaiScalar(first).is_base()
+            || !ThaiScalar(second).is_base()
+            || !ThaiScalar(second).is_coda()
+        {
+            return false;
+        }
+
+        if characters
+            .get(index + 2)
+            .is_some_and(|value| ThaiScalar(value.character).is_dependent())
+        {
+            return false;
+        }
+
+        !ThaiScalar(first).forms_initial_cluster_with(ThaiScalar(second))
+            || characters
+                .get(index + 2)
+                .is_some_and(|value| ThaiScalar(value.character).is_base())
+    }
+
     pub(crate) fn starts_syllable_after_final(self, index: usize) -> bool {
         let characters = self.0;
         // Rule: after a consumed final, a dependent-mark base or listed cluster
