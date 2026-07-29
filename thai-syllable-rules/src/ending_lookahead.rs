@@ -15,6 +15,36 @@ impl CharacterSequence<'_> {
         })
     }
 
+    pub(crate) fn starts_following_syllable(self, index: usize) -> bool {
+        let characters = self.0;
+        // Rule: a base followed by a dependent mark, initial cluster, or carrier
+        // construction is a structural following-syllable candidate. An open
+        // base-plus-อ spelling is sufficient even without a final base, and a
+        // bare อ+base candidate must be recognized as well. Otherwise an ordinary
+        // coda such as จ in `กิจอสัง` would be consumed before the following
+        // `อ`-carrier candidate is considered. A base immediately before a
+        // leading-vowel construction is intentionally not included here: that
+        // shape is handled only by the final-r rule that has a separate positive
+        // ownership check. Otherwise a preceding ordinary coda such as ญ in
+        // `เหรียญเจือะ` would be left unresolved merely because the next syllable
+        // happens to use a preposed vowel.
+        // Examples: `กะกรา` sees `กร` as a following candidate; `กะกิ` sees the
+        // marked `กิ`; `กะกอน` sees the `อ+น` carrier shape; `กิจอสัง` sees the
+        // bare `อ+ส` candidate; and `เหมือนตอ` sees `ตอ` as an open carrier
+        // syllable. A lone base with no such evidence remains eligible for
+        // conservative ambiguity.
+        characters
+            .get(index)
+            .is_some_and(|value| ThaiScalar(value.character).is_base())
+            && (characters
+                .get(index + 1)
+                .is_some_and(|value| ThaiScalar(value.character).is_dependent())
+                || self.starts_following_initial_cluster(index)
+                || self.starts_following_carrier_syllable(index)
+                || self.starts_carrier_syllable_at(index)
+                || self.starts_following_open_carrier_syllable(index))
+    }
+
     pub(crate) fn starts_following_open_carrier_syllable(self, index: usize) -> bool {
         let characters = self.0;
         // Rule: a base followed directly by a bare อ is already a vowel-bearing
