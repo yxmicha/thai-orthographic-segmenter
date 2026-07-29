@@ -212,6 +212,12 @@ impl ThaiScalar {
         matches!(character, '\u{0e22}' | '\u{0e27}') // ย ว
     }
 
+    pub(crate) const fn is_inherent_final_leading_vowel(self) -> bool {
+        let character = self.0;
+        // Leading vowels with an inherent final: ใ (U+0E43) and ไ (U+0E44).
+        matches!(character, '\u{0e43}' | '\u{0e44}') // ใ ไ
+    }
+
     pub(crate) const fn is_vowel(self) -> bool {
         let character = self.0;
         // Rule: this predicate identifies every scalar that can supply a vowel
