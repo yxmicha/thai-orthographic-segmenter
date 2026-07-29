@@ -20,3 +20,9 @@ pub(crate) struct HardEndingContext {
     pub(crate) has_glide: bool,
     pub(crate) allow_ambiguous_garan_trailing_base: bool,
 }
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum EndingClosure {
+    Open,
+    Hard,
+}
