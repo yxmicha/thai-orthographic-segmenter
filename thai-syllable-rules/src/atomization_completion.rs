@@ -4,6 +4,87 @@ use crate::construction_scan::ConstructionScan;
 
 impl CharacterSequence<'_> {
 
+    /// Extends the scan over the carrier and leading-vowel spellings of a rime, then its glide.
+    fn complete_rime(self, scan: &mut ConstructionScan) {
+        let characters = self.0;
+        let start = scan.start;
+        let ue_carrier_starts_following_rime = characters
+            .get(scan.index..scan.index + 2)
+            .is_some_and(|values| {
+                ThaiScalar(values[0].character).is_vowel_carrier()
+                    && ThaiScalar(values[1].character).is_dependent()
+            });
+        if scan.has_ue_rime
+            && !ue_carrier_starts_following_rime
+            && characters
+                .get(scan.index)
+                .is_some_and(|value| ThaiScalar(value.character).is_vowel_carrier())
+        {
+            // Rule: the อ carrier completes a ือ-style rime before final
+            // ending recognition.
+            // Examples: `มือ` consumes `อ` after `ื` as one `ือ` rime, and a
+            // following final is considered only after that carrier is known.
+            // This prevents `มื | อ` from exposing the carrier as a new base.
+            scan.index += 1;
+            scan.consumed_ue_carrier = true;
+            self.consume_dependent_characters(&mut scan.index, &mut scan.has_nucleus, true);
+        }
+
+        let has_explicit_hard_vowel_rime = self.rime_has_explicit_hard_vowel(start, scan.index)
+            || (characters
+                .get(start)
+                .is_some_and(|value| value.character == '\u{0e40}') // เ
+                && characters[start..scan.index]
+                    .iter()
+                    .any(|value| value.character == '\u{0e32}')); // า
+        if characters[start].character == 'เ'
+            && !scan.has_vowel_rime
+            && characters
+                .get(scan.index)
+                .is_some_and(|value| value.character == 'อ')
+            && characters
+                .get(scan.index + 1)
+                .is_some_and(|value| ThaiScalar(value.character).is_coda())
+            && (scan.index + 2 == characters.len()
+                || (characters
+                    .get(scan.index + 1)
+                    .is_some_and(|value| matches!(value.character, 'ม' | 'ญ'))
+                    && characters
+                        .get(scan.index + 2)
+                        .is_some_and(|value| !ThaiScalar(value.character).is_dependent())))
+        {
+            // Retained เ-อ before a final (เทอม, เทอญ, เทอมหน้า) supplies
+            // one nucleus; อ must not become a second implicit onset.
+            scan.index += 1;
+            scan.has_carrier = true;
+        }
+        if scan.has_leading_vowel
+            && characters.get(start).is_some_and(|value| {
+                value.character == '\u{0e40}' // เ
+                        && !ThaiScalar(value.character).is_inherent_final_leading_vowel()
+            })
+            && !has_explicit_hard_vowel_rime
+            && (!scan.has_vowel_rime || scan.has_ue_rime)
+            && characters
+                .get(scan.index..scan.index + 2)
+                .is_some_and(|values| {
+                    values[0].character == '\u{0e2d}' // อ
+                    && values[1].character == '\u{0e30}' // ะ
+                })
+        {
+            // Rule: a leading-vowel spelling may consume อ plus its rime as a
+            // carrier completion, except for the inherent-final ใ/ไ forms.
+            // Examples: `เธอ` keeps the trailing carrier spelling with the
+            // leading-vowel construction. The special `ใ`/`ไ` forms do not
+            // consume an unrelated carrier through this branch because their
+            // inherent final is already complete.
+            scan.index += 1;
+            self.consume_dependent_characters(&mut scan.index, &mut scan.has_nucleus, false);
+        }
+
+        self.complete_glide(scan);
+    }
+
     /// Extends the scan over a glide spelling that the rime's vowel pattern permits.
     fn complete_glide(self, scan: &mut ConstructionScan) {
         let characters = self.0;
