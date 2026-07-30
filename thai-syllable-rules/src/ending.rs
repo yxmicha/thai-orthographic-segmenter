@@ -41,3 +41,10 @@ pub(crate) enum CodaEvidence {
     OrdinaryFinal,
     CarrierFinal,
 }
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum EndingExtension {
+    None,
+    FinalR(FinalRExtension),
+    Garan,
+}
