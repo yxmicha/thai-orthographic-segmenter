@@ -28,6 +28,12 @@ pub(crate) enum EndingClosure {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum FinalRExtension {
+    Single,
+    Cluster,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) enum CodaEvidence {
     None,
     ShortA,
