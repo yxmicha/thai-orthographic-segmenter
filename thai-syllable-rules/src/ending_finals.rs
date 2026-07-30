@@ -14,6 +14,27 @@ pub(crate) struct EndingScan {
     pub(crate) deferred_silent_coda: bool,
 }
 
+impl EndingScan {
+    /// Starts at `index`, already hard when a short-ั coda, a closed short-ั glide, or a
+    /// tone-marked implicit nucleus closed the construction.
+    pub(crate) fn new(
+        index: usize,
+        context: &HardEndingContext,
+        evidence: &HardEndingEvidence,
+    ) -> Self {
+        Self {
+            index,
+            has_hard_ending: context.consumed_short_a_coda
+                || context.consumed_short_a_glide
+                || evidence.has_tone_marked_implicit_nucleus,
+            consumed_hard_final: false,
+            final_r_extension: None,
+            consumed_garan_extension: false,
+            deferred_silent_coda: false,
+        }
+    }
+}
+
 /// Lookahead and shape facts about a construction at the point its hard ending is decided.
 #[allow(
     clippy::struct_excessive_bools,
