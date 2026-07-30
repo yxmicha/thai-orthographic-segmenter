@@ -26,3 +26,12 @@ pub(crate) enum EndingClosure {
     Open,
     Hard,
 }
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum CodaEvidence {
+    None,
+    ShortA,
+    ToneMarkedImplicit,
+    OrdinaryFinal,
+    CarrierFinal,
+}
