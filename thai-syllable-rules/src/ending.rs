@@ -48,3 +48,17 @@ pub(crate) enum EndingExtension {
     FinalR(FinalRExtension),
     Garan,
 }
+
+/// The result of the hard-ending pass.
+///
+/// The decision owns both the structural classification and the end of the
+/// consumed source range. This keeps callers from having to reconstruct
+/// ending semantics from a changed cursor and a bare boolean.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) struct EndingDecision {
+    pub(crate) end: usize,
+    pub(crate) closure: EndingClosure,
+    pub(crate) coda: CodaEvidence,
+    pub(crate) extension: EndingExtension,
+    pub(crate) deferred_silent_coda: bool,
+}
