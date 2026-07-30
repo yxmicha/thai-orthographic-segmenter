@@ -2,6 +2,13 @@ use crate::character::ThaiScalar;
 use crate::character_sequence::CharacterSequence;
 use crate::construction_scan::ConstructionScan;
 
+/// What the hard-ending decision learned about one construction.
+struct EndingOutcome {
+    has_tone_mark: bool,
+    has_hard_ending: bool,
+    deferred_silent_coda: bool,
+}
+
 impl CharacterSequence<'_> {
 
     /// Extends the scan over the carrier and leading-vowel spellings of a rime, then its glide.
