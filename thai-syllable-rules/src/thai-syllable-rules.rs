@@ -67,6 +67,7 @@ mod atom;
 mod atom_sequence;
 mod atomization_completion;
 mod atomization_rime;
+mod attachment_evidence;
 mod character;
 mod character_sequence;
 mod construction_scan;
