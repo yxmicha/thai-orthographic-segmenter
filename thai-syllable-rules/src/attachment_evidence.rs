@@ -87,4 +87,44 @@ impl AttachmentEvidence {
             Self::LeftOnly
         }
     }
+
+    pub(crate) fn after_silent_mark(characters: &[ThaiCharacter], index: usize) -> Self {
+        let sequence = CharacterSequence(characters);
+        if !characters
+            .get(index)
+            .is_some_and(|value| ThaiScalar(value.character).is_coda())
+        {
+            return Self::Ineligible;
+        }
+        // The marked silent base may precede a pronounced coda (`ฟิล์ม`).
+        // But a bare following pair (`ศิลป์คน`) also admits an implicit rime;
+        // unlike closure lookahead, this alternative needs no later anchor.
+        let implicit_right = characters.get(index + 1).is_some_and(|value| {
+            ThaiScalar(value.character).is_coda()
+                && characters
+                    .get(index + 2)
+                    .is_none_or(|following| !ThaiScalar(following.character).is_dependent())
+        });
+        if implicit_right
+            || {
+                // Rule: a following open carrier is not, by itself, proof that the
+                // current base is an onset of the next syllable. Explicit carrier rimes
+                // such as the `อั` in `กลิ่นอับ` remain following candidates through the
+                // ordinary dependent-rime lookahead rather than this open-carrier
+                // predicate. Keep the stronger cluster, dependent-rime, and non-carrier
+                // carrier evidence while excluding the open `base + อ` and preposed-vowel
+                // lookaheads handled by
+                // their dedicated ownership rules. A garan suffix is allowed to retain
+                // its trailing base before a later leading vowel, as in `ฟิล์มและ`.
+                sequence.starts_following_syllable(index)
+                    && !sequence.starts_following_open_carrier_syllable(index)
+                    && !sequence.starts_following_leading_vowel_syllable(index)
+            }
+            || sequence.starts_following_open_carrier_syllable(index)
+        {
+            Self::Undecided
+        } else {
+            Self::LeftOnly
+        }
+    }
 }
