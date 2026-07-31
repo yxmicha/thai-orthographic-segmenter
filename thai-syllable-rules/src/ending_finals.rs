@@ -162,3 +162,112 @@ impl CharacterSequence<'_> {
         }
     }
 }
+
+impl CharacterSequence<'_> {
+    /// Takes the finals that a tone-marked nucleus, a carrier, an inherent-final vowel, a taikhu
+    /// carrier, or a completed ือ carrier proves local. Returns whether the construction has an
+    /// explicit hard vowel ending (ะ, ำ, or เ...า).
+    pub(crate) fn consume_local_finals(
+        self,
+        start: usize,
+        scan: &mut EndingScan,
+        context: &HardEndingContext,
+        evidence: &HardEndingEvidence,
+    ) -> bool {
+        let characters = self.0;
+        // Rule: an inherent-final ใ/ไ form is a certain hard boundary only when
+        // neither a garan suffix nor an unmarked ย remains at the boundary. A
+        // garan suffix provides a positive silent-mark continuation, while bare ย
+        // can still attach to the preceding spelling or begin the following one.
+        // Examples: `ไกกะ` closes `ไก` before `กะ`; `ไตรย์กะ` stays open for its
+        // garan spelling; and `ไกยกะ` exposes `ย` as `Undecided` instead of
+        // pretending that `ไก | ย` is certain.
+        let has_unresolved_bare_inherent_final_y = characters
+            .get(scan.index)
+            .is_some_and(|value| value.character == '\u{0e22}') // ย
+            && !characters
+                .get(scan.index + 1)
+                .is_some_and(|value| ThaiScalar(value.character).is_dependent());
+        let has_inherent_final_leading_rime = evidence.starts_with_inherent_final_leading_vowel
+            && !self.has_garan_suffix(scan.index)
+            && !has_unresolved_bare_inherent_final_y;
+
+        if evidence.can_consume_tone_marked_final {
+            // Rule: a tone-marked implicit nucleus may take one ordinary final
+            // consonant, just like the equivalent vowel-led closed shapes. Do not
+            // take it when lookahead identifies a following rime, cluster, or
+            // carrier. Examples: `ส่ง` keeps `ง` with `ส่`, while `ก่กา` keeps
+            // `กา` as the next candidate and `ก่กรา` keeps `กร` as its onset.
+            scan.index += 1;
+            scan.has_hard_ending = true;
+            scan.consumed_hard_final = true;
+        }
+
+        if evidence.can_consume_carrier_final {
+            // Rule: a tone-marked carrier may consume its ordinary final when the
+            // current base cannot itself begin a following candidate and the later
+            // cluster has its own rime. Examples: `น้องหงส์` becomes
+            // `น้อง | หงส์` because the tone mark anchors `น้อง` and `หงส์` has
+            // a garan rime; a bare following cluster such as `ล่องหน` keeps
+            // `ง` unresolved. Unmarked `ลอกหนัง` and `ทอดกรอบ` remain ambiguous
+            // through the same attachment evidence.
+            scan.index += 1;
+            scan.has_hard_ending = true;
+            scan.consumed_hard_final = true;
+        }
+
+        // Rule: ใ-/ไ-, independent vowels, and a completed ือ carrier carry an
+        // inherent final or complete nucleus and therefore close the atom.
+        // Examples: `ใจกะ`, `ไตรกะ`, `ฤกะ`, and `มือกะ` can close as `ใจ | กะ`,
+        // `ไตร | กะ`, `ฤ | กะ`, and `มือ | กะ`. Their complete rimes prevent the
+        // following bare consonant from being absorbed backward.
+        scan.has_hard_ending |= has_inherent_final_leading_rime
+            || context.has_independent_vowel
+            || context.consumed_ue_carrier;
+
+        let has_explicit_hard_vowel_ending =
+            self.rime_has_explicit_hard_vowel(start, scan.index) || evidence.has_e_ao_pattern;
+        if has_explicit_hard_vowel_ending {
+            // Rule: ะ, ำ, and the เ...า pattern are explicit hard vowel endings.
+            // Examples: `กะตกลม`, `กำกะ`, and `เกากะ` close their first spelling
+            // before the following material. In particular, `เกา` is closed even
+            // though its characters include a leading vowel and a long `า`.
+            scan.has_hard_ending = true;
+        }
+
+        let taikhu_carrier_final_is_locally_owned = evidence.has_taikhu
+            && characters
+                .get(scan.index)
+                .is_some_and(|value| ThaiScalar(value.character).is_vowel_carrier())
+            && characters
+                .get(scan.index + 1)
+                .is_some_and(|value| ThaiScalar(value.character).is_base())
+            && !self.starts_syllable_after_final(scan.index + 1);
+        if taikhu_carrier_final_is_locally_owned {
+            // Rule: taikhu + อ + base is a closed spelling only when the base
+            // cannot begin a following candidate. This is the same certainty
+            // requirement as every other final-coda attachment: `ก็อด` may keep
+            // its `ด` when nothing follows it, but `บล็อกหยุด` must expose `ก`
+            // between `บล็อ` and the following `หย` cluster as `Undecided`.
+            scan.index += 1;
+        }
+
+        if context.consumed_ue_carrier
+            && AttachmentEvidence::ordinary_final(characters, scan.index, LocalClosure::OptionalCoda)
+                == AttachmentEvidence::LeftOnly
+            && !self.contains_character(start, scan.index, '\u{0e30}') // ะ
+            && !self.contains_character(start, scan.index, '\u{0e33}') // ำ
+            && !self.starts_syllable_after_final(scan.index)
+        {
+            // Rule: a final base after ือ is allowed only when lookahead does not
+            // identify a new syllable, and then it closes the current syllable.
+            // Examples: `คืน` may consume its final `น`, while `เป็นอยู่` keeps
+            // the `อ` carrier and its following rime available so the result is
+            // `เป็น | อยู่` rather than an overlong first part.
+            scan.index += 1;
+            scan.has_hard_ending = true;
+            scan.consumed_hard_final = true;
+        }
+        has_explicit_hard_vowel_ending
+    }
+}
