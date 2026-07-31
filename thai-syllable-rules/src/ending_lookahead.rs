@@ -148,6 +148,25 @@ impl CharacterSequence<'_> {
                 .is_some_and(|value| ThaiScalar(value.character).is_base())
     }
 
+    pub(crate) fn has_garan_suffix(self, index: usize) -> bool {
+        let characters = self.0;
+        // Rule: a run of bases followed by garan is treated as one silent-mark
+        // suffix when guarding an initial cluster or atom construction.
+        // Examples: `ทร์` and `ฟิล์ม` expose a garan suffix to the atomizer, while
+        // an unmarked run such as `กม` does not. The result is a structural guard,
+        // not proof that the complete run is a dictionary word.
+        let mut probe = index;
+        while characters
+            .get(probe)
+            .is_some_and(|value| ThaiScalar(value.character).is_base())
+        {
+            probe += 1;
+        }
+        characters
+            .get(probe)
+            .is_some_and(|value| ThaiScalar(value.character).is_garan_mark())
+    }
+
     pub(crate) fn starts_syllable_after_final(self, index: usize) -> bool {
         let characters = self.0;
         // Rule: after a consumed final, a dependent-mark base or listed cluster
