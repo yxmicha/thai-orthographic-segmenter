@@ -315,4 +315,19 @@ impl ThaiScalar {
                 )
         )
     }
+
+    pub(crate) const fn forms_final_r_cluster_with(self, second: Self) -> bool {
+        let (first, second) = (self.0, second.0);
+        // Final-ร clusters that are also valid initial pairs but may serve as a
+        // preceding rime extension: กร, ตร, ทร, and สร. This is a role-specific
+        // subset of the authoritative initial-cluster inventory, not a second
+        // independent cluster table.
+        matches!(
+            (first, second),
+            (
+                '\u{0e01}' | '\u{0e15}' | '\u{0e17}' | '\u{0e2a}',
+                '\u{0e23}'
+            ) // ส ร
+        )
+    }
 }
