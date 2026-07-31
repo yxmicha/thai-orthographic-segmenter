@@ -270,4 +270,70 @@ impl CharacterSequence<'_> {
         }
         has_explicit_hard_vowel_ending
     }
+
+    /// Takes one ordinary final consonant after the vowel shapes that call for it. Returns
+    /// whether the rime itself proves that the final belongs on the left.
+    pub(crate) fn consume_ordinary_final(
+        self,
+        scan: &mut EndingScan,
+        context: &HardEndingContext,
+        evidence: &HardEndingEvidence,
+        has_explicit_hard_vowel_ending: bool,
+    ) -> bool {
+        let characters = self.0;
+        let can_consume_ordinary_final = !has_explicit_hard_vowel_ending
+            && (evidence.has_taikhu
+                || evidence.has_ue_rime
+                || evidence.has_preposed_i
+                || evidence.has_short_i
+                || evidence.can_consume_short_u_final)
+            && (!context.has_glide || !self.starts_following_implicit_syllable(scan.index));
+
+        let taikhu_final_is_locally_owned = evidence.has_taikhu
+            && (!context.has_carrier || !evidence.taikhu_final_precedes_following_cluster);
+        let local_ending_proves_ownership = taikhu_final_is_locally_owned
+                // A tone-marked ื rime can still leave its final at the boundary
+                // before a following candidate, as in `พื้นที่` -> `พื้ | ?น | ที่`.
+                // The unmarked `คืน` shape retains its required local final.
+                || (evidence.has_ue_rime && !context.has_tone_mark)
+                || evidence.has_preposed_i;
+        // Rule: required local rimes may consume an eligible coda even when a
+        // bare continuation could be resegmented, because the rime itself proves
+        // that the coda completes the spelling. Open carriers do not enter this
+        // set; their coda must pass the full following-candidate test above.
+        // Examples: `เป็นคน` keeps `น` in `เป็น`. A taikhu carrier rime follows
+        // the same ownership rule;
+        // this preserves `บล็อ | ?ก | หยุด` instead of committing `ก` to
+        // `บล็อก`. A non-carrier taikhu rime such as `เต็ม` retains its eligible
+        // final through the ordinary hard-rime path.
+        // An ordinary short-ิ rime does not prove that its final belongs on the
+        // left when another Thai candidate follows. The final may be the onset
+        // boundary material of the next construction, so the resolver must keep
+        // it explicit. For short-ิ forms, the preposed เ...ิ spelling is hard by
+        // local structure; the base-led `กิ` in `กินซัก` therefore becomes
+        // `กิ | ?น | ซัก`, while terminal `กิน` still consumes `น` because no
+        // right-hand candidate exists.
+        // Carrier-led cases such as `วิฟอยู่` and `กลิ่นอับ` follow the same
+        // conservative rule, and open carriers such as `ทอดกรอบ` still leave
+        // `ด` unresolved between `ทอ` and the next cluster.
+        let closure = if local_ending_proves_ownership {
+            LocalClosure::RequiredCoda
+        } else {
+            LocalClosure::OptionalCoda
+        };
+        let can_consume_final = AttachmentEvidence::ordinary_final(characters, scan.index, closure)
+            == AttachmentEvidence::LeftOnly;
+        if can_consume_ordinary_final && can_consume_final {
+            // Rule: these vowel shapes take one ordinary final consonant. A base
+            // followed by a dependent mark is left for the next construction.
+            // Examples: `กัด`, `เด็ก`, `แข็ง`, `น็อต`, `คืน`, and `เดิน` each
+            // consume their local final when the spelling calls for it. If the
+            // next base has its own mark, as in `...กะ...`, it remains a following
+            // candidate instead of becoming a second final.
+            scan.index += 1;
+            scan.has_hard_ending = true;
+            scan.consumed_hard_final = true;
+        }
+        local_ending_proves_ownership
+    }
 }
