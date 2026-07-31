@@ -15,6 +15,18 @@ impl CharacterSequence<'_> {
         })
     }
 
+    pub(crate) fn starts_initial_cluster_with_rime(self, index: usize) -> bool {
+        let characters = self.0;
+        // Rule: if the second base of a listed onset cluster already has its own
+        // dependent rime, the first base may still be the preceding final. This
+        // preserves `อิส | รา` in `อิสรา`; the cluster-shaped lookahead does not
+        // force ส into the following syllable when ร visibly starts its rime.
+        self.starts_following_initial_cluster(index)
+            && characters
+                .get(index + 2)
+                .is_some_and(|value| ThaiScalar(value.character).is_dependent())
+    }
+
     pub(crate) fn starts_following_syllable(self, index: usize) -> bool {
         let characters = self.0;
         // Rule: a base followed by a dependent mark, initial cluster, or carrier
