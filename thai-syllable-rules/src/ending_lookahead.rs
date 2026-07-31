@@ -57,6 +57,27 @@ impl CharacterSequence<'_> {
                 || self.starts_following_open_carrier_syllable(index))
     }
 
+    pub(crate) fn starts_following_leading_vowel_syllable(self, index: usize) -> bool {
+        let characters = self.0;
+        // Rule: a base immediately before a leading vowel plus its base is a
+        // possible continuation of an unmarked final-r spelling, but it is not
+        // generic evidence that an ordinary coda must remain unresolved. This
+        // narrower probe keeps final-r behavior conservative without changing the
+        // ordinary-coda result for `เหรียญเจือะ`: ญ is accepted by `เหรีย` because
+        // the following `เจือะ` owns its own preposed-vowel construction. The
+        // garan path intentionally does not use this probe either; garan supplies
+        // positive local ownership for a permitted trailing base.
+        characters
+            .get(index)
+            .is_some_and(|value| ThaiScalar(value.character).is_base())
+            && characters
+                .get(index + 1)
+                .is_some_and(|value| ThaiScalar(value.character).is_leading_vowel())
+            && characters
+                .get(index + 2)
+                .is_some_and(|value| ThaiScalar(value.character).is_base())
+    }
+
     pub(crate) fn starts_following_open_carrier_syllable(self, index: usize) -> bool {
         let characters = self.0;
         // Rule: a base followed directly by a bare อ is already a vowel-bearing
