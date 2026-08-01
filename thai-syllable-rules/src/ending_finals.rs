@@ -336,4 +336,35 @@ impl CharacterSequence<'_> {
         }
         local_ending_proves_ownership
     }
+
+    /// Takes the garan that follows an already consumed short-ั coda.
+    fn consume_short_coda_garan(self, scan: &mut EndingScan, context: &HardEndingContext) {
+        if context.consumed_short_a_coda
+            && !scan.consumed_hard_final
+            && self.has_immediate_garan_suffix(scan.index)
+        {
+            // Rule: a garan immediately after an already consumed short-ั coda
+            // belongs to that final spelling even when no extra base is consumed.
+            // Example: `สัตว์` keeps the garan mark with the consumed `ัต`-style
+            // ending; it does not produce `สัต | ว์` or a standalone `์` part.
+            scan.consumed_hard_final = true;
+        }
+
+        if context.consumed_short_a_coda
+            && !scan.consumed_hard_final
+            && self.has_garan_suffix(scan.index)
+            && !self.starts_following_initial_cluster(scan.index)
+            && self
+                .consume_garan_extension(&mut scan.index, false)
+                .is_some()
+        {
+            // Rule: a non-cluster garan suffix may extend a short-ั ending when
+            // the suffix does not look like the start of an initial cluster.
+            // Examples: `บัตร` and `สัตว์` can retain their garan-bearing endings,
+            // while a following cluster-shaped onset is left for the next
+            // syllable so the extension cannot swallow a legitimate boundary.
+            scan.has_hard_ending = true;
+            scan.consumed_hard_final = true;
+        }
+    }
 }
