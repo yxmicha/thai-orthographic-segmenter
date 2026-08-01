@@ -169,6 +169,21 @@ impl CharacterSequence<'_> {
                 .is_some_and(|value| ThaiScalar(value.character).is_base())
     }
 
+    pub(crate) fn has_immediate_garan_suffix(self, index: usize) -> bool {
+        let characters = self.0;
+        // Rule: recognize the minimal base + garan suffix without scanning past
+        // the immediate spelling boundary.
+        // Examples: `ก์` is an immediate suffix shape, while `ก์ดา` is examined
+        // only at the `ก์` boundary and lets `ดา` go through normal following-
+        // syllable lookahead. The helper does not search an entire paragraph.
+        characters
+            .get(index)
+            .is_some_and(|value| ThaiScalar(value.character).is_base())
+            && characters
+                .get(index + 1)
+                .is_some_and(|value| ThaiScalar(value.character).is_garan_mark())
+    }
+
     pub(crate) fn has_garan_suffix(self, index: usize) -> bool {
         let characters = self.0;
         // Rule: a run of bases followed by garan is treated as one silent-mark
