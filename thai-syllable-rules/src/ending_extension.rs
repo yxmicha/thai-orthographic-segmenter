@@ -1,8 +1,79 @@
 use crate::attachment_evidence::AttachmentEvidence;
 use crate::character::ThaiScalar;
 use crate::character_sequence::CharacterSequence;
+use crate::ending::FinalRExtension;
 
 impl CharacterSequence<'_> {
+    pub(crate) fn consume_final_r_extension(
+        self,
+        index: &mut usize,
+        final_r_is_bound: bool,
+    ) -> Option<FinalRExtension> {
+        let characters = self.0;
+        // Rule: allow a single final ร or a base + ร + garan cluster as a rime
+        // extension; unrelated consonants remain available to resolution.
+        // Examples: `บัตร` uses the single-final shape, while `จันทร์` uses the
+        // base-plus-`ร`-plus-garan shape. In `การ์ดา`, the `ร` belongs to `การ์`
+        // but `ดา` remains a separate following nucleus.
+        let first = characters.get(*index)?;
+        let following_leading_vowel = self.starts_following_leading_vowel_syllable(*index);
+        let following_leading_vowel_after_r =
+            self.starts_following_leading_vowel_syllable(*index + 1);
+        let following_open_carrier = self.starts_following_open_carrier_syllable(*index);
+        let following_other_candidate = self.starts_following_syllable(*index)
+            && !following_leading_vowel
+            && !following_open_carrier;
+        let following_syllable_after_r =
+            self.starts_syllable_after_final(*index) || following_leading_vowel_after_r;
+        let preceded_by_supported_final_r_cluster = (*index > 0).then(|| {
+            characters.get(*index - 1).is_some_and(|value| {
+                ThaiScalar(value.character).forms_final_r_cluster_with(ThaiScalar(first.character))
+            })
+        }) == Some(true);
+        // A supported `กร`/`ตร`/`ทร`/`สร` shape permits final-ร attachment, but it
+        // does not prove that `ร` belongs to the left syllable when a following
+        // syllable can start immediately after it. The pair is also a valid onset
+        // shape, so `จักรยาน` must remain `จัก | ?ร | ยาน`; the final-ร ownership
+        // becomes certain only when no following candidate remains possible.
+        let supported_final_r_is_unambiguous =
+            preceded_by_supported_final_r_cluster && !following_syllable_after_r;
+        if ThaiScalar(first.character).is_final_r()
+            && (!characters
+                .get(*index + 1)
+                .is_some_and(|value| ThaiScalar(value.character).is_dependent())
+                || characters
+                    .get(*index + 1)
+                    .is_some_and(|value| ThaiScalar(value.character).is_garan_mark()))
+        // อ์
+            && (characters
+                .get(*index + 1)
+                .is_some_and(|value| ThaiScalar(value.character).is_garan_mark())
+                || (!following_open_carrier
+                    && (supported_final_r_is_unambiguous
+                        || (!following_syllable_after_r
+                            && (final_r_is_bound || !following_other_candidate)
+                            && (final_r_is_bound
+                                || (!following_leading_vowel
+                                    && !self.starts_following_implicit_syllable(*index)))))))
+        {
+            *index += 1;
+            return Some(FinalRExtension::Single);
+        }
+
+        let second = characters.get(*index + 1)?;
+        if ThaiScalar(first.character).is_base()
+            && ThaiScalar(second.character).is_final_r()
+            && characters
+                .get(*index + 2)
+                .is_some_and(|value| ThaiScalar(value.character).is_garan_mark())
+        // อ์
+        {
+            *index += 2;
+            return Some(FinalRExtension::Cluster);
+        }
+
+        None
+    }
 
     pub(crate) fn consume_garan_extension(
         self,
