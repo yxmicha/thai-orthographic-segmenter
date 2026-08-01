@@ -337,6 +337,52 @@ impl CharacterSequence<'_> {
         local_ending_proves_ownership
     }
 
+    /// Takes garan and final-ร extensions that complete the consumed ending.
+    pub(crate) fn consume_ending_extensions(
+        self,
+        start: usize,
+        scan: &mut EndingScan,
+        context: &HardEndingContext,
+        evidence: &HardEndingEvidence,
+        local_ending_proves_ownership: bool,
+    ) {
+        if evidence.has_e_ao_pattern
+            && self.has_immediate_garan_suffix(scan.index)
+            && self
+                .consume_garan_extension(&mut scan.index, true)
+                .is_some()
+        {
+            // Rule: an immediate base + garan suffix extends the closed เ...า
+            // form, rather than creating a detached silent-mark atom.
+            // Example: a shape such as `เกาก์...` keeps the immediate `ก์` with
+            // the closed `เกา` spelling. The garan extension is local and does not
+            // authorize merging a later full syllable.
+            scan.has_hard_ending = true;
+            scan.consumed_hard_final = true;
+            scan.consumed_garan_extension = true;
+        }
+
+        self.consume_short_coda_garan(scan, context);
+        self.consume_final_r(start, scan, context, evidence);
+        self.consume_trailing_garan(scan, context, evidence, local_ending_proves_ownership);
+
+        if scan.has_hard_ending
+            && !scan.consumed_hard_final
+            && !scan.consumed_garan_extension
+            && self.has_immediate_garan_suffix(scan.index)
+            && self
+                .consume_garan_extension(&mut scan.index, true)
+                .is_some()
+        {
+            // Rule: an immediate garan spelling can complete an otherwise hard
+            // ending, including forms with a base before the silent mark.
+            // Examples: `จันทร์`, `ฟิล์ม`, and `เสน่ห์` retain their immediate
+            // garan spelling as part of the hard candidate. The mark is never
+            // promoted to a public part on its own.
+            scan.has_hard_ending = true;
+        }
+    }
+
     /// Takes the garan that follows an already consumed short-ั coda.
     fn consume_short_coda_garan(self, scan: &mut EndingScan, context: &HardEndingContext) {
         if context.consumed_short_a_coda
