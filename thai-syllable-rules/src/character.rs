@@ -212,6 +212,15 @@ impl ThaiScalar {
         matches!(character, '\u{0e22}' | '\u{0e27}') // ย ว
     }
 
+    pub(crate) const fn is_final_r(self) -> bool {
+        let character = self.0;
+        // Thai final ร: ร (U+0E23).
+        // This role-specific predicate keeps final-r extension logic independent
+        // from raw scalar comparisons. Examples: `บัตร` may consume a final ร,
+        // while `รอก` uses ร as the onset of the following syllable.
+        character == '\u{0e23}' // ร
+    }
+
     pub(crate) const fn is_inherent_final_leading_vowel(self) -> bool {
         let character = self.0;
         // Leading vowels with an inherent final: ใ (U+0E43) and ไ (U+0E44).
