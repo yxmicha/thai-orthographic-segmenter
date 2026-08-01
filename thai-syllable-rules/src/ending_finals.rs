@@ -413,4 +413,42 @@ impl CharacterSequence<'_> {
             scan.final_r_extension = Some(extension);
         }
     }
+
+    /// Takes a garan sequence that follows a consumed hard final, within its trailing-base policy.
+    fn consume_trailing_garan(
+        self,
+        scan: &mut EndingScan,
+        context: &HardEndingContext,
+        evidence: &HardEndingEvidence,
+        local_ending_proves_ownership: bool,
+    ) {
+        if scan.consumed_hard_final
+            && !scan.consumed_garan_extension
+            // A new initial cluster after a consumed final belongs to the next
+            // spelling; do not absorb that whole cluster as a garan extension.
+            && !self.starts_following_initial_cluster(scan.index)
+            && let Some(trailing_attachment) = self.consume_garan_extension(&mut scan.index,
+                match scan.final_r_extension {
+                    Some(FinalRExtension::Single) => context.allow_ambiguous_garan_trailing_base,
+                    Some(FinalRExtension::Cluster) => false,
+                    None => true,
+                },)
+        {
+            // Only a consumed base that is itself silenced frees the ordinary
+            // coda slot. A short-ั coda or a final-ร extension retains its prior
+            // pronounced coda, even though another silent suffix follows it.
+            scan.deferred_silent_coda = trailing_attachment == AttachmentEvidence::Undecided
+                && !context.consumed_short_a_coda
+                && !evidence.has_tone_marked_implicit_nucleus
+                && !local_ending_proves_ownership
+                && scan.final_r_extension.is_none();
+            // Rule: consume a following garan sequence only when its trailing-base
+            // policy allows it; final clusters are more restrictive than singles.
+            // Examples: `ฟอร์ม` may keep its local silent-mark sequence, while a
+            // final cluster followed by a new onset is not extended arbitrarily.
+            // This is why `การ์ดา` can stop before `ดา` even though `การ์` is
+            // itself opaque.
+            scan.has_hard_ending = true;
+        }
+    }
 }
