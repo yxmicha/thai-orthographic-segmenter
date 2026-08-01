@@ -367,4 +367,50 @@ impl CharacterSequence<'_> {
             scan.consumed_hard_final = true;
         }
     }
+
+    /// Takes a final ร extension after a short-ั, short-ิ or short-ุ ending that has a vowel rime.
+    fn consume_final_r(
+        self,
+        start: usize,
+        scan: &mut EndingScan,
+        context: &HardEndingContext,
+        evidence: &HardEndingEvidence,
+    ) {
+        let characters = self.0;
+        let consumed_base_is_glide = scan.consumed_hard_final
+            && characters
+                .get(scan.index - 1)
+                .is_some_and(|value| ThaiScalar(value.character).is_glide_base());
+        if (context.consumed_short_a_coda || evidence.has_short_i || evidence.can_consume_short_u_final)
+            && !consumed_base_is_glide
+            // Rule: final ร extensions require an actual vowel rime before the final.
+            // Examples: `ฟอร์ม` and `บัตร` have a preceding vowel-bearing structure;
+            // a bare run shaped only like `กร` has no such evidence and leaves its
+            // bases to cluster or ambiguity handling instead.
+            && characters[start..scan.index]
+                .iter()
+                .any(|value| ThaiScalar(value.character).is_vowel())
+            && let Some(extension) = self.consume_final_r_extension(
+&mut scan.index,
+                context.consumed_short_a_coda || scan.consumed_hard_final,
+            )
+        {
+            // Rule: a final ร is a permitted rime extension after these vowel
+            // forms; retain whether it is a single base or a garan cluster.
+            // Examples: `บัตร` admits a final `ร`-extension shape, and `จันทร์`
+            // keeps the `ร` plus garan sequence with the preceding rime. A bare
+            // consonant run with no preceding vowel does not qualify merely
+            // because it contains `ร`. When a short-ั or already hard ending has
+            // established the rime, the final ร is bound only when the supported
+            // final-ร cluster proves ownership and no competing following
+            // candidate exists. Thus `จักรยาน` leaves `ร` available to both
+            // neighboring constructions, while terminal `จักร` can retain it.
+            // An explicit following rime still wins: `อิสรอ` is `อิส | รอ`,
+            // because the open carrier proves that `ร` can be the next syllable's
+            // onset.
+            scan.has_hard_ending = true;
+            scan.consumed_hard_final = true;
+            scan.final_r_extension = Some(extension);
+        }
+    }
 }
