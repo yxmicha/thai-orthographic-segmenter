@@ -48,3 +48,10 @@ impl CharacterSequence<'_> {
             })
     }
 }
+
+#[derive(Clone, Copy, Debug, Default)]
+pub(crate) struct SilentMarkSuffixShape {
+    pub(crate) starts_at_last_initial_cluster: bool,
+    pub(crate) precedes_initial_cluster: bool,
+    pub(crate) precedes_any_initial_cluster: bool,
+}
