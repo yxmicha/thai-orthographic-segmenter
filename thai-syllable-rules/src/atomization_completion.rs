@@ -14,6 +14,18 @@ struct EndingOutcome {
 }
 
 impl CharacterSequence<'_> {
+    /// Applies rime, ending, and silent-mark closure to a scanned onset and nucleus, then hands
+    /// the source-local facts to atom construction.
+    pub(crate) fn complete_scan(
+        self,
+        scan: &mut ConstructionScan,
+        previous: Option<&ThaiAtom>,
+    ) -> AtomScan {
+        self.complete_rime(scan);
+        let mut ending = self.decide_ending(scan, previous);
+        self.consume_silent_marks(scan, previous, &mut ending);
+        self.finish_scan(scan, &ending)
+    }
 
     /// Extends the scan over the carrier and leading-vowel spellings of a rime, then its glide.
     fn complete_rime(self, scan: &mut ConstructionScan) {
