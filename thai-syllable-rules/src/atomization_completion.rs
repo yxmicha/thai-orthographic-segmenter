@@ -1,3 +1,4 @@
+use crate::atom::AtomScan;
 use crate::atom::ThaiAtom;
 use crate::attachment_evidence::AttachmentEvidence;
 use crate::character::ThaiScalar;
@@ -341,6 +342,47 @@ impl CharacterSequence<'_> {
         {
             scan.has_nucleus = true;
             scan.is_opaque = true;
+        }
+    }
+
+    /// Settles the nucleus of a tone-marked implicit construction and records the scan facts.
+    fn finish_scan(self, scan: &mut ConstructionScan, ending: &EndingOutcome) -> AtomScan {
+        let characters = self.0;
+        let start = scan.start;
+        if !scan.has_nucleus && ending.has_tone_mark && !self.starts_carrier_syllable_at(scan.index)
+        {
+            // Rule: a base plus an ordinary tone mark is an implicit-vowel
+            // atom and must not be reclassified as an onset modifier for the
+            // next rime. Resolution later marks the atom `Invalid` when it is
+            // between two syllables and has no vowel or final base.
+            // Examples: `ก่`, `ก้`, `ก๊`, and `ก๋` stay bounded before `กา`,
+            // while `นะก้กา` exposes the middle atom as Invalid. The `ป้` in
+            // `ป้อง` is excluded because its following `อ+ง` carrier completes
+            // the same tone-marked syllable.
+            scan.has_nucleus = true;
+        }
+
+        let end = scan.index.max(start + 1);
+        // AtomScan is the hand-off between structural scanning and semantic
+        // atom construction. The scanner owns only source-local facts; the
+        // atom module owns their interpretation as onset, nucleus, ending,
+        // and silent-mark shapes.
+        AtomScan {
+            range: characters[start].start..characters[end - 1].end,
+            character: scan.character,
+            first_base: scan.first_base,
+            has_nucleus: scan.has_nucleus,
+            has_vowel_rime: scan.has_vowel_rime,
+            has_ue_rime: scan.has_ue_rime,
+            has_independent_vowel: scan.has_independent_vowel,
+            has_tone_mark: ending.has_tone_mark,
+            has_hard_ending: ending.has_hard_ending,
+            deferred_silent_coda: ending.deferred_silent_coda,
+            is_opaque: scan.is_opaque,
+            has_leading_vowel: scan.has_leading_vowel,
+            has_carrier: scan.has_carrier,
+            has_glide: scan.has_glide,
+            consumed_ue_carrier: scan.consumed_ue_carrier,
         }
     }
 }
