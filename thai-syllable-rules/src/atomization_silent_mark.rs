@@ -108,6 +108,61 @@ impl CharacterSequence<'_> {
                 || (cluster_count > 0 && last_cluster_start != Some(start)),
         }
     }
+
+    pub(crate) fn scan_silent_mark_suffix(self, index: usize) -> Option<SilentMarkSuffixScan> {
+        let characters = self.0;
+        let mut base_probe = index;
+        while characters
+            .get(base_probe..base_probe + 1)
+            .is_some_and(|values| ThaiScalar(values[0].character).is_base())
+        {
+            base_probe += 1;
+        }
+        if base_probe == index {
+            return None;
+        }
+
+        let mut dependent_end = base_probe;
+        let mut has_immediate_garan = false;
+        while characters
+            .get(dependent_end..dependent_end + 1)
+            .is_some_and(|values| ThaiScalar(values[0].character).is_dependent())
+        {
+            has_immediate_garan |= ThaiScalar(characters[dependent_end].character).is_garan_mark();
+            dependent_end += 1;
+        }
+        if has_immediate_garan
+            && characters[index..base_probe]
+                .iter()
+                .enumerate()
+                .find(|(_, value)| ThaiScalar(value.character).is_vowel_carrier())
+                .is_some_and(|(offset, _)| offset > 0)
+        {
+            // Rule: a carrier-bearing garan spelling starts at the base immediately
+            // before its carrier. If an earlier bare run reaches across that start,
+            // it must not be atomized as one opaque candidate. Examples: `ฟอร์ม`
+            // starts at `ฟ`, while `กลมฟอร์ม` must leave `ก`, `ล`, and `ม` available
+            // to ownership resolution before consuming the later `ฟอร์ม` suffix.
+            return None;
+        }
+        // Rule: only multi-base candidates need the long-range garan probe. A
+        // one-base suffix uses `has_immediate_garan` for consumption and cannot
+        // satisfy either the compact hard-ending rule or the multi-base ambiguity
+        // rule, so avoid rescanning the rest of a long Thai run.
+        let has_garan_after_base = (base_probe - index >= 2)
+            && characters.get(base_probe..).is_some_and(|values| {
+                values
+                    .iter()
+                    .any(|value| ThaiScalar(value.character).is_garan_mark())
+            });
+        Some(SilentMarkSuffixScan {
+            base_probe,
+            dependent_end,
+            base_count: base_probe - index,
+            has_immediate_garan,
+            has_garan_after_base,
+        })
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default)]
