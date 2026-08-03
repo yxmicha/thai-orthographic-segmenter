@@ -163,6 +163,30 @@ impl CharacterSequence<'_> {
             has_garan_after_base,
         })
     }
+
+    pub(crate) fn consume_silent_mark_suffix(
+        self,
+        index: &mut usize,
+        allow_ambiguous_trailing_base: bool,
+        suffix: Option<SilentMarkSuffixScan>,
+    ) -> bool {
+        // Rule: consume a garan-bearing suffix as one opaque candidate, then let
+        // shape-based lookahead decide whether its trailing base belongs to it.
+        // Examples: `ฟอร์มและ` consumes the silent-mark spelling before `และ`,
+        // while `การ์ดา` leaves the `ดา` nucleus for the following candidate.
+        // `เทิร์นเปี๊ยะ` likewise keeps `เทิร์น` intact without merging the next
+        // leading-vowel construction into its garan suffix.
+        let Some(suffix) = suffix.filter(|suffix| suffix.has_immediate_garan) else {
+            return false;
+        };
+
+        *index = suffix.dependent_end;
+        if self.can_consume_garan_trailing_base(suffix.dependent_end, allow_ambiguous_trailing_base)
+        {
+            *index = suffix.dependent_end + 1;
+        }
+        true
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default)]
