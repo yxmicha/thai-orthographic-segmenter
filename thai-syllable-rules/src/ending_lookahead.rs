@@ -1,3 +1,4 @@
+use crate::attachment_evidence::AttachmentEvidence;
 use crate::character::ThaiScalar;
 use crate::character_sequence::CharacterSequence;
 
@@ -167,6 +168,20 @@ impl CharacterSequence<'_> {
             || characters
                 .get(index + 2)
                 .is_some_and(|value| ThaiScalar(value.character).is_base())
+    }
+
+    pub(crate) fn can_consume_garan_trailing_base(
+        self,
+        index: usize,
+        allow_ambiguous_following_base: bool,
+    ) -> bool {
+        let characters = self.0;
+        // Garan silences preceding material; it does not establish ownership of
+        // a pronounced base after the mark. A following implicit pair is a live
+        // alternative even at the end of the run, as in `ศิลป์คน`.
+        allow_ambiguous_following_base
+            && AttachmentEvidence::after_silent_mark(characters, index)
+                == AttachmentEvidence::LeftOnly
     }
 
     pub(crate) fn has_immediate_garan_suffix(self, index: usize) -> bool {
