@@ -1,4 +1,5 @@
 use crate::atom::ThaiAtom;
+use crate::attachment_evidence::AttachmentEvidence;
 use crate::character::ThaiScalar;
 use crate::character_sequence::CharacterSequence;
 use crate::construction_scan::ConstructionScan;
@@ -248,6 +249,98 @@ impl CharacterSequence<'_> {
             has_tone_mark,
             has_hard_ending,
             deferred_silent_coda,
+        }
+    }
+
+    /// Makes a garan-marked construction opaque and admits its trailing silent-mark suffix.
+    fn consume_silent_marks(
+        self,
+        scan: &mut ConstructionScan,
+        previous: Option<&ThaiAtom>,
+        ending: &mut EndingOutcome,
+    ) {
+        let characters = self.0;
+        let start = scan.start;
+        // Rule: a garan mark makes the current structure opaque. Its possible
+        // trailing base is admitted only by shape-based lookahead in ending.
+        // Examples: `ฟิล์ม` and `เสน่ห์` are opaque silent-mark candidates;
+        // `การ์ดา` keeps `ดา` outside the opaque spelling because lookahead
+        // finds its own nucleus. The garan mark itself never becomes a public
+        // part.
+        let consumed_garan_mark = characters[start..scan.index]
+            .iter()
+            .any(|value| ThaiScalar(value.character).is_garan_mark());
+        if !scan.has_nucleus && scan.first_base.is_some() && consumed_garan_mark {
+            scan.has_nucleus = true;
+            scan.is_opaque = true;
+            let allow_ambiguous_trailing_base = previous.is_none_or(|atom| !atom.has_glide());
+            ending.deferred_silent_coda = allow_ambiguous_trailing_base
+                && previous.is_some_and(|atom| atom.has_nucleus() && !atom.has_hard_ending())
+                && AttachmentEvidence::after_silent_mark(characters, scan.index)
+                    == AttachmentEvidence::Undecided;
+            if self.can_consume_garan_trailing_base(scan.index, allow_ambiguous_trailing_base) {
+                scan.index += 1;
+            }
+        }
+
+        let previous_has_hard_ending = previous.is_some_and(super::atom::ThaiAtom::has_hard_ending);
+        // Rule: a consonant run with a garan suffix can form a structural
+        // silent-mark candidate, but only when it is not a listed onset
+        // cluster or an ambiguous suffix that should remain unresolved.
+        // Examples: `กำน์` can be retained as one structural silent-mark
+        // candidate, while `กะกเรนทร์` gives the recognized `กร` onset and
+        // `กะมเหสักข์` remains available to ambiguity resolution rather than
+        // being prematurely flattened into one arbitrary atom.
+        let silent_mark_scan = if !scan.has_nucleus && scan.first_base.is_some() {
+            self.scan_silent_mark_suffix(scan.index)
+        } else {
+            None
+        };
+        let can_start_silent_mark_suffix = silent_mark_scan.is_some_and(|suffix| {
+            if previous_has_hard_ending {
+                // Rule: a hard-ending predecessor may consume only a compact two- or
+                // three-base garan spelling. Examples: `กำน์กะ` and `ฟิล์มและ` qualify;
+                // a four-base run remains available to the ordinary ambiguity rules.
+                (2..=3).contains(&suffix.base_count) && suffix.has_garan_after_base
+            } else {
+                let previous_starts_with_leading_vowel =
+                    previous.is_some_and(super::atom::ThaiAtom::starts_with_leading_vowel);
+                let starts_with_initial_cluster = self.starts_following_initial_cluster(start);
+                let silent_mark_shape = self.silent_mark_suffix_shape(start, Some(suffix));
+                // Rule: an onset-only base cannot be swallowed into an opaque
+                // garan candidate when a later initial cluster supplies the
+                // actual onset. In `สหกรณ์`, `ห` cannot close `ส` and cannot
+                // begin the `กรณ์` suffix, so the resolver must expose both
+                // uncertain bases before the `กร` candidate.
+                let onset_only_base_precedes_initial_cluster = characters
+                    .get(start)
+                    .is_some_and(|value| !ThaiScalar(value.character).is_coda())
+                    && silent_mark_shape.precedes_any_initial_cluster;
+                let previous_is_unmarked_open_carrier = previous.is_some_and(|atom| {
+                    atom.has_carrier()
+                        && !atom.has_explicit_rime()
+                        && !atom.has_tone_mark
+                        && !atom.has_hard_ending()
+                });
+                let unmarked_carrier_precedes_initial_cluster = previous_is_unmarked_open_carrier
+                    && silent_mark_shape.precedes_any_initial_cluster;
+                (!starts_with_initial_cluster || silent_mark_shape.starts_at_last_initial_cluster)
+                    && !self.has_ambiguous_silent_mark_suffix(start, scan.index, Some(suffix))
+                    && !onset_only_base_precedes_initial_cluster
+                    && !unmarked_carrier_precedes_initial_cluster
+                    && (previous_starts_with_leading_vowel
+                        || !silent_mark_shape.precedes_initial_cluster)
+            }
+        });
+        if can_start_silent_mark_suffix
+            && self.consume_silent_mark_suffix(
+                &mut scan.index,
+                previous.is_none_or(|atom| !atom.has_glide()),
+                silent_mark_scan,
+            )
+        {
+            scan.has_nucleus = true;
+            scan.is_opaque = true;
         }
     }
 }
