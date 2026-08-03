@@ -1,6 +1,8 @@
+use crate::atom::ThaiAtom;
 use crate::character::ThaiScalar;
 use crate::character_sequence::CharacterSequence;
 use crate::construction_scan::ConstructionScan;
+use crate::ending::{EndingClosure, HardEndingContext};
 
 /// What the hard-ending decision learned about one construction.
 struct EndingOutcome {
@@ -197,6 +199,55 @@ impl CharacterSequence<'_> {
                 scan.consumed_short_a_glide =
                     self.contains_character(start, scan.index, '\u{0e31}'); // ั
             }
+        }
+    }
+
+    /// Consumes a hard ending and records its tone-mark and closure evidence.
+    fn decide_ending(
+        self,
+        scan: &mut ConstructionScan,
+        previous: Option<&ThaiAtom>,
+    ) -> EndingOutcome {
+        let characters = self.0;
+        let start = scan.start;
+        let has_tone_mark = characters[start..scan.index]
+            .iter()
+            .any(|value| ThaiScalar(value.character).is_tone_mark());
+        let ending_decision = self.consume_hard_ending(
+            start,
+            scan.index,
+            HardEndingContext {
+                has_leading_vowel: scan.has_leading_vowel,
+                has_independent_vowel: scan.has_independent_vowel,
+                has_nucleus: scan.has_nucleus,
+                has_carrier: scan.has_carrier,
+                has_tone_mark,
+                consumed_short_a_coda: scan.consumed_short_a_coda,
+                consumed_short_a_glide: scan.consumed_short_a_glide,
+                consumed_ue_carrier: scan.consumed_ue_carrier,
+                has_glide: scan.has_glide,
+                allow_ambiguous_garan_trailing_base: previous.is_none_or(|atom| !atom.has_glide()),
+            },
+        );
+        scan.index = ending_decision.end;
+        let has_hard_ending = matches!(ending_decision.closure, EndingClosure::Hard);
+        if matches!(
+            ending_decision.coda,
+            crate::ending::CodaEvidence::ToneMarkedImplicit
+        ) {
+            scan.has_nucleus = true;
+        }
+        let deferred_silent_coda = ending_decision.deferred_silent_coda;
+        if self.is_standalone_ko_taikhu(start, scan.index) {
+            // Rule: the standalone `ก็` exception is a real nucleus, even
+            // though taikhu normally contributes only an implicit rime when
+            // it is attached to a larger vowel pattern.
+            scan.has_nucleus = true;
+        }
+        EndingOutcome {
+            has_tone_mark,
+            has_hard_ending,
+            deferred_silent_coda,
         }
     }
 }
