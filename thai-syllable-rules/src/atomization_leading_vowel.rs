@@ -1,5 +1,9 @@
+use crate::atomization_rime::{long_a_dependent_character, short_a_dependent_character};
+use crate::character::ThaiCharacter;
 use crate::character::ThaiScalar;
 use crate::character_sequence::CharacterSequence;
+use winnow::Parser;
+use winnow::token::any;
 
 /// Lookahead facts that decide whether the second base after a leading vowel joins its cluster.
 #[allow(
@@ -142,5 +146,34 @@ impl CharacterSequence<'_> {
                         .is_some_and(|value| ThaiScalar(value.character).is_vowel())
 
                 }
+    }
+
+    /// Whether a leading `เ` and two bases precede a `าะ` rime.
+    fn starts_leading_ao_pattern(self, start: usize, index: usize) -> bool {
+        let characters = self.0;
+        // Rule: a leading เ followed by one non-cluster base and a second base
+        // before าะ is one cross-atom เ-าะ vowel pattern. The second base is not
+        // an independent onset merely because the first base did not form one of
+        // the listed initial clusters. Examples: เฉพาะ, เรพาะ, and เสนาะ keep
+        // their เ...าะ spelling together; without this lookahead the scanner
+        // would incorrectly emit เฉ | พาะ, เร | พาะ, or เส | นาะ.
+        if characters
+            .get(start)
+            .is_none_or(|value| value.character != '\u{0e40}')
+        // เ
+        {
+            return false;
+        }
+
+        let Some(mut input) = characters.get(index..) else {
+            return false;
+        };
+        let mut parser = (
+            any.verify(|value: &ThaiCharacter| ThaiScalar(value.character).is_base()),
+            long_a_dependent_character,
+            short_a_dependent_character,
+        )
+            .void();
+        parser.parse_next(&mut input).is_ok()
     }
 }
