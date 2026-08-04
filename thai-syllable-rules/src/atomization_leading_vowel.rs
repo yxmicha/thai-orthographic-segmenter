@@ -107,4 +107,40 @@ impl CharacterSequence<'_> {
             })
             && characters.get(following_index + 1).is_none()
     }
+
+    /// Whether a trailing `ี` starts a new syllable at the second base.
+    fn cluster_starts_unrelated_i_rime(self, start: usize, second_base_index: usize) -> bool {
+        let characters = self.0;
+        let leading_vowel_index = start;
+        // Rule: เ + base + cluster-base + ี is not one compound vowel unless ย
+        // completes the written เ-ีย frame. Without ย, the ี belongs to a new
+        // syllable beginning at the cluster's second base. This keeps `เสรี` as
+        // `เส | รี` while retaining `เกรียน` as one leading-vowel construction.
+        characters
+                .get(leading_vowel_index)
+                .is_some_and(|value| value.character == '\u{0e40}') // เ
+                && characters
+                    .get(second_base_index + 1)
+                    .is_some_and(|value| value.character == '\u{0e35}') // ี
+                && !'next_base_after_tone_marks_is_y: {
+                    let mut index = second_base_index + 2;
+                    while characters
+                        .get(index)
+                        .is_some_and(|value| ThaiScalar(value.character).is_tone_mark())
+                    {
+                        index += 1;
+                    }
+                    if characters
+                        .get(index)
+                        .is_none_or(|value| value.character != '\u{0e22}')
+                    // ย
+                    {
+                        break 'next_base_after_tone_marks_is_y false;
+                    }
+                    !characters
+                        .get(index + 1)
+                        .is_some_and(|value| ThaiScalar(value.character).is_vowel())
+
+                }
+    }
 }
