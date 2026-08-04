@@ -38,4 +38,52 @@ impl CharacterSequence<'_> {
                 || ThaiScalar(value.character).is_independent_vowel()
         })
     }
+
+    /// Whether the source after the second base contains a separate nucleus.
+    fn cluster_has_following_nucleus(self, second_base_index: usize) -> bool {
+        let characters = self.0;
+        // Rule: an ordinary leading-vowel cluster exposes its coda-capable second
+        // base only when the source after that base contains a separate nucleus.
+        // A bare consonant by itself is not enough evidence: it may simply be the
+        // final of the leading-vowel spelling. This narrower probe is deliberately
+        // different from the inherent-final ใ/ไ lookahead above, which has its own
+        // positive final-ownership rule.
+        // Examples: `เครดิต` becomes `เค | ?ร | ดิต` because ดิ is a following
+        // rime, while terminal `เบรก` exposes `เบ | รก` because รก is a complete
+        // right-hand implicit candidate. A following leading-vowel or independent-
+        // vowel construction also supplies the required right-hand nucleus.
+        let following_index = second_base_index + 1;
+        let Some(following) = characters.get(following_index) else {
+            return false;
+        };
+        if ThaiScalar(following.character).is_leading_vowel() {
+            return characters
+                .get(following_index + 1)
+                .is_some_and(|value| ThaiScalar(value.character).is_base());
+        }
+        if ThaiScalar(following.character).is_independent_vowel() {
+            return true;
+        }
+        if following.character == '\u{0e31}' {
+            // A standalone short ั cannot complete the preceding leading-vowel
+            // cluster. It starts the following base's own rime, as in
+            // `เซรั่ม` -> `เซ | รั่ม`; longer leading-vowel rimes such as `เครือ`
+            // and recognized `เ...าะ` forms are handled by the branches below.
+            return true;
+        }
+        if ThaiScalar(following.character).is_vowel_carrier()
+            && characters
+                .get(following_index + 1)
+                .is_some_and(|value| ThaiScalar(value.character).is_dependent())
+        {
+            // The carrier and its dependent mark complete the leading-vowel
+            // spelling's local rime; they are not a separate right-hand nucleus.
+            // Example: `เปรอะ` keeps `ร` in the same candidate instead of exposing
+            // `เป | ?ร | อะ`.
+            return false;
+        }
+        ThaiScalar(following.character).is_base()
+            && (self.starts_following_syllable(following_index)
+                || self.starts_following_implicit_syllable(following_index))
+    }
 }
