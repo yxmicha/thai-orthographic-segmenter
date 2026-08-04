@@ -86,4 +86,25 @@ impl CharacterSequence<'_> {
             && (self.starts_following_syllable(following_index)
                 || self.starts_following_implicit_syllable(following_index))
     }
+
+    /// Whether the second base and a terminal base form a complete implicit candidate.
+    fn cluster_has_terminal_implicit_candidate(self, second_base_index: usize) -> bool {
+        let characters = self.0;
+        // Rule: a terminal bare base after a leading-vowel cluster can provide a
+        // complete right-hand implicit candidate together with that cluster's
+        // second base. This is positive evidence to expose the cluster boundary:
+        // `เบรก` becomes `เบ | รก` rather than hiding both candidates in `เบรก`.
+        // The candidate must end at the Thai run boundary and its final base must
+        // be coda-capable; dependent marks or more Thai material require the
+        // ordinary lookahead rules instead.
+        let following_index = second_base_index + 1;
+        characters
+            .get(second_base_index..following_index + 1)
+            .is_some_and(|values| {
+                ThaiScalar(values[0].character).is_base()
+                    && ThaiScalar(values[1].character).is_base()
+                    && ThaiScalar(values[1].character).is_coda()
+            })
+            && characters.get(following_index + 1).is_none()
+    }
 }
