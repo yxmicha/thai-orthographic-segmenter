@@ -247,6 +247,31 @@ impl ThaiScalar {
         )
     }
 
+    /// Returns whether a Thai character is an independent vowel (ฤ or ฦ), which carries a nucleus
+    /// without a consonant base.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::ThaiScalar;
+    ///
+    /// assert!(ThaiScalar::new('ฤ').is_independent_vowel());
+    /// assert!(!ThaiScalar::new('ก').is_independent_vowel());
+    /// ```
+    #[must_use]
+    pub const fn is_independent_vowel(self) -> bool {
+        let character = self.0;
+        // Rule: ฤ and ฦ can carry a nucleus without a preceding consonant base.
+        // Examples: both `ฤ` and `ฦ` can begin a candidate in `ฤดู` or `ฦๅ`; they are
+        // not forced to wait for a preceding `ก`-like base. A following garan sequence
+        // is handled by the silent-mark rules rather than by base classification.
+        matches!(
+            character,
+            '\u{0e24}' // ฤ
+                | '\u{0e26}' // ฦ
+        )
+    }
+
     pub(crate) const fn is_tone_mark(self) -> bool {
         let character = self.0;
         // Rule: tone marks modify the current onset and do not start a part.
