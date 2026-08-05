@@ -65,6 +65,7 @@
 mod alternative_sites;
 mod atom;
 mod atom_sequence;
+mod atomization;
 mod atomization_completion;
 mod atomization_leading_vowel;
 mod atomization_onset;
