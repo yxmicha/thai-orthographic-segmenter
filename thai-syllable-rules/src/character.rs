@@ -52,6 +52,51 @@ impl std::fmt::Display for ThaiScalar {
 
 impl ThaiScalar {
 
+    /// Returns whether a character is an accepted Thai orthographic character.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::ThaiScalar;
+    ///
+    /// assert!(ThaiScalar::new('ก').is_accepted());
+    /// // Thai digits, the baht sign and other scripts stay outside Thai runs.
+    /// assert!(!ThaiScalar::new('๑').is_accepted());
+    /// assert!(!ThaiScalar::new('a').is_accepted());
+    /// ```
+    //
+    // Rule: use an explicit allow-list of assigned Thai letters, vowels, and
+    // marks. Thai punctuation, digits, the baht sign, and unassigned code points
+    // remain outside Thai runs even though some share the Thai Unicode block.
+    // Examples: `กะ` is one accepted Thai run, while `ก๑฿ข` is scanned as `ก`,
+    // `๑฿`, and `ข` around a preserved non-Thai region. `ฯ`, `ๆ`, `๐`, and `฿`
+    // therefore cannot create syllable candidates or silently disappear.
+    //
+    // Thai-block inventory:
+    // U+0E00 is unassigned.
+    // U+0E01..U+0E2E are accepted letters:
+    // ก ข ฃ ค ฅ ฆ ง จ ฉ ช ซ ฌ ญ ฎ ฏ ฐ ฑ ฒ ณ ด ต ถ ท ธ น บ ป ผ ฝ พ ฟ ภ ม ย ร ฤ ล ฦ ว ศ ษ ส ห ฬ อ ฮ
+    // U+0E2F is ฯ and is excluded.
+    // U+0E30..U+0E3A are accepted marks: อะ อั อา อำ อิ อี อึ อื อุ อู อฺ.
+    // U+0E3B..U+0E3E are unassigned; U+0E3F is ฿ and is excluded.
+    // U+0E40..U+0E45 are accepted vowels: เ แ โ ใ ไ ๅ.
+    // U+0E46 is ๆ and is excluded.
+    // U+0E47..U+0E4E are accepted marks: อ็ อ่ อ้ อ๊ อ๋ อ์ อํ อ๎.
+    // U+0E4F is ๏ and is excluded.
+    // U+0E50..U+0E59 are Thai digits and are excluded: ๐ ๑ ๒ ๓ ๔ ๕ ๖ ๗ ๘ ๙.
+    // U+0E5A..U+0E5B are ๚ ๛ and are excluded; U+0E5C..U+0E7F are unassigned.
+    #[must_use]
+    pub const fn is_accepted(self) -> bool {
+        let character = self.0;
+        matches!(
+            character,
+            '\u{0e01}'..='\u{0e2e}' // ก ข ฃ ค ฅ ฆ ง จ ฉ ช ซ ฌ ญ ฎ ฏ ฐ ฑ ฒ ณ ด ต ถ ท ธ น บ ป ผ ฝ พ ฟ ภ ม ย ร ฤ ล ฦ ว ศ ษ ส ห ฬ อ ฮ
+                | '\u{0e30}'..='\u{0e3a}' // ะ อั า ำ อิ อี อึ อื อุ อู อฺ
+                | '\u{0e40}'..='\u{0e45}' // เ แ โ ใ ไ ๅ
+                | '\u{0e47}'..='\u{0e4e}' // อ็ อ่ อ้ อ๊ อ๋ อ์ อํ อ๎
+        )
+    }
+
     /// Returns whether a Thai character is a dependent vowel, tone mark, or mark.
     ///
     /// # Examples
