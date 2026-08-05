@@ -5,6 +5,86 @@ use crate::construction_scan::ConstructionScan;
 
 impl CharacterSequence<'_> {
 
+    /// Scans a construction that starts with one consonant and consumes its dependent marks and
+    /// orthographic rime.
+    fn scan_base_onset(self, scan: &mut ConstructionScan, previous: Option<&ThaiAtom>) {
+        let characters = self.0;
+        let character = scan.character;
+        // Rule: a base-led atom starts with one consonant and consumes its
+        // immediately following dependent marks and orthographic rime.
+        // Examples: `กะ` starts at `ก` and consumes `ะ`; `เป็น` consumes
+        // the `เ...็` rime and its final `น`; `สวัสดี` is still read as
+        // adjacent local atoms rather than one unbounded consonant run.
+        scan.first_base = Some(character);
+        let bare_predecessor_blocks_carrier = previous.is_some_and(|atom| {
+            if atom.has_nucleus() || atom.has_tone_mark || atom.has_silent_mark() {
+                return false;
+            }
+
+            let carrier_base_has_explicit_rime = characters
+                .get(scan.index + 2)
+                .is_some_and(|value| ThaiScalar(value.character).is_dependent());
+            let preceding_base_can_be_a_coda = atom
+                .first_base()
+                .is_some_and(|character| ThaiScalar(character).is_coda());
+            let following_syllable_after_carrier = self.starts_following_syllable(scan.index + 2);
+
+            // Rule: a coda-capable bare atom before a bare carrier must not
+            // be collapsed into the carrier when a later candidate anchors
+            // both ownership readings. The preceding base may close the
+            // previous syllable, while `อ` and its base may form the next
+            // implicit syllable; collapsing them would erase all three
+            // attachment choices before resolution can expose them.
+            // Examples: `ว่ากอนด้า` must preserve `ก`, `อ`, and `น` as
+            // separate undecided atoms between `ว่า` and `ด้า`. A carrier
+            // with its own dependent rime, such as `อับ`, is also kept
+            // separate from a bare predecessor so its marks cannot be
+            // misclassified as an implicit carrier. A tone-marked
+            // predecessor is excluded: `ป้อง` has positive local spelling
+            // evidence and must remain one carrier construction.
+            carrier_base_has_explicit_rime
+                || (preceding_base_can_be_a_coda && following_syllable_after_carrier)
+        });
+        let is_bare_carrier_syllable = ThaiScalar(character).is_vowel_carrier()
+            && characters
+                .get(scan.index + 1)
+                .is_some_and(|value| ThaiScalar(value.character).is_coda())
+            && !bare_predecessor_blocks_carrier
+            && (characters
+                .get(scan.index..scan.index + 2)
+                .is_some_and(|values| {
+                    ThaiScalar(values[0].character)
+                        .forms_initial_cluster_with(ThaiScalar(values[1].character))
+                })
+                || !characters
+                    .get(scan.index + 2)
+                    .is_some_and(|value| ThaiScalar(value.character).is_dependent()));
+        if is_bare_carrier_syllable {
+            // Rule: a bare อ prefix plus its following base is one
+            // implicit-vowel syllable, as in อน. The prefix supplies the
+            // spelling's inherent a-like sound; it is not a second
+            // explicit vowel nucleus that should force an internal split.
+            // Examples: `อน` stays one candidate, while `ขออน` can become
+            // `ขอ | อน`. If the following base has its own rime, as in
+            // `อนา`, the later resolver can expose `อ | นา` instead. When
+            // a bare unresolved atom precedes a carrier whose base has an
+            // explicit rime, the carrier is intentionally left atomized
+            // as `อ` plus that following base. This preserves both
+            // choices in `วิฟอยู่`: `วิ | ?ฟ | ?อ | ยู่`.
+            scan.index += 2;
+            scan.has_nucleus = true;
+            (
+                scan.has_vowel_rime,
+                scan.has_ue_rime,
+                scan.consumed_short_a_coda,
+            ) = self.consume_rime(&mut scan.index, &mut scan.has_nucleus, true);
+        } else {
+            self.scan_consonant_rime(scan, previous);
+        }
+
+        self.scan_extended_rime(scan);
+    }
+
     /// Scans a consonant-led construction that is not a bare carrier syllable: its onset
     /// cluster, dependent marks, and the carrier forms that complete its rime.
     fn scan_consonant_rime(self, scan: &mut ConstructionScan, previous: Option<&ThaiAtom>) {
