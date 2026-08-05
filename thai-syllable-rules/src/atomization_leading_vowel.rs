@@ -6,6 +6,97 @@ use crate::construction_scan::ConstructionScan;
 use winnow::Parser;
 use winnow::token::any;
 
+impl CharacterSequence<'_> {
+    /// Scans a construction that starts with a preposed vowel, with its base, cluster, marks,
+    /// and required coda.
+    pub(crate) fn scan_leading_vowel_onset(self, scan: &mut ConstructionScan) {
+        let characters = self.0;
+        let character = scan.character;
+        // Rule: a preposed vowel starts an atom and consumes its following
+        // base, permitted onset cluster, dependent marks, and required
+        // coda as one local construction.
+        // Examples: `เกิน` starts at `เ` and keeps `ก`, `ิ`, and `น` in
+        // the same local construction; `กราบ` keeps its onset cluster and
+        // rime together. A later candidate such as `สี` is not swallowed
+        // merely because it follows the leading-vowel spelling.
+        scan.has_leading_vowel = true;
+        scan.has_nucleus = true;
+        scan.index += 1;
+        if let Some(base) = characters.get(scan.index).map(|value| value.character)
+            && ThaiScalar(base).is_base()
+        {
+            scan.first_base = Some(base);
+            scan.index += 1;
+            let SecondBaseEvidence {
+                inherent_final_cluster_has_following_onset,
+                cluster_has_following_nucleus,
+                cluster_has_terminal_implicit_candidate,
+                cluster_starts_unrelated_i_rime,
+                starts_leading_ao_pattern,
+            } = self.second_base_evidence(scan);
+            if let Some(second_base) = characters.get(scan.index).map(|value| value.character)
+                && ThaiScalar(base).forms_initial_cluster_with(ThaiScalar(second_base))
+                && !self.has_garan_suffix(scan.index)
+                && !((ThaiScalar(character).is_inherent_final_leading_vowel()
+                    && ThaiScalar(second_base).is_coda()
+                    && inherent_final_cluster_has_following_onset)
+                    || (!ThaiScalar(character).is_inherent_final_leading_vowel()
+                        && ThaiScalar(second_base).is_coda()
+                        && (cluster_has_following_nucleus
+                            || cluster_has_terminal_implicit_candidate)))
+                && !cluster_starts_unrelated_i_rime
+            {
+                // Rule: a listed initial cluster stays with the leading
+                // vowel only when its second base cannot instead be the
+                // preceding syllable's coda. A coda-capable second base
+                // remains unresolved when another nucleus-bearing Thai
+                // candidate follows it; a cluster spelling alone is not
+                // enough certainty to choose the onset interpretation.
+                // Examples: `เครดิต` becomes `เค | ?ร | ดิต`, while
+                // `เครื่อง` keeps `เครือ...` together because the mark
+                // after `ร` is part of that same local rime. The same
+                // certainty rule makes `ไหลย้อน` become `ไห | ?ล | ย้อน`,
+                // while terminal `ไหล` keeps `ล` because no following
+                // candidate can own it.
+                scan.index += 1;
+            } else if starts_leading_ao_pattern {
+                // Rule: the เ...าะ spelling can place a non-cluster base
+                // between its leading-vowel base and าะ. Consume that
+                // second base here so the shared rime parser recognizes
+                // the complete pattern as one atom. Examples: เฉพาะ,
+                // เรพาะ, and เสนาะ stay intact instead of splitting their
+                // single เ-าะ pattern at the intervening base.
+                scan.index += 1;
+            }
+        }
+        if ThaiScalar(character).is_inherent_final_leading_vowel()
+            && characters
+                .get(scan.index)
+                .is_some_and(|value| value.character == '\u{0e22}') // ย
+            && characters.get(scan.index + 1).is_none()
+        {
+            // Rule: a bare final ย may join ใ/ไ only when the Thai run
+            // ends immediately after it. That terminal lookahead proves
+            // that no following syllable can own the character; without
+            // that proof, leave ย as a separate atom for ambiguity
+            // resolution. Examples: `ไทย` is one terminal spelling,
+            // while `ไกยกะ` remains `ไก | ?ย | กะ` and `ไหลย้อน` lets
+            // `ย้อน` own its marked onset.
+            scan.index += 1;
+        }
+        // Rule: all consecutive dependent characters stay attached to the
+        // atom; a short-ั coda is handled at the same rime boundary for
+        // every atom shape. Examples: `ก้`, `เกิน`, and `เปี๊ยะ` keep tone
+        // and vowel marks with their base atoms, while the `ั` in `กัด`
+        // is followed by the required `ด` final.
+        (
+            scan.has_vowel_rime,
+            scan.has_ue_rime,
+            scan.consumed_short_a_coda,
+        ) = self.consume_rime(&mut scan.index, &mut scan.has_nucleus, true);
+    }
+}
+
 /// Lookahead facts that decide whether the second base after a leading vowel joins its cluster.
 #[allow(
     clippy::struct_excessive_bools,
