@@ -222,4 +222,49 @@ impl CharacterSequence<'_> {
             }
         }
     }
+
+    /// Scans a construction that starts with an independent vowel (ฤ or ฦ).
+    fn scan_independent_vowel_onset(self, scan: &mut ConstructionScan) {
+        let characters = self.0;
+        let character = scan.character;
+        // Rule: ฤ and ฦ are independent vowel nuclei and may stand without
+        // a preceding consonant base.
+        // Examples: `ฤดู` begins with an independent nucleus and `ฦ` is
+        // still a candidate at the start of a run. Neither character is
+        // classified as an ordinary consonant onset.
+        scan.has_independent_vowel = true;
+        scan.has_nucleus = true;
+        scan.index += 1;
+        if characters
+            .get(scan.index..scan.index + 1)
+            .is_some_and(|values| values[0].character == '\u{0e45}' /* ๅ */)
+        // ๅ
+        {
+            scan.index += 1;
+        } else if character == '\u{0e24}' {
+            // Rule: ฤ followed by bases and a garan mark is one silent-mark
+            // construction rather than unrelated bare consonants.
+            // Example: `ฤทธิ์` keeps the bases and garan mark associated
+            // with the independent `ฤ`; it is not atomized as `ฤ | ท | ธ`
+            // with an orphan `์` left for resolution.
+            let mut probe = scan.index;
+            while characters
+                .get(probe..probe + 1)
+                .is_some_and(|values| ThaiScalar(values[0].character).is_base())
+            {
+                probe += 1;
+            }
+            let mut has_silent_mark = false;
+            while characters
+                .get(probe..probe + 1)
+                .is_some_and(|values| ThaiScalar(values[0].character).is_dependent())
+            {
+                has_silent_mark |= ThaiScalar(characters[probe].character).is_garan_mark();
+                probe += 1;
+            }
+            if has_silent_mark {
+                scan.index = probe;
+            }
+        }
+    }
 }
