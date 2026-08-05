@@ -29,6 +29,50 @@ impl CharacterSequence<'_> {
             })
     }
 
+    pub(crate) fn consume_rime(
+        self,
+        index: &mut usize,
+        has_nucleus: &mut bool,
+        allow_compound_vowel: bool,
+    ) -> (bool, bool, bool) {
+        // Rule: every base-led construction consumes its dependent rime through
+        // the same local parser, then applies the short-ั coda rule at the rime's
+        // boundary. Keeping this sequence shared prevents leading-vowel atoms,
+        // carrier atoms, and ordinary base atoms from acquiring different vowel
+        // or final semantics merely because they entered through different parser
+        // branches.
+        let rime_start = *index;
+        let has_vowel_rime =
+            self.consume_dependent_characters(index, has_nucleus, allow_compound_vowel);
+        let has_ue_rime = self.contains_character(rime_start, *index, '\u{0e37}'); // ื
+        let consumed_short_a_coda = 'consume_coda_required_by_short_a: {
+            let characters = self.0;
+            // Short-ั requires a final, but cannot take a marked onset from the next
+            // vowel pattern. Post-final silent ิ/ุ and garan remain supported; marked
+            // ย/ว belongs to the glide parser rather than the ordinary coda path.
+            // Examples: `กัด` consumes `ด`, but a glide-shaped continuation such as
+            // `กัวยะ` leaves `ย` available when its following mark proves that it is
+            // part of the glide rather than an ordinary final.
+            if self.contains_character(rime_start, *index, '\u{0e31}') // อั
+                && characters
+                    .get(*index)
+                    .is_some_and(|value| ThaiScalar(value.character).is_coda())
+                && !characters
+                    .get(*index + 1)
+                    .is_some_and(|value| {
+                        ThaiScalar(value.character).is_dependent()
+                            && (ThaiScalar(characters[*index].character).is_glide_base()
+                                || !matches!(value.character, 'ิ' | 'ุ' | '์'))
+                    })
+            {
+                *index += 1;
+                break 'consume_coda_required_by_short_a true;
+            }
+            false
+        };
+        (has_vowel_rime, has_ue_rime, consumed_short_a_coda)
+    }
+
     pub(crate) fn consume_dependent_characters(
         self,
         index: &mut usize,
