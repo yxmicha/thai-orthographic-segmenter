@@ -2,6 +2,7 @@ use crate::atomization_rime::{long_a_dependent_character, short_a_dependent_char
 use crate::character::ThaiCharacter;
 use crate::character::ThaiScalar;
 use crate::character_sequence::CharacterSequence;
+use crate::construction_scan::ConstructionScan;
 use winnow::Parser;
 use winnow::token::any;
 
@@ -19,6 +20,21 @@ struct SecondBaseEvidence {
 }
 
 impl CharacterSequence<'_> {
+    /// Gathers the lookahead facts for the base at the scan position, which follows the first
+    /// base of a leading-vowel construction.
+    fn second_base_evidence(self, scan: &ConstructionScan) -> SecondBaseEvidence {
+        let (start, second_base_index) = (scan.start, scan.index);
+        SecondBaseEvidence {
+            inherent_final_cluster_has_following_onset: self
+                .inherent_final_cluster_has_following_onset(second_base_index),
+            cluster_has_following_nucleus: self.cluster_has_following_nucleus(second_base_index),
+            cluster_has_terminal_implicit_candidate: self
+                .cluster_has_terminal_implicit_candidate(second_base_index),
+            cluster_starts_unrelated_i_rime: self
+                .cluster_starts_unrelated_i_rime(start, second_base_index),
+            starts_leading_ao_pattern: self.starts_leading_ao_pattern(start, second_base_index),
+        }
+    }
 
     /// Whether another onset-bearing Thai construction follows the second base.
     fn inherent_final_cluster_has_following_onset(self, second_base_index: usize) -> bool {
