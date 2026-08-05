@@ -4,6 +4,33 @@ use crate::character_sequence::CharacterSequence;
 use crate::construction_scan::ConstructionScan;
 
 impl CharacterSequence<'_> {
+    /// Scans one construction's onset (leading vowel, base, cluster, or independent vowel)
+    /// and the nucleus marks that belong to it.
+    pub(crate) fn scan_onset_and_nucleus(
+        self,
+        scan: &mut ConstructionScan,
+        previous: Option<&ThaiAtom>,
+    ) {
+        let character = scan.character;
+        if ThaiScalar(character).is_leading_vowel() {
+            self.scan_leading_vowel_onset(scan);
+        } else if ThaiScalar(character).is_base() {
+            self.scan_base_onset(scan, previous);
+        } else if ThaiScalar(character).is_independent_vowel() {
+            self.scan_independent_vowel_onset(scan);
+        } else if ThaiScalar(character).is_dependent() {
+            // Rule: a dependent mark without a local base is consumed into the
+            // current atom so it can never become a standalone public part.
+            // Examples: malformed input beginning with `ิ` or `์` remains
+            // source material inside the current run; it never produces a
+            // public `Syllable("ิ")` or `Undecided("์")` part. A valid `กิ`
+            // still records the mark as the nucleus of `ก`.
+            scan.has_vowel_rime =
+                self.consume_dependent_characters(&mut scan.index, &mut scan.has_nucleus, false);
+        } else {
+            scan.index += 1;
+        }
+    }
 
     /// Scans a construction that starts with one consonant and consumes its dependent marks and
     /// orthographic rime.
