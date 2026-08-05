@@ -67,6 +67,7 @@ mod atom;
 mod atom_sequence;
 mod atomization_completion;
 mod atomization_leading_vowel;
+mod atomization_onset;
 mod atomization_rime;
 mod atomization_silent_mark;
 mod attachment_evidence;
