@@ -91,4 +91,55 @@ impl CharacterSequence<'_> {
             self.consume_dependent_characters(&mut scan.index, &mut scan.has_nucleus, true);
         }
     }
+
+    /// Consumes the base that follows an ฦ construction when it can only be that construction's
+    /// coda.
+    fn scan_extended_rime(self, scan: &mut ConstructionScan) {
+        let characters = self.0;
+        let start = scan.start;
+        if !scan.has_vowel_rime
+            && characters
+                .get(scan.index..scan.index + 2)
+                .is_some_and(|values| {
+                    values[0].character == '\u{0e26}' // ฦ
+                        && values[1].character != '\u{0e45}' // ๅ
+                })
+        {
+            // Rule: the independent-vowel pair ฦๅ belongs to this base-led
+            // atom when it follows a base without another rime.
+            // Example: `กฦๅ` keeps the base and the independent-vowel
+            // extension together; it is not split into `ก | ฦ | ๅ`.
+            scan.has_nucleus = true;
+            scan.index += 1;
+        }
+
+        if !scan.has_vowel_rime
+            && characters.get(start..scan.index).is_some_and(|values| {
+                values
+                    .iter()
+                    .any(|value| ThaiScalar(value.character).is_tone_mark())
+            })
+            && characters
+                .get(scan.index..scan.index + 1)
+                .is_some_and(|values| values[0].character == '\u{0e27}' /* ว */)
+        // ว
+        {
+            // Rule: tone-marked base + ว + base is a closed orthographic
+            // glide construction unless a following preposed-vowel
+            // syllable competes for the boundary. In that competing shape
+            // the final base remains a separate atom so resolution can
+            // expose its uncertain ownership. Examples: `ช่วย` and
+            // terminal `อ้วน` retain their final ย/น, while `ม้วนได้`
+            // becomes `ม้ว | ?น | ได้`.
+            scan.has_nucleus = true;
+            scan.has_glide = true;
+            scan.index += 1;
+            if characters.get(scan.index).is_some_and(|value| {
+                ThaiScalar(value.character).is_base() && ThaiScalar(value.character).is_coda()
+            }) && !self.starts_following_leading_vowel_syllable(scan.index)
+            {
+                scan.index += 1;
+            }
+        }
+    }
 }
