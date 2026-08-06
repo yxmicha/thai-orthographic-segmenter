@@ -76,6 +76,12 @@ impl From<char> for ThaiScalar {
     }
 }
 
+impl From<ThaiScalar> for char {
+    fn from(scalar: ThaiScalar) -> Self {
+        scalar.0
+    }
+}
+
 impl std::fmt::Display for ThaiScalar {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self.0, formatter)
