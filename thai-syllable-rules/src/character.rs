@@ -103,6 +103,20 @@ impl ThaiScalar {
         Self(character)
     }
 
+    /// The wrapped character.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::ThaiScalar;
+    ///
+    /// assert_eq!(ThaiScalar::new('ก').character(), 'ก');
+    /// ```
+    #[must_use]
+    pub const fn character(self) -> char {
+        self.0
+    }
+
     /// Returns whether a character is an accepted Thai orthographic character.
     ///
     /// # Examples
