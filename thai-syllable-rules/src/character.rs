@@ -194,6 +194,12 @@ impl ThaiScalar {
         )
     }
 
+    /// Marks stacked on a consonant cell, excluding spacing dependent vowels.
+    pub(crate) const fn is_combining_mark(self) -> bool {
+        let character = self.0;
+        matches!(character, '\u{0e31}' | '\u{0e34}'..='\u{0e3a}' | '\u{0e47}'..='\u{0e4e}')
+    }
+
     /// Returns whether a Thai character is a preposed vowel.
     ///
     /// # Examples
