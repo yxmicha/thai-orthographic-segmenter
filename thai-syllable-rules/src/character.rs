@@ -89,6 +89,19 @@ impl std::fmt::Display for ThaiScalar {
 }
 
 impl ThaiScalar {
+    /// Wraps `character` for classification.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::ThaiScalar;
+    ///
+    /// assert!(ThaiScalar::new('ก').is_base());
+    /// ```
+    #[must_use]
+    pub const fn new(character: char) -> Self {
+        Self(character)
+    }
 
     /// Returns whether a character is an accepted Thai orthographic character.
     ///
