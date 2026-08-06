@@ -74,6 +74,7 @@ mod atomization_silent_mark;
 mod attachment_evidence;
 mod character;
 mod character_sequence;
+mod completeness;
 mod construction_scan;
 mod ending;
 mod ending_closure;
