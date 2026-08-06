@@ -1,10 +1,42 @@
 use crate::character_sequence::CharacterSequence;
+use winnow::{
+    ModalResult,
+    error::{ContextError, ErrMode},
+};
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct ThaiCharacter {
     pub(crate) character: char,
     pub(crate) start: usize,
     pub(crate) end: usize,
+}
+
+pub(crate) fn thai_characters(input: &mut &str) -> ModalResult<Vec<ThaiCharacter>> {
+    // Rule: parse one maximal run from the accepted alphabet and retain each
+    // scalar's byte range for exact source reconstruction.
+    // Examples: the accepted portion of `ไทย 123` is one Thai run `ไทย`, then
+    // whitespace and ASCII digits form hard source boundaries. Combining marks
+    // remain in the run with their original byte ranges; no normalization changes
+    // the substring later returned by `split`.
+    let mut characters = Vec::with_capacity(input.len() / 3 + 1);
+    let mut offset = 0;
+    for character in input
+        .chars()
+        .take_while(|character| ThaiScalar(*character).is_accepted())
+    {
+        let start = offset;
+        offset += character.len_utf8();
+        characters.push(ThaiCharacter {
+            character,
+            start,
+            end: offset,
+        });
+    }
+    if characters.is_empty() {
+        return Err(ErrMode::Backtrack(ContextError::new()));
+    }
+    *input = &input[offset..];
+    Ok(characters)
 }
 
 impl CharacterSequence<'_> {
