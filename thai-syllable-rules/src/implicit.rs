@@ -102,4 +102,19 @@ impl AtomSequence<'_> {
         }
         2
     }
+
+    pub(crate) fn following_initial_prefix_start(self, following: &ThaiAtom) -> Option<usize> {
+        let atoms = self.0;
+        // Rule: move the final tail base into the following atom only when it and
+        // that atom make one of the explicitly allowed initial clusters.
+        // Examples: in `กะกเรณุ`, the tail `ก` can move into the following `เร`
+        // construction to make `กร`; in `กะกม`, no such move is allowed because
+        // `กม` is not a listed onset pair. The operation changes ownership of a
+        // source atom, never the source text itself.
+        let prefix = atoms.last()?.first_base()?;
+        let following = following.first_base()?;
+        ThaiScalar(prefix)
+            .forms_initial_cluster_with(ThaiScalar(following))
+            .then_some(atoms.len() - 1)
+    }
 }
