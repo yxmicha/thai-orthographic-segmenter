@@ -117,4 +117,23 @@ impl AtomSequence<'_> {
             .forms_initial_cluster_with(ThaiScalar(following))
             .then_some(atoms.len() - 1)
     }
+
+    pub(crate) fn is_implicit_glide_syllable(self) -> bool {
+        let atoms = self.0;
+        // Rule: a bare base + ว + ย tail is the special three-atom implicit-glide
+        // shape, provided none of its atoms already has a nucleus.
+        // Examples: a bare `กวย`-shaped tail can qualify as the three-atom glide
+        // candidate, but `กวา` does not because `า` already supplies a nucleus.
+        // A repeated glide base such as ยยย is an expressive tail, not the
+        // base+ว+ย construction. A marked or vowel-bearing atom likewise prevents
+        // this implicit-glide shortcut.
+        matches!(
+            atoms,
+                [first, middle, last]
+                    if first.first_base().is_some()
+                    && middle.first_base() == Some('ว')
+                    && last.first_base() == Some('ย')
+                    && atoms.iter().all(|atom| !atom.has_nucleus())
+        )
+    }
 }
