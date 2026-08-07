@@ -15,6 +15,28 @@ pub(crate) struct ImplicitCandidateRanges {
 }
 
 impl AtomSequence<'_> {
+    pub(crate) fn implicit_syllable_candidates(
+        self,
+        source_offset: usize,
+    ) -> Option<ImplicitCandidateRanges> {
+        let atoms = self.0;
+        // Rule: a terminal bare sequence can be represented as two structural
+        // implicit-vowel candidates, or one three-base onset candidate plus the
+        // remaining candidate, without consulting lexical data.
+        // Examples: `จมก` can expose a left candidate and a right candidate while
+        // preserving the middle attachment choice; `กเรณุ` recognizes the `กร`
+        // onset shape before the following nucleus. No dictionary entry is needed
+        // to decide that the source atoms are contiguous and structurally usable.
+        let first_length = self.implicit_syllable_sequence_start()?;
+        Some(ImplicitCandidateRanges {
+            first: atoms[0].absolute_range(source_offset).start
+                ..atoms[first_length - 1].absolute_range(source_offset).end,
+            second: (first_length < atoms.len()).then(|| {
+                atoms[first_length].absolute_range(source_offset).start
+                    ..atoms[atoms.len() - 1].absolute_range(source_offset).end
+            }),
+        })
+    }
 
     pub(crate) fn implicit_syllable_sequence_start(self) -> Option<usize> {
         let atoms = self.0;
