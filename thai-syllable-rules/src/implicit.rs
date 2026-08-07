@@ -16,6 +16,25 @@ pub(crate) struct ImplicitCandidateRanges {
 
 impl AtomSequence<'_> {
 
+    pub(crate) fn implicit_syllable_sequence_start(self) -> Option<usize> {
+        let atoms = self.0;
+        // Rule: emit a split only when both sides are independently valid
+        // implicit candidates; otherwise preserve the full conservative range.
+        // Examples: a four-atom bare run can split only when both resulting sides
+        // have at least two atoms; a three-atom run stays whole rather than
+        // producing an orphan one-character candidate. This is why terminal
+        // `จมก` is conservative when no safe right-hand candidate exists.
+        let first_length = self.implicit_syllable_length();
+        if first_length < 2 {
+            return None;
+        }
+        if first_length == atoms.len() {
+            return Some(first_length);
+        }
+        let second_length = AtomSequence(&atoms[first_length..]).implicit_syllable_length();
+        (second_length >= 2 && first_length + second_length == atoms.len()).then_some(first_length)
+    }
+
     pub(crate) fn implicit_syllable_length(self) -> usize {
         let atoms = self.0;
         // Rule: implicit candidates use two bases by default; a recognized
