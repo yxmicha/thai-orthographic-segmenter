@@ -59,3 +59,14 @@ pub enum Part {
     /// Non-Thai material, orphan Thai marks, and invalid or misplaced periods.
     Text(ByteRange),
 }
+
+/// Appends preserved source text while coalescing adjacent text ranges.
+pub(crate) fn push_text(parts: &mut Vec<Part>, range: ByteRange) {
+    if let Some(Part::Text(previous)) = parts.last_mut()
+        && previous.end == range.start
+    {
+        previous.end = range.end;
+    } else {
+        parts.push(Part::Text(range));
+    }
+}
