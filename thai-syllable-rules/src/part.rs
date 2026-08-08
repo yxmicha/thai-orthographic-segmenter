@@ -60,6 +60,29 @@ pub enum Part {
     Text(ByteRange),
 }
 
+impl Part {
+    /// Returns the exact UTF-8 byte range in the input source.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::Part;
+    ///
+    /// let part = Part::Syllable(0..6);
+    /// assert_eq!(part.byte_range(), 0..6);
+    /// ```
+    #[must_use]
+    pub fn byte_range(&self) -> ByteRange {
+        match self {
+            Self::Syllable(range)
+            | Self::Undecided(range)
+            | Self::Invalid(range)
+            | Self::Dot(range)
+            | Self::Text(range) => range.clone(),
+        }
+    }
+}
+
 /// Appends preserved source text while coalescing adjacent text ranges.
 pub(crate) fn push_text(parts: &mut Vec<Part>, range: ByteRange) {
     if let Some(Part::Text(previous)) = parts.last_mut()
