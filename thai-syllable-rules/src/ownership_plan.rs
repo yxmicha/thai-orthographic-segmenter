@@ -42,6 +42,13 @@ impl<'a> OwnershipPlan<'a> {
         (self.source_offset + range.start)..(self.source_offset + range.end)
     }
 
+    pub(crate) fn adopt_atom_prefix(&mut self, target: usize, source: usize) {
+        let start = self.atom_starts[source];
+        debug_assert!(source <= target);
+        debug_assert_eq!(self.emitted_end(), self.source_offset + start);
+        self.atom_starts[target] = start;
+    }
+
     pub(crate) fn emitted_end(&self) -> usize {
         self.parts
             .last()
