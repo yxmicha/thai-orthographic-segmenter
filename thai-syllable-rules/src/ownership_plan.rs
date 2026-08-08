@@ -41,4 +41,10 @@ impl<'a> OwnershipPlan<'a> {
         let range = self.atom_range(index);
         (self.source_offset + range.start)..(self.source_offset + range.end)
     }
+
+    pub(crate) fn emitted_end(&self) -> usize {
+        self.parts
+            .last()
+            .map_or(self.source_offset, |part| part.byte_range().end)
+    }
 }
