@@ -32,4 +32,8 @@ impl<'a> OwnershipPlan<'a> {
             parts: Vec::new(),
         }
     }
+
+    pub(crate) fn atom_range(&self, index: usize) -> crate::part::ByteRange {
+        self.atom_starts[index]..self.atom_ranges[index].end
+    }
 }
