@@ -36,4 +36,9 @@ impl<'a> OwnershipPlan<'a> {
     pub(crate) fn atom_range(&self, index: usize) -> crate::part::ByteRange {
         self.atom_starts[index]..self.atom_ranges[index].end
     }
+
+    pub(crate) fn atom_absolute_range(&self, index: usize) -> crate::part::ByteRange {
+        let range = self.atom_range(index);
+        (self.source_offset + range.start)..(self.source_offset + range.end)
+    }
 }
