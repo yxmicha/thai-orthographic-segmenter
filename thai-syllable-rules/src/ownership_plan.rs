@@ -1,4 +1,5 @@
 use crate::atom::ThaiAtom;
+use crate::character::ThaiScalar;
 use crate::part::{ByteRange, Part, push_text};
 
 /// Applies ownership decisions while preserving a contiguous UTF-8 partition.
@@ -47,6 +48,15 @@ impl<'a> OwnershipPlan<'a> {
         debug_assert!(source <= target);
         debug_assert_eq!(self.emitted_end(), self.source_offset + start);
         self.atom_starts[target] = start;
+    }
+
+    pub(crate) fn single_base_character(&self, range: &ByteRange) -> Option<char> {
+        let start = range.start.checked_sub(self.source_offset)?;
+        let end = range.end.checked_sub(self.source_offset)?;
+        let text = self.text.get(start..end)?;
+        let mut characters = text.chars();
+        let character = characters.next()?;
+        (ThaiScalar(character).is_base() && characters.next().is_none()).then_some(character)
     }
 
     pub(crate) fn emitted_end(&self) -> usize {
