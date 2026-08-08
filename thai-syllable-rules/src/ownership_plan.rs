@@ -1,3 +1,4 @@
+use crate::atom::ThaiAtom;
 use crate::part::{ByteRange, Part, push_text};
 
 /// Applies ownership decisions while preserving a contiguous UTF-8 partition.
@@ -12,4 +13,23 @@ pub(crate) struct OwnershipPlan<'a> {
     pub(crate) atom_ranges: Vec<ByteRange>,
     pub(crate) atom_starts: Vec<usize>,
     pub(crate) parts: Vec<Part>,
+}
+
+impl<'a> OwnershipPlan<'a> {
+    pub(crate) fn new(text: &'a str, source_offset: usize, atoms: &[ThaiAtom]) -> Self {
+        Self {
+            text,
+            source_offset,
+            atom_ranges: atoms
+                .iter()
+                .map(ThaiAtom::relative_range)
+                .cloned()
+                .collect(),
+            atom_starts: atoms
+                .iter()
+                .map(|atom| atom.relative_range().start)
+                .collect(),
+            parts: Vec::new(),
+        }
+    }
 }
