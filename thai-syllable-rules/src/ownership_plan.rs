@@ -54,4 +54,16 @@ impl<'a> OwnershipPlan<'a> {
             .last()
             .map_or(self.source_offset, |part| part.byte_range().end)
     }
+
+    pub(crate) fn validate_next(&self, range: &ByteRange) {
+        debug_assert_eq!(
+            range.start,
+            self.emitted_end(),
+            "ownership must be contiguous"
+        );
+        debug_assert!(range.start < range.end, "ownership must consume source");
+        debug_assert!(range.end <= self.source_offset + self.text.len());
+        debug_assert!(self.text.is_char_boundary(range.start - self.source_offset));
+        debug_assert!(self.text.is_char_boundary(range.end - self.source_offset));
+    }
 }
