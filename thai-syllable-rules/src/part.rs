@@ -101,6 +101,10 @@ impl Part {
     pub(crate) fn is_syllable(&self) -> bool {
         matches!(self, Self::Syllable(_))
     }
+
+    pub(crate) fn is_undecided(&self) -> bool {
+        matches!(self, Self::Undecided(_))
+    }
 }
 
 /// Appends preserved source text while coalescing adjacent text ranges.
