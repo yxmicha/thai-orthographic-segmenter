@@ -95,6 +95,11 @@ impl<'a> OwnershipPlan<'a> {
         self.parts.push(Part::Undecided(range));
     }
 
+    pub(crate) fn push_text(&mut self, range: crate::part::ByteRange) {
+        self.validate_next(&range);
+        push_text(&mut self.parts, range);
+    }
+
     pub(crate) fn emitted_end(&self) -> usize {
         self.parts
             .last()
