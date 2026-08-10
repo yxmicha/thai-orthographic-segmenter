@@ -100,6 +100,10 @@ impl<'a> OwnershipPlan<'a> {
         push_text(&mut self.parts, range);
     }
 
+    pub(crate) fn last_is_syllable(&self) -> bool {
+        self.parts.last().is_some_and(Part::is_syllable)
+    }
+
     pub(crate) fn emitted_end(&self) -> usize {
         self.parts
             .last()
