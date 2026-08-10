@@ -82,6 +82,22 @@ impl Part {
         }
     }
 
+    /// Returns the source text covered by this part.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::split;
+    ///
+    /// let source = "กะตกลม";
+    /// let parts = split(source);
+    /// assert_eq!(parts[0].text(source), "กะ");
+    /// ```
+    #[must_use]
+    pub fn text<'a>(&self, source: &'a str) -> &'a str {
+        &source[self.byte_range()]
+    }
+
     pub(crate) fn is_syllable(&self) -> bool {
         matches!(self, Self::Syllable(_))
     }
