@@ -104,6 +104,17 @@ impl<'a> OwnershipPlan<'a> {
         self.parts.last().is_some_and(Part::is_syllable)
     }
 
+    pub(crate) fn extend_last_syllable(&mut self, end: usize) -> bool {
+        debug_assert!(end <= self.source_offset + self.text.len());
+        debug_assert!(self.text.is_char_boundary(end - self.source_offset));
+        debug_assert!(end >= self.emitted_end());
+        let Some(Part::Syllable(range)) = self.parts.last_mut() else {
+            return false;
+        };
+        range.end = end;
+        true
+    }
+
     pub(crate) fn emitted_end(&self) -> usize {
         self.parts
             .last()
