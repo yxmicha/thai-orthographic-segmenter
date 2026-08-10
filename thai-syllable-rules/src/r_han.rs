@@ -19,3 +19,20 @@ pub struct RHanPattern {
     pub(crate) nucleus_range: ByteRange,
     pub(crate) possible_final: Option<ByteRange>,
 }
+
+impl RHanPattern {
+    /// Onset and both ร characters, in source bytes.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::RuleAnalysis;
+    ///
+    /// let analysis = RuleAnalysis::new("สรรพ");
+    /// assert_eq!(analysis.r_han_patterns()[0].nucleus_range(), &(0..9));
+    /// ```
+    #[must_use]
+    pub const fn nucleus_range(&self) -> &ByteRange {
+        &self.nucleus_range
+    }
+}
