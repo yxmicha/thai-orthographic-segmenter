@@ -50,6 +50,37 @@ impl<'a> OwnershipPlan<'a> {
         self.atom_starts[target] = start;
     }
 
+    pub(crate) fn push_syllable(&mut self, range: ByteRange) {
+        // Rule: every public syllable must contain at least two Thai
+        // characters. Downgrade shorter candidates at the shared
+        // public-output boundary so every resolution path follows the same
+        // rule, including isolated and terminal runs. Examples: `ฤ` and `ฮ`
+        // become `Undecided`, while `นะก` becomes `นะ | Undecided("ก")` and
+        // `กา` remains a syllable.
+        // Phinthu suppresses an inherent vowel; adding it to a lone base
+        // supplies no nucleus and cannot upgrade that base to a syllable.
+        if self.text[range.start - self.source_offset..range.end - self.source_offset]
+            .chars()
+            .count()
+            < 2
+            || self.single_base_character(&range).is_some()
+            || self.text[range.start - self.source_offset..range.end - self.source_offset]
+                .strip_suffix('ฺ')
+                .is_some_and(|base| {
+                    let mut characters = base.chars();
+                    characters
+                        .next()
+                        .is_some_and(|character| ThaiScalar(character).is_base())
+                        && characters.next().is_none()
+                })
+        {
+            self.push_undecided(range);
+        } else {
+            self.validate_next(&range);
+            self.parts.push(Part::Syllable(range));
+        }
+    }
+
     pub(crate) fn single_base_character(&self, range: &ByteRange) -> Option<char> {
         let start = range.start.checked_sub(self.source_offset)?;
         let end = range.end.checked_sub(self.source_offset)?;
