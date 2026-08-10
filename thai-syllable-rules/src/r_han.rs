@@ -35,4 +35,19 @@ impl RHanPattern {
     pub const fn nucleus_range(&self) -> &ByteRange {
         &self.nucleus_range
     }
+
+    /// A possible written coda; its ownership is not chosen here.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::RuleAnalysis;
+    ///
+    /// let analysis = RuleAnalysis::new("สรรพ");
+    /// assert_eq!(analysis.r_han_patterns()[0].possible_final(), Some(&(9..12)));
+    /// ```
+    #[must_use]
+    pub const fn possible_final(&self) -> Option<&ByteRange> {
+        self.possible_final.as_ref()
+    }
 }
