@@ -81,6 +81,10 @@ impl Part {
             | Self::Text(range) => range.clone(),
         }
     }
+
+    pub(crate) fn is_syllable(&self) -> bool {
+        matches!(self, Self::Syllable(_))
+    }
 }
 
 /// Appends preserved source text while coalescing adjacent text ranges.
