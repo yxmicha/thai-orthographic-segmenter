@@ -59,6 +59,11 @@ impl<'a> OwnershipPlan<'a> {
         (ThaiScalar(character).is_base() && characters.next().is_none()).then_some(character)
     }
 
+    pub(crate) fn push_undecided(&mut self, range: crate::part::ByteRange) {
+        self.validate_next(&range);
+        self.parts.push(Part::Undecided(range));
+    }
+
     pub(crate) fn emitted_end(&self) -> usize {
         self.parts
             .last()
