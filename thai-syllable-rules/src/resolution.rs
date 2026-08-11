@@ -40,4 +40,8 @@ impl<'a> ResolutionState<'a> {
     pub(crate) fn source_offset(&self) -> usize {
         self.source_offset
     }
+
+    pub(crate) fn following_source(&self) -> FollowingSource {
+        self.following_source
+    }
 }
