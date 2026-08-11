@@ -86,6 +86,7 @@ mod ownership_plan;
 mod part;
 mod r_han;
 mod reading_alternative;
+mod resolution;
 mod resolution_input;
 mod rule_analysis;
 
