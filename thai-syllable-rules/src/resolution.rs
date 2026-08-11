@@ -36,4 +36,8 @@ impl<'a> ResolutionState<'a> {
     pub(crate) fn text(&self) -> &str {
         self.text
     }
+
+    pub(crate) fn source_offset(&self) -> usize {
+        self.source_offset
+    }
 }
