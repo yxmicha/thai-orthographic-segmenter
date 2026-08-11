@@ -48,4 +48,8 @@ impl<'a> ResolutionState<'a> {
     pub(crate) fn characters(&self) -> &[ThaiCharacter] {
         &self.characters
     }
+
+    pub(crate) fn atoms(&self) -> &[crate::atom::ThaiAtom] {
+        &self.atoms
+    }
 }
