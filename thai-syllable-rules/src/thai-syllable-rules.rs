@@ -87,6 +87,7 @@ mod part;
 mod r_han;
 mod reading_alternative;
 mod resolution;
+mod resolution_bare_run;
 mod resolution_input;
 mod rule_analysis;
 
