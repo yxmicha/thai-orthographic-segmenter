@@ -44,4 +44,8 @@ impl<'a> ResolutionState<'a> {
     pub(crate) fn following_source(&self) -> FollowingSource {
         self.following_source
     }
+
+    pub(crate) fn characters(&self) -> &[ThaiCharacter] {
+        &self.characters
+    }
 }
