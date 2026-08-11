@@ -32,4 +32,8 @@ impl<'a> ResolutionState<'a> {
             ownership,
         }
     }
+
+    pub(crate) fn text(&self) -> &str {
+        self.text
+    }
 }
