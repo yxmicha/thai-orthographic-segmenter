@@ -48,3 +48,24 @@ pub enum ReadingAlternative {
         boundary: usize,
     },
 }
+
+impl ReadingAlternative {
+    /// Source boundary at which this alternative can be associated with a path.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::ReadingAlternative;
+    ///
+    /// let alternative = ReadingAlternative::WeakInitial { source_range: 0..3, boundary: 3 };
+    /// assert_eq!(alternative.boundary(), 3);
+    /// ```
+    #[must_use]
+    pub const fn boundary(&self) -> usize {
+        match self {
+            Self::WeakInitial { boundary, .. }
+            | Self::SharedConsonant { boundary, .. }
+            | Self::LeadingVowelScope { boundary, .. } => *boundary,
+        }
+    }
+}
