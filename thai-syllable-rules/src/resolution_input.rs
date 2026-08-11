@@ -1,3 +1,6 @@
+use crate::atom::ThaiAtom;
+use crate::character::{ThaiCharacter, thai_characters};
+
 /// The source context immediately following a maximal Thai run.
 ///
 /// This is deliberately richer than a boolean so source punctuation policy is
@@ -9,4 +12,18 @@ pub(crate) enum FollowingSource {
     None,
     /// The Thai run is immediately followed by exactly one ASCII period.
     SinglePeriod,
+}
+
+/// All source-relative state for one maximal Thai run.
+///
+/// Parsing and candidate preparation deliberately keep the same owner. The
+/// stages still have separate methods, but the text, offset, source context,
+/// character metadata, and atom sequence cannot be accidentally detached from
+/// one another between stages.
+pub(crate) struct ThaiRun<'a> {
+    pub(crate) text: &'a str,
+    pub(crate) source_offset: usize,
+    pub(crate) following_source: FollowingSource,
+    pub(crate) characters: Vec<ThaiCharacter>,
+    pub(crate) atoms: Vec<ThaiAtom>,
 }
