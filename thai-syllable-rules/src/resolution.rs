@@ -1,6 +1,7 @@
 use crate::character::ThaiCharacter;
 use crate::ownership_plan::OwnershipPlan;
 use crate::resolution_input::FollowingSource;
+use crate::resolution_input::ThaiRun;
 
 // This module turns local `ThaiAtom` candidates into source-preserving `Part`
 // ranges. Its
@@ -17,4 +18,18 @@ pub(crate) struct ResolutionState<'a> {
     characters: Vec<ThaiCharacter>,
     atoms: Vec<crate::atom::ThaiAtom>,
     pub(crate) ownership: OwnershipPlan<'a>,
+}
+
+impl<'a> ResolutionState<'a> {
+    fn new(run: ThaiRun<'a>) -> Self {
+        let ownership = OwnershipPlan::new(run.text, run.source_offset, &run.atoms);
+        Self {
+            text: run.text,
+            source_offset: run.source_offset,
+            following_source: run.following_source,
+            characters: run.characters,
+            atoms: run.atoms,
+            ownership,
+        }
+    }
 }
