@@ -1,3 +1,4 @@
+use crate::atom_sequence::AtomSequence;
 use crate::character::ThaiScalar;
 use crate::resolution::ResolutionState;
 
@@ -55,6 +56,106 @@ impl ResolutionState<'_> {
             plan.push_undecided((plan.source_offset + start)..(plan.source_offset + end));
             plan.atom_starts[index] = end;
         };
+        true
+    }
+
+    pub(crate) fn move_onset_only_cluster_suffix_forward(
+        &mut self,
+        start: usize,
+        end: usize,
+    ) -> bool {
+        // Rule: if the tail of a longer unresolved run is an onset-only base and
+        // forms a listed initial cluster with the following atom, move only that
+        // suffix forward. Earlier bases remain independently attachable instead
+        // of being swallowed into the same following syllable. A single earlier
+        // coda-capable base is different: once the following atom already owns
+        // the listed cluster onset, that base cannot be a second onset there, so
+        // it belongs to the preceding syllable when that syllable can accept it.
+        // Examples: `เดือนหน้า` is `เดือ | ?น | หน้า`, not `เดือน | หน้า`,
+        // because the parser cannot prove that น belongs to เดือ rather than
+        // being boundary material before the following หน onset. The same
+        // certainty changes `อีกหลาย` to `อีก | หลาย`; it does not resolve a longer ambiguous tail such as
+        // `กะตกลม`, where more than one possible attachment remains. `เพื่อตรวจ`
+        // does not use this rule because ร + ว is not a listed pair, while
+        // `กะกเรณุ` retains its existing singleton-cluster rule for ก + ร.
+        let relative_cluster_start = AtomSequence(&self.atoms()[start..end])
+            .following_initial_prefix_start(&self.atoms()[end]);
+        let Some(relative_cluster_start) = relative_cluster_start else {
+            return false;
+        };
+        let cluster_start = start + relative_cluster_start;
+        let can_attach_coda_before_cluster = cluster_start == start + 1
+            && 'can_attach_coda_before_onset_cluster: {
+                let (start, cluster_start) = (start, cluster_start);
+                // Rule: this certainty path applies only to one unresolved coda before
+                // a following listed onset cluster. The preceding public part must be a
+                // real open syllable; a hard ending or a missing nucleus cannot accept
+                // another base. A plain carrier and a completed ือ carrier are both
+                // deliberately excluded because their final remains ambiguous before
+                // a following candidate. The earlier tail must also not form a valid
+                // implicit candidate with the cluster-start base; otherwise there are
+                // two legal ownership readings and the tail must remain `Undecided`.
+                // The cluster-start argument is kept explicit so this guard cannot
+                // accidentally consume a longer unresolved run.
+                // Examples: `เดือนหน้า` keeps น undecided between เดือ and หน้า, while
+                // `อีกหลาย` accepts ก into อีก before หล. `กะนหน้า` keeps น undecided because the
+                // short ะ already hard-closes กะ, and `กะตกลม` keeps its multi-base tail
+                // ambiguous because this helper only handles one base immediately before
+                // the onset-only suffix. `ซึ้งคลื่น` remains `ซึ้ | ?ง | ?ค | ลื่น`
+                // because `งค` is itself a valid implicit pair. `วิฟอยู่` remains
+                // `วิ | ?ฟ | ?อ | ยู่` because the plain อ carrier is also ambiguous.
+                // `บล็อกหยุด` and `เดือนหน้า` follow the same conservative rule: neither
+                // commits an optional final before a following cluster.
+                if cluster_start != start + 1
+                    || !self.ownership.last_is_syllable()
+                    || self.atoms()[cluster_start]
+                        .first_base()
+                        .is_some_and(|character| ThaiScalar(character).is_vowel_carrier())
+                    || AtomSequence(&self.atoms()[start..=cluster_start]).implicit_syllable_length()
+                        >= 2
+                {
+                    break 'can_attach_coda_before_onset_cluster false;
+                }
+                let Some(previous) = start
+                    .checked_sub(1)
+                    .and_then(|index| self.atoms().get(index))
+                else {
+                    break 'can_attach_coda_before_onset_cluster false;
+                };
+                previous.has_nucleus()
+                    && !previous.has_hard_ending()
+                    && !previous.has_carrier()
+                    && self.can_attach_singleton_as_coda(start)
+            };
+        if can_attach_coda_before_cluster {
+            self.ownership
+                .extend_last_syllable(self.ownership.atom_absolute_range(start).end);
+            self.ownership.adopt_atom_prefix(end, cluster_start);
+            return true;
+        }
+        if cluster_start <= start
+            || self.can_attach_singleton_as_coda(cluster_start)
+            || self.atoms()[cluster_start]
+                .first_base()
+                .is_some_and(|character| ThaiScalar(character).is_vowel_carrier())
+        {
+            // Rule: a carrier at the front of a listed cluster cannot be moved
+            // forward merely because its second base is a recognized onset.
+            // When an earlier bare atom is still unresolved, the carrier can
+            // itself be the next attachment choice, so moving it would hide a
+            // real boundary without certainty. Examples: `วิฟอยู่` remains
+            // `วิ | ?ฟ | ?อ | ยู่`; the `อ` is not silently folded into `อยู`.
+            // This does not weaken ordinary cluster ownership: `อีกหลาย` still
+            // moves onset-only `ห` into `หลาย`, and a carrier that was already
+            // atomized with its own rime remains a normal following syllable.
+            return false;
+        }
+
+        for atom_index in start..cluster_start {
+            self.ownership
+                .push_undecided(self.ownership.atom_absolute_range(atom_index));
+        }
+        self.ownership.adopt_atom_prefix(end, cluster_start);
         true
     }
 }
