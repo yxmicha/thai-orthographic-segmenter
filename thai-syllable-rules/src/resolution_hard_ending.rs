@@ -156,6 +156,34 @@ impl ResolutionState<'_> {
         true
     }
 
+    /// Resolves the remaining bare runs before a following syllable by splitting off suffix and
+    /// prefix candidates and exposing what stays between them.
+    fn resolve_remaining_cases(&mut self, start: usize, end: usize) {
+        let facts = self.remaining_run_facts(start, end);
+        if self.resolve_final_two_candidate(start, end, &facts)
+            || self.resolve_safe_prefix_candidate(start, end, &facts)
+            || self.move_onset_only_cluster_suffix_forward(start, end)
+            || self.resolve_singleton_before_cluster(start, end)
+            || self.resolve_singleton_before_leading_vowel(start, end)
+        {
+            return;
+        }
+        // Rule: when no safe implicit candidate exists, every bare atom
+        // between structural syllables is an attachment choice. Do not
+        // promote the first atom to a syllable merely to give the
+        // ambiguity run a left anchor: a lone base such as `ร` has no
+        // syllable nucleus. Examples such as `กะตกลม` expose each
+        // unresolved atom rather than silently choosing `ตก | ลม` or
+        // `ตกล | ม`. A longer run may use the final two-atom candidate
+        // rule above while its leading choices remain undecided. Each
+        // public ambiguity remains independently attachable by a later
+        // pass.
+        for atom_index in start..end {
+            self.ownership
+                .push_undecided(self.ownership.atom_absolute_range(atom_index));
+        }
+    }
+
     /// Measures the candidates a remaining bare run can offer before a following syllable.
     fn remaining_run_facts(&self, start: usize, end: usize) -> RemainingRunFacts {
         let unresolved = &self.atoms()[start..end];
