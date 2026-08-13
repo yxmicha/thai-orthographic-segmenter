@@ -154,6 +154,45 @@ impl ResolutionState<'_> {
 
         true
     }
+
+    /// Measures the candidates a remaining bare run can offer before a following syllable.
+    fn remaining_run_facts(&self, start: usize, end: usize) -> RemainingRunFacts {
+        let unresolved = &self.atoms()[start..end];
+        let first_length = AtomSequence(unresolved).implicit_syllable_length();
+        let leaves_singleton_tail =
+            unresolved.len() > first_length && unresolved.len() - first_length == 1;
+        let final_two_suffix_start = unresolved.len().checked_sub(2).filter(|&suffix_start| {
+            unresolved.len() >= 4
+                && AtomSequence(&unresolved[suffix_start..]).implicit_syllable_length() == 2
+        });
+        // Rule: prefer the longest safe prefix that still leaves a complete
+        // implicit candidate, while retaining any unresolved tail.
+        // Examples: for a run shaped like `กเรณุกา`, a three-atom `กเรณุ` prefix
+        // may be preferred when it leaves `กา` as a complete candidate. The rule
+        // never consumes the final atom if doing so would leave a one-atom tail.
+        let prefix_length = (2..=unresolved.len()).rev().find(|&length| {
+            AtomSequence(&unresolved[..length])
+                .implicit_syllable_sequence_start()
+                .is_some()
+        });
+        // Rule: do not synthesize an implicit candidate when its final
+        // bare atom is also the first base of a following initial cluster.
+        // The preceding atoms may form the left candidate, while that
+        // final atom may begin the right-hand cluster; the cluster alone
+        // does not prove either ownership. Examples: `ไหนครับ` becomes
+        // `ไห | ?น | ?ค | รับ`, and `ไหมครับ` becomes
+        // `ไห | ?ม | ?ค | รับ`. Only a later pass may resolve those atoms.
+        let first_candidate_ends_at_following_cluster = AtomSequence(unresolved)
+            .following_initial_prefix_start(&self.atoms()[end])
+            .is_some_and(|cluster_start| cluster_start + 1 == first_length);
+        RemainingRunFacts {
+            first_length,
+            leaves_singleton_tail,
+            final_two_suffix_start,
+            prefix_length,
+            first_candidate_ends_at_following_cluster,
+        }
+    }
 }
 
 /// What a remaining bare run can offer as candidates before a following syllable.
