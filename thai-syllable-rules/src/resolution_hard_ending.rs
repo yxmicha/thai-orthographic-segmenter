@@ -155,3 +155,12 @@ impl ResolutionState<'_> {
         true
     }
 }
+
+/// What a remaining bare run can offer as candidates before a following syllable.
+struct RemainingRunFacts {
+    first_length: usize,
+    leaves_singleton_tail: bool,
+    final_two_suffix_start: Option<usize>,
+    prefix_length: Option<usize>,
+    first_candidate_ends_at_following_cluster: bool,
+}
