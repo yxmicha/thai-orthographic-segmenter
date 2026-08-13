@@ -1,3 +1,4 @@
+use crate::atom::NucleusShape;
 use crate::atom_sequence::AtomSequence;
 use crate::character::ThaiScalar;
 use crate::resolution::ResolutionState;
@@ -292,6 +293,74 @@ impl ResolutionState<'_> {
         // is retained with the `กร` onset when the cluster predicate
         // proves that attachment; an unlisted pair is not granted the
         // same merge.
+        self.ownership.adopt_atom_prefix(end, start);
+        true
+    }
+
+    /// Resolves a lone base that sits between a closed syllable and a leading-vowel atom.
+    fn resolve_singleton_before_leading_vowel(&mut self, start: usize, end: usize) -> bool {
+        // Rule: after a hard ending, a singleton before a leading-vowel
+        // atom cannot attach to the closed syllable on the left. Attach it
+        // to the following nucleus instead of exposing impossible left
+        // attachment as `Undecided`.
+        let previous_has_completed_ue_carrier = start
+            .checked_sub(1)
+            .and_then(|previous| self.atoms().get(previous))
+            .is_some_and(|atom| {
+                matches!(
+                    atom.nucleus,
+                    NucleusShape::Rime {
+                        completed_ue_carrier: true,
+                        ..
+                    }
+                )
+            });
+        if end - start != 1
+            || !self.atoms()[end].starts_with_leading_vowel()
+            || previous_has_completed_ue_carrier
+        {
+            return false;
+        }
+        let coda_can_attach_to_inherent_final_left = self.atoms()[start]
+            .first_base()
+            .is_some_and(|character| ThaiScalar(character).is_coda())
+            && start.checked_sub(1).is_some_and(|previous| {
+                let previous_range = self.ownership.atom_range(previous);
+                self.characters()
+                    .iter()
+                    .find(|character| character.start == previous_range.start)
+                    .is_some_and(|character| {
+                        ThaiScalar(character.character).is_inherent_final_leading_vowel()
+                    })
+            });
+        if coda_can_attach_to_inherent_final_left {
+            // A coda-capable singleton can close the preceding ใ-/ไ-
+            // spelling or begin the following leading-vowel candidate.
+            // Keep that ownership choice visible: `ไหนโอ` becomes
+            // `ไห | ?น | โอ`.
+            self.ownership
+                .push_undecided(self.ownership.atom_absolute_range(start));
+            return true;
+        }
+        if self.atoms()[start]
+            .first_base()
+            .is_some_and(|character| ThaiScalar(character).is_final_r())
+            && self.preceding_atom_allows_unmarked_final_r(start)
+        {
+            // Rule: a bare final-ร between a hard short-vowel rime and
+            // a following leading-vowel candidate is two-sided
+            // ambiguity, not an onset that can be silently absorbed
+            // into the right-hand spelling. The preceding rime may own
+            // `ร`, while the following leading vowel may begin after
+            // it. Examples: `บัตรไทย` becomes `บัต | ?ร | ไทย`, just
+            // as `จักรยาน` becomes `จัก | ?ร | ยาน`.
+            self.ownership
+                .push_undecided(self.ownership.atom_absolute_range(start));
+            return true;
+        }
+        // Examples: `กะมเหสี` becomes `กะ | มเห | สี`, and
+        // `กะมเหศ` becomes `กะ | มเหศ`; the leading `ม` is not
+        // ambiguous once `กะ` has closed.
         self.ownership.adopt_atom_prefix(end, start);
         true
     }
