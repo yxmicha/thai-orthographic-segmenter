@@ -276,6 +276,25 @@ impl ResolutionState<'_> {
         }
         true
     }
+
+    /// Moves a lone base into a following listed onset cluster.
+    fn resolve_singleton_before_cluster(&mut self, start: usize, end: usize) -> bool {
+        if end - start != 1
+            || AtomSequence(&self.atoms()[start..end])
+                .following_initial_prefix_start(&self.atoms()[end])
+                .is_none()
+        {
+            return false;
+        }
+        // Rule: the first base of a following listed cluster is moved
+        // into that cluster instead of being left alone.
+        // Example: a singleton `ก` immediately before following `รา`
+        // is retained with the `กร` onset when the cluster predicate
+        // proves that attachment; an unlisted pair is not granted the
+        // same merge.
+        self.ownership.adopt_atom_prefix(end, start);
+        true
+    }
 }
 
 /// What a remaining bare run can offer as candidates before a following syllable.
