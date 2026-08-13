@@ -193,6 +193,36 @@ impl ResolutionState<'_> {
             first_candidate_ends_at_following_cluster,
         }
     }
+
+    /// Prefers the final two-atom candidate when a leading candidate would leave a singleton.
+    fn resolve_final_two_candidate(
+        &mut self,
+        start: usize,
+        end: usize,
+        facts: &RemainingRunFacts,
+    ) -> bool {
+        let (true, Some(suffix_start)) =
+            (facts.leaves_singleton_tail, facts.final_two_suffix_start)
+        else {
+            return false;
+        };
+        // Rule: if a leading implicit interpretation would leave a
+        // singleton tail, prefer the final two-atom candidate and
+        // keep every earlier attachment choice explicit.
+        // Example: `เพื่อตรวจสอบ` becomes `เพื่อ | ต? | ร? |
+        // วจ | สอบ`; the parser does not choose whether either
+        // leading consonant belongs to the adjacent spelling.
+        for offset in 0..suffix_start {
+            self.ownership
+                .push_undecided(self.ownership.atom_absolute_range(start + offset));
+        }
+        self.ownership.push_syllable(
+            self.ownership
+                .atom_absolute_range(start + suffix_start)
+                .start..self.ownership.atom_absolute_range(end - 1).end,
+        );
+        true
+    }
 }
 
 /// What a remaining bare run can offer as candidates before a following syllable.
