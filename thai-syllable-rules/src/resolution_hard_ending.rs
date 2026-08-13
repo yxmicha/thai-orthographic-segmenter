@@ -1,7 +1,78 @@
 use crate::atom::NucleusShape;
 use crate::atom_sequence::AtomSequence;
 use crate::character::ThaiScalar;
+use crate::part::ByteRange;
 use crate::resolution::ResolutionState;
+
+impl ResolutionState<'_> {
+    pub(crate) fn resolve_hard_ending_run(
+        &mut self,
+        start: usize,
+        end: usize,
+        range: ByteRange,
+        has_following_syllable: bool,
+        is_terminal_singleton_before_dot: bool,
+    ) {
+        // Rule: a hard ending closes the preceding syllable. The bare run
+        // after it must be resolved against a following candidate rather than
+        // absorbed backward.
+        // Examples: `กำกะ` stays `กำ | กะ`, and in `กะตกลม` the tail is
+        // considered against `ลม` instead of being folded backward into the
+        // already closed `กะ`.
+        if has_following_syllable {
+            if !self.resolve_leading_cases(start, end) {
+                self.resolve_remaining_cases(start, end);
+            }
+            return;
+        }
+        if is_terminal_singleton_before_dot {
+            // Rule: the abbreviation-tail exception permits one singleton
+            // `Undecided` without a following syllable.
+            // Example: `นะก.` emits `ก` as the one exception; a terminal `ก`
+            // without the adjacent single period is merged or made a
+            // conservative syllable because no right-hand candidate exists.
+            self.ownership.push_undecided(range);
+        } else if let Some(candidates) = AtomSequence(&self.atoms()[start..end])
+            .implicit_syllable_candidates(self.source_offset())
+        {
+            // Rule: a terminal run has no right-hand candidate; emit a
+            // conservative candidate sequence instead of leaving it pending.
+            // Candidate construction already proved that each returned range
+            // has a safe implicit shape; this pass records those ranges as
+            // resolved structural syllables.
+            // Examples: a terminal `จมก` remains one conservative range, while
+            // a longer safe run can return two complete candidates.
+            self.ownership.push_syllable(candidates.first);
+            if let Some(second) = candidates.second {
+                self.ownership.push_syllable(second);
+            }
+        } else {
+            // Rule: a terminal fallback may be a conservative syllable only
+            // when its final atom can actually close an implicit spelling (or
+            // carries a garan mark that makes the ending opaque). An
+            // onset-only final such as ห cannot be hidden inside a synthetic
+            // syllable merely because the source run has no right-hand
+            // nucleus. Preserve every atom as unresolved instead.
+            // Examples: `กะนห` becomes `กะ | ?น | ?ห`, while `กะหน` may
+            // remain `กะ | หน` because น is a legal bare coda and `ห`+`น`
+            // is a listed onset shape. A garan-bearing terminal spelling is
+            // also retained as one conservative range because the mark gives
+            // the trailing material explicit local ownership.
+            let terminal_can_close = self.atoms()[end - 1].has_silent_mark()
+                || self.atoms()[end - 1]
+                    .first_base()
+                    .is_some_and(|character| ThaiScalar(character).is_coda());
+            if terminal_can_close {
+                self.ownership.push_syllable(range);
+            } else {
+                for atom_index in start..end {
+                    self.ownership
+                        .push_undecided(self.ownership.atom_absolute_range(atom_index));
+                }
+            }
+        }
+    }
+}
 
 impl ResolutionState<'_> {
     // Rule: only the short ั, ิ, and ุ rimes enter the unmarked final-ร pass.
