@@ -223,6 +223,59 @@ impl ResolutionState<'_> {
         );
         true
     }
+
+    /// Emits a safe implicit prefix candidate and leaves its remaining bare atoms undecided.
+    fn resolve_safe_prefix_candidate(
+        &mut self,
+        start: usize,
+        end: usize,
+        facts: &RemainingRunFacts,
+    ) -> bool {
+        let Some(prefix_length) = facts.prefix_length else {
+            return false;
+        };
+        let first_length = facts.first_length;
+        let tail_length = end - start - first_length;
+        let first_candidate_is_safe = first_length >= 2
+            && (tail_length == 0 || tail_length >= 2 || (first_length == 3 && tail_length == 1));
+        if !first_candidate_is_safe
+            || prefix_length < first_length
+            || facts.first_candidate_ends_at_following_cluster
+        {
+            return false;
+        }
+        // Rule: expose a safe implicit candidate first, then leave
+        // its remaining bare atoms explicitly undecided.
+        // Example: after a hard boundary, a safe two-atom prefix
+        // is emitted as a `Syllable`, while a remaining tail
+        // becomes one `Undecided` per atom until the following
+        // nucleus is reached.
+        self.ownership.push_syllable(
+            self.ownership.atom_absolute_range(start).start
+                ..self
+                    .ownership
+                    .atom_absolute_range(start + first_length - 1)
+                    .end,
+        );
+        let tail_start = start + first_length;
+        let cluster_start = AtomSequence(&self.atoms()[tail_start..end])
+            .following_initial_prefix_start(&self.atoms()[end])
+            .map(|offset| tail_start + offset);
+        let undecided_end = cluster_start.unwrap_or(end);
+        for atom_index in tail_start..undecided_end {
+            self.ownership
+                .push_undecided(self.ownership.atom_absolute_range(atom_index));
+        }
+        if let Some(cluster_start) = cluster_start {
+            // Rule: a recognized onset cluster belongs to the
+            // following syllable, not to the undecided tail.
+            // Example: in `กะกเรณุ`, the tail `ก` moves with
+            // `เร` to form the recognized `กร` onset; it is not
+            // left as an unrelated `Undecided("ก")`.
+            self.ownership.adopt_atom_prefix(end, cluster_start);
+        }
+        true
+    }
 }
 
 /// What a remaining bare run can offer as candidates before a following syllable.
