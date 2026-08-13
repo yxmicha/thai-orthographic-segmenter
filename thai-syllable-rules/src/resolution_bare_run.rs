@@ -1,4 +1,5 @@
 use std::ops::Range;
+use crate::character::ThaiScalar;
 use crate::resolution::ResolutionState;
 
 /// A maximal run of bare atoms and the facts about its neighbors that decide its ownership.
@@ -79,6 +80,113 @@ impl ResolutionState<'_> {
                 self.ownership
                     .push_undecided(self.ownership.atom_absolute_range(atom_index));
             }
+            return Some(index);
+        }
+        None
+    }
+
+    /// Resolves a run that starts with a vowel carrier, precedes a garan carrier, or follows a hard ending; `None` when none applies.
+    fn resolve_carrier_run(&mut self, run: &BareRun) -> Option<usize> {
+        let BareRun {
+            start,
+            end: mut index,
+            range,
+            has_following_syllable,
+            previous_has_hard_ending,
+            is_terminal_singleton_before_dot,
+            is_single_vowel_carrier,
+            ..
+        } = run.clone();
+        let starts_with_vowel_carrier = self.atoms()[start]
+            .first_base()
+            .is_some_and(|character| ThaiScalar(character).is_vowel_carrier());
+        if has_following_syllable && starts_with_vowel_carrier {
+            if start > 0
+                && self.atoms()[start - 1].starts_with_leading_vowel()
+                && !self.atoms()[start - 1].has_hard_ending()
+            {
+                if is_single_vowel_carrier {
+                    // Rule: a singleton อ after an open leading-vowel atom
+                    // remains unresolved when a later nucleus-bearing atom
+                    // follows. The carrier may complete the left spelling or
+                    // begin an implicit-vowel spelling on the right, so
+                    // attaching it to either side would exceed certainty.
+                    // Examples: `เจอแบ` becomes `เจ | ?อ | แบ`, while the
+                    // terminal `เจอ` still merges its carrier into `เจ` below
+                    // because no right-hand nucleus can claim `อ`.
+                    self.ownership
+                        .push_undecided(self.ownership.atom_absolute_range(start));
+                    index = start + 1;
+                    return Some(index);
+                }
+
+                // Rule: a multi-scalar carrier construction after a
+                // leading-vowel atom completes that atom's spelling when
+                // its own structure already proves the attachment. The
+                // singleton ambiguity above is deliberately handled first.
+                // Examples: a carrier with its own base remains a complete
+                // candidate such as `เยอร...`; only its bases are exposed
+                // when the carrier construction itself is structurally
+                // ambiguous.
+                let end = self.ownership.atom_absolute_range(start).end;
+                if self.ownership.extend_last_syllable(end) {
+                    index = start + 1;
+                    return Some(index);
+                }
+            }
+
+            if is_single_vowel_carrier && self.atoms()[index].has_explicit_rime() {
+                // Rule: a bare carrier between syllables belongs to the
+                // following explicit-rime construction, as in ขออนุ. It is
+                // not a second vowel attached to the preceding ขอ.
+                // Example: `ขออนุ` keeps the carrier boundary visible as the
+                // next `อนุ` construction instead of treating `อ` as a second
+                // nucleus inside `ขอ`.
+                self.ownership.adopt_atom_prefix(index, start);
+                return Some(index);
+            }
+        }
+
+        let following_is_garan_carrier = has_following_syllable
+            && self.atoms()[index]
+                .first_base()
+                .is_some_and(|character| ThaiScalar(character).is_vowel_carrier())
+            && self.atoms()[index].has_nucleus()
+            && self.atoms()[index].has_silent_mark();
+        if following_is_garan_carrier && self.atoms()[start..index].len() == 1 {
+            // Rule: a bare onset immediately before an อ-carrier with garan
+            // belongs to that spelling; do not emit the invalid `อ...์`
+            // suffix without its onset.
+            // Example: in a shape such as `กอ...์`, the preceding bare onset
+            // is carried into the following silent-mark spelling; output like
+            // `ก | อ...์` would leave a garan construction with no onset.
+            self.ownership.adopt_atom_prefix(index, start);
+            return Some(index);
+        }
+
+        if has_following_syllable
+            && index - start == 1
+            && self.atoms()[start].has_tone_mark
+            && !self.atoms()[start].has_hard_ending()
+        {
+            // Rule: retain the legacy onset-modifier path only for a
+            // tone-marked atom that did not form an implicit nucleus. Ordinary
+            // base + tone self.atoms are made hard and bypass this branch.
+            // Example: a malformed tone-marked modifier before `นา` can still
+            // attach forward, while valid `ก้` in `นะก้กา` remains its own
+            // closed candidate.
+            self.ownership.adopt_atom_prefix(index, start);
+            return Some(index);
+        }
+
+        if previous_has_hard_ending {
+            self.resolve_hard_ending_run(
+                start,
+                index,
+                range,
+                has_following_syllable,
+                is_terminal_singleton_before_dot,
+            );
             return Some(index);
         }
         None
