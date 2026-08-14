@@ -1,7 +1,60 @@
 use crate::atom::SilentMarkShape;
+use crate::atom_sequence::AtomSequence;
+use crate::character::ThaiScalar;
 use crate::resolution::ResolutionState;
+use crate::resolution_bare_run::BareRun;
 
 impl ResolutionState<'_> {
+
+    /// Resolves a run between two syllables: repeated carrier onsets, singletons, silent-mark
+    /// suffixes, and runs left as undecided atoms. Returns the index after the run.
+    fn resolve_run_between_syllables(&mut self, run: &BareRun) -> usize {
+        let BareRun {
+            start, end: index, ..
+        } = run.clone();
+        // Rule: with candidates on both sides, preserve attachment
+        // ambiguity unless a silent-mark shape provides a stronger merge.
+        // Examples: the bare middle of `กะตกลม` stays explicit because
+        // both `กะ` and `ลม` can anchor it. A compatible silent-mark suffix
+        // such as `ฟิล์ม` uses the stronger opaque-shape rule instead.
+        if self.expose_repeated_carrier_onset(start, index)
+            || self.move_onset_only_cluster_suffix_forward(start, index)
+        {
+            return index;
+        }
+        if index - start == 1
+            && !self.can_attach_singleton_as_coda(start)
+            && (AtomSequence(&self.atoms()[start..index])
+                .following_initial_prefix_start(&self.atoms()[index])
+                .is_some()
+                || self.atoms()[index]
+                    .first_base()
+                    .is_some_and(|character| ThaiScalar(character).is_vowel_carrier()))
+        {
+            // Rule: an onset-only singleton cannot attach as the previous
+            // syllable's coda. When it starts a listed cluster or an
+            // อ-carrier construction, move it forward instead of exposing
+            // an impossible `Undecided` attachment.
+            // Examples: `แกหรอก` becomes `แก | หรอก`, while `จมรรอก`
+            // is handled by the repeated-carrier
+            // rule first and exposes both `ร` bases as undecided.
+            self.ownership.adopt_atom_prefix(index, start);
+            return index;
+        }
+        if self.resolve_silent_mark_suffix_run(start, index) {
+            return index + 1;
+        }
+        // Rule: each unresolved atom is public ambiguity, one part per
+        // atom, so later resolution can choose its attachment.
+        // Examples: a middle run `ตกล` is represented atom-by-atom,
+        // allowing later logic to choose `ตก | ลม` or another valid
+        // attachment without losing the original character spans.
+        for atom_index in start..index {
+            self.ownership
+                .push_undecided(self.ownership.atom_absolute_range(atom_index));
+        }
+        index
+    }
 
     /// Resolves the run when a silent-mark suffix atom follows it. Returns whether it did, in which
     /// case the suffix atom is consumed as well.
