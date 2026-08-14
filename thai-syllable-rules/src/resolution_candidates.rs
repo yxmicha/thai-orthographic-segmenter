@@ -228,4 +228,65 @@ impl ResolutionState<'_> {
 
         None
     }
+
+    /// Resolves a single leading base before the nucleus at `nucleus_index`; `None` when the run
+    /// has another length.
+    fn absorb_leading_single(&mut self, nucleus_index: usize) -> Option<usize> {
+        let prefix = &self.atoms()[..nucleus_index];
+        if prefix.len() == 1 && prefix[0].has_tone_mark {
+            // Rule: a tone-marked bare consonant is already a complete implicit
+            // onset candidate. Do not merge its implicit vowel with the following
+            // explicit vowel pattern, as in `ก้` before `นา`.
+            self.ownership
+                .push_syllable(self.ownership.atom_absolute_range(0));
+            return Some(nucleus_index);
+        }
+
+        if prefix.len() == 1
+            && prefix[0]
+                .first_base()
+                .is_some_and(|character| ThaiScalar(character).is_vowel_carrier())
+            && self.atoms()[nucleus_index].has_explicit_rime()
+        {
+            // Rule: a standalone vowel carrier already supplies its own implicit
+            // vowel. Keep it separate before a following explicit-rime candidate,
+            // as in a leading `อ` before `นา`.
+            self.ownership
+                .push_syllable(self.ownership.atom_absolute_range(0));
+            return Some(nucleus_index);
+        }
+
+        if prefix.len() == 1 {
+            let joins_following_cluster = prefix[0]
+                .first_base()
+                .zip(self.atoms()[nucleus_index].first_base())
+                .is_some_and(|(first, second)| {
+                    ThaiScalar(first).forms_initial_cluster_with(ThaiScalar(second))
+                });
+            let following_base_is_onset_only = self.atoms()[nucleus_index]
+                .first_base()
+                .is_some_and(|base| !ThaiScalar(base).is_coda());
+            if self.atoms()[nucleus_index].starts_with_leading_vowel()
+                || joins_following_cluster
+                || !following_base_is_onset_only
+            {
+                // Rule: one leading base may join a following leading-vowel
+                // spelling, recognized initial cluster, or coda-capable base
+                // because the source order proves that it supplies the
+                // following onset. Examples: `มเหสี` keeps `ม` with `เห`,
+                // `กล้า` keeps `ก` with `ล้า`, and `ขนาด` keeps `ข` with `นา`.
+                self.ownership.adopt_atom_prefix(nucleus_index, 0);
+                return Some(nucleus_index);
+            }
+
+            // Rule: one leading base before an onset-only nucleus is not known
+            // to belong to that nucleus. Keep it unresolved instead of
+            // creating a multi-vowel candidate such as `มหา` or `พหุ`.
+            self.ownership
+                .push_undecided(self.ownership.atom_absolute_range(0));
+            return Some(nucleus_index);
+        }
+
+        None
+    }
 }
