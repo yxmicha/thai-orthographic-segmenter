@@ -1,4 +1,6 @@
 use std::ops::Range;
+
+use crate::atom::NucleusShape;
 use crate::character::ThaiScalar;
 use crate::resolution::ResolutionState;
 
@@ -24,6 +26,75 @@ pub(crate) struct BareRun {
 }
 
 impl ResolutionState<'_> {
+    /// Resolves the run of bare atoms that starts at `start` and returns the index after it.
+    pub(crate) fn resolve_bare_run(&mut self, start: usize) -> usize {
+        let mut index = start;
+        while index < self.atoms().len()
+            && !self.atoms()[index].has_nucleus()
+            && self.atoms()[index].first_base().is_some()
+                == self.atoms()[start].first_base().is_some()
+        {
+            index += 1;
+        }
+        let range = (self.source_offset() + self.ownership.atom_range(start).start)
+            ..(self.source_offset() + self.ownership.atom_range(index - 1).end);
+        let run_has_silent_mark = self.atoms()[start..index]
+            .iter()
+            .any(super::atom::ThaiAtom::has_silent_mark);
+        let has_previous_syllable = self.ownership.last_is_syllable();
+        let has_following_syllable = index < self.atoms().len();
+        let previous_has_hard_ending = start > 0 && self.atoms()[start - 1].has_hard_ending();
+        let is_terminal_singleton_before_dot = {
+            let end = index;
+            self.following_source().has_single_period()
+                && end - start == 1
+                && self.atoms()[start].first_base().is_some()
+                && self.text()[self.ownership.atom_range(start)]
+                    .chars()
+                    .count()
+                    == 1
+                && !run_has_silent_mark
+        };
+        let contains_orphan_dependent_mark = self.atoms()[start..index]
+            .iter()
+            .any(|atom| atom.first_base().is_none() && !atom.starts_with_leading_vowel());
+        let contains_orphan_vowel_mark = self.atoms()[start..index]
+            .iter()
+            .any(|atom| matches!(atom.nucleus, NucleusShape::OrphanRime));
+        let previous_ends_in_base = {
+            start > 0
+                && self
+                    .characters()
+                    .iter()
+                    .find(|character| character.end == self.atoms()[start - 1].relative_range().end)
+                    .is_some_and(|character| ThaiScalar(character.character).is_base())
+        };
+        let is_single_vowel_carrier = index - start == 1
+            && self.atoms()[start]
+                .first_base()
+                .is_some_and(|character| ThaiScalar(character).is_vowel_carrier());
+        let run = BareRun {
+            start,
+            end: index,
+            range,
+            run_has_silent_mark,
+            has_previous_syllable,
+            has_following_syllable,
+            previous_has_hard_ending,
+            is_terminal_singleton_before_dot,
+            contains_orphan_dependent_mark,
+            contains_orphan_vowel_mark,
+            previous_ends_in_base,
+            is_single_vowel_carrier,
+        };
+        if let Some(next) = self.resolve_malformed_run(&run) {
+            return next;
+        }
+        if let Some(next) = self.resolve_carrier_run(&run) {
+            return next;
+        }
+        self.resolve_ordinary_run(&run)
+    }
 
     /// Preserves a run holding orphan dependent marks or vowels as text or undecided parts; `None` when the run has none.
     fn resolve_malformed_run(&mut self, run: &BareRun) -> Option<usize> {
