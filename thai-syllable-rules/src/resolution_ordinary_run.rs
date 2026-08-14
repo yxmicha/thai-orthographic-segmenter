@@ -6,6 +6,97 @@ use crate::resolution::ResolutionState;
 use crate::resolution_bare_run::BareRun;
 
 impl ResolutionState<'_> {
+    /// Resolves a run that the other cases leave: singletons, silent-mark suffixes, and implicit syllables.
+    pub(crate) fn resolve_ordinary_run(&mut self, run: &BareRun) -> usize {
+        let BareRun {
+            start,
+            end: mut index,
+            range,
+            run_has_silent_mark,
+            has_previous_syllable,
+            has_following_syllable,
+            is_terminal_singleton_before_dot,
+            is_single_vowel_carrier,
+            ..
+        } = run.clone();
+        if index - start == 1
+            && !has_following_syllable
+            && self.promote_last_singleton_carrier(&range)
+        {
+            // Rule: a terminal bare base completes a preceding singleton
+            // `อ` carrier when atomization had exposed the carrier as an
+            // unresolved scalar. The two scalars are then one implicit
+            // candidate, not two standalone parts. Example: the repeated
+            // carrier path in `จมรรอก` first exposes `อ`, then this rule
+            // completes `อก` after the two ambiguous `ร` atoms.
+            return index;
+        }
+
+        if has_previous_syllable && (!has_following_syllable || run_has_silent_mark) {
+            if is_terminal_singleton_before_dot {
+                // Rule: retain the abbreviation-tail exception even when the
+                // run is terminal before its period.
+                // Example: the final bare singleton in `นะก.` remains
+                // `Undecided` immediately before `Dot`, even though the Thai
+                // run has no later syllable candidate.
+                self.ownership.push_undecided(range);
+            } else if !(run_has_silent_mark
+                || (is_single_vowel_carrier
+                    && start > 0
+                    && self.atoms()[start - 1].starts_with_leading_vowel())
+                || self.atoms()[start..index].iter().all(|atom| {
+                    atom.first_base()
+                        .is_some_and(|character| ThaiScalar(character).is_coda())
+                }))
+            {
+                // Exhausting the input does not make an onset-only base a
+                // legal coda: นาห retains ห as unresolved source material.
+                for atom_index in start..index {
+                    self.ownership
+                        .push_undecided(self.ownership.atom_absolute_range(atom_index));
+                }
+            } else if self.ownership.last_is_syllable() {
+                self.ownership.extend_last_syllable(range.end);
+            }
+        } else if has_previous_syllable && has_following_syllable {
+            return self.resolve_run_between_syllables(run);
+        } else if has_following_syllable {
+            if self.atoms()[start].starts_with_leading_vowel()
+                && self.atoms()[start].first_base().is_none()
+            {
+                // Rule: an unpaired leading vowel is malformed Thai source,
+                // not a valid syllable prefix. Preserve it as Text instead of
+                // hiding it inside a following vowel pattern.
+                // Example: the leading `เ` in malformed `เแท` remains `Text`
+                // rather than being combined with a later independent vowel;
+                // valid `เกา` still follows the normal leading-vowel path.
+                let range = self.ownership.atom_absolute_range(start);
+                self.ownership.push_text(range);
+                index = start + 1;
+                return index;
+            }
+            // Rule: a leading bare prefix that reaches this fallback has no
+            // independently proven boundary. Preserve the contiguous
+            // candidate here; leading-vowel and onset-only leading runs are
+            // handled earlier by `absorb_leading_bases`.
+            self.ownership.adopt_atom_prefix(index, start);
+        } else {
+            // Input exhaustion cannot supply a missing nucleus or license
+            // an onset-only final, including after an initial cluster.
+            if self.atoms()[index - 1]
+                .first_base()
+                .is_some_and(|character| ThaiScalar(character).is_coda())
+            {
+                self.ownership.push_syllable(range);
+            } else {
+                for atom_index in start..index {
+                    self.ownership
+                        .push_undecided(self.ownership.atom_absolute_range(atom_index));
+                }
+            }
+        }
+        index
+    }
 
     /// Resolves a run between two syllables: repeated carrier onsets, singletons, silent-mark
     /// suffixes, and runs left as undecided atoms. Returns the index after the run.
