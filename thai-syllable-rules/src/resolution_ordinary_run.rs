@@ -1,6 +1,7 @@
 use crate::atom::SilentMarkShape;
 use crate::atom_sequence::AtomSequence;
 use crate::character::ThaiScalar;
+use crate::part::{ByteRange, Part};
 use crate::resolution::ResolutionState;
 use crate::resolution_bare_run::BareRun;
 
@@ -54,6 +55,36 @@ impl ResolutionState<'_> {
                 .push_undecided(self.ownership.atom_absolute_range(atom_index));
         }
         index
+    }
+
+    /// Completes a preceding singleton carrier with the final coda-capable base of the run.
+    fn promote_last_singleton_carrier(&mut self, range: &ByteRange) -> bool {
+        let (start, end) = (range.start, range.end);
+        let plan = &mut self.ownership;
+        let Some(previous) = plan.parts.last().and_then(|part| match part {
+            Part::Undecided(range) => Some(range.clone()),
+            _ => None,
+        }) else {
+            return false;
+        };
+        if previous.end != start
+            || !plan
+                .single_base_character(&(start..end))
+                .is_some_and(|character| ThaiScalar(character).is_coda())
+        {
+            return false;
+        }
+        let Some(carrier) = plan.single_base_character(&previous) else {
+            return false;
+        };
+        if !ThaiScalar(carrier).is_vowel_carrier() {
+            return false;
+        }
+        let Some(last) = plan.parts.last_mut() else {
+            return false;
+        };
+        *last = Part::Syllable(previous.start..end);
+        true
     }
 
     /// Resolves the run when a silent-mark suffix atom follows it. Returns whether it did, in which
