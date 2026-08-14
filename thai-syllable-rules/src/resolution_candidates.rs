@@ -169,4 +169,63 @@ impl ResolutionState<'_> {
             .and_then(super::atom::ThaiAtom::first_base)
             .is_some_and(|character| ThaiScalar(character).is_coda())
     }
+
+    /// Resolves a leading run of two or more bases before the nucleus at `nucleus_index`; `None`
+    /// when the run does not start with a pair this handles.
+    fn absorb_leading_pair(&mut self, nucleus_index: usize) -> Option<usize> {
+        let prefix = &self.atoms()[..nucleus_index];
+        if prefix.len() >= 2
+            && prefix[0]
+                .first_base()
+                .zip(prefix[1].first_base())
+                .is_some_and(|(first, second)| {
+                    !ThaiScalar(first).forms_initial_cluster_with(ThaiScalar(second))
+                })
+        {
+            if prefix[1]
+                .first_base()
+                .is_some_and(|character| ThaiScalar(character).is_coda())
+            {
+                // Rule: two non-cluster leading bases form one implicit candidate
+                // only when the second base can be its coda. Example: `สม` is a
+                // valid structural candidate, while `สห` cannot be one because
+                // ห is onset-only and must remain available to the next spelling.
+                let start = self.source_offset() + prefix[0].relative_range().start;
+                let end = self.source_offset() + prefix[1].relative_range().end;
+                self.ownership.push_syllable(start..end);
+                return Some(2);
+            }
+
+            // Rule: a non-cluster leading run whose second base is onset-only
+            // cannot be collapsed into an implicit syllable. Keep each base
+            // visible so `มหา`, `สหภาพ`, and `คหบดี` do not hide separate spoken
+            // units inside a broad first candidate.
+            let prefix_len = prefix.len();
+            for atom_index in 0..prefix_len {
+                self.ownership
+                    .push_undecided(self.ownership.atom_absolute_range(atom_index));
+            }
+            return Some(nucleus_index);
+        }
+
+        if prefix.len() >= 2
+            && prefix[0]
+                .first_base()
+                .zip(prefix[1].first_base())
+                .is_some_and(|(first, second)| {
+                    ThaiScalar(first).forms_initial_cluster_with(ThaiScalar(second))
+                })
+        {
+            // Rule: a recognized initial cluster is retained as one leading
+            // candidate before the later nucleus. Examples: a leading `กร` before
+            // a later nucleus stays one candidate; an unlisted pair uses the rule
+            // above instead.
+            let start = self.source_offset() + prefix[0].relative_range().start;
+            let end = self.source_offset() + prefix[1].relative_range().end;
+            self.ownership.push_syllable(start..end);
+            return Some(2);
+        }
+
+        None
+    }
 }
