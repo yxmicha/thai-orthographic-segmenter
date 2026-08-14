@@ -14,6 +14,12 @@ pub(crate) enum FollowingSource {
     SinglePeriod,
 }
 
+impl FollowingSource {
+    pub(crate) fn has_single_period(self) -> bool {
+        matches!(self, Self::SinglePeriod)
+    }
+}
+
 /// All source-relative state for one maximal Thai run.
 ///
 /// Parsing and candidate preparation deliberately keep the same owner. The
