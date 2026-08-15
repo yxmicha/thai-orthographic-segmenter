@@ -104,4 +104,39 @@ impl ResolutionState<'_> {
         range.end = end;
         true
     }
+
+    /// Whether the opaque silent-mark atom at `index` may attach to the atom before it.
+    fn can_attach_opaque_silent_suffix(&self, index: usize) -> bool {
+        index.checked_sub(1).is_some_and(|previous_index| {
+            let Some(suffix_base) = self.atoms()[index].first_base() else {
+                return false;
+            };
+            if !ThaiScalar(suffix_base).is_coda() {
+                return false;
+            }
+
+            let previous = &self.atoms()[previous_index];
+            let previous_range = self.ownership.atom_range(previous_index);
+            let previous_final_is_coda = self
+                .characters()
+                .iter()
+                .find(|character| character.end == previous_range.end)
+                .is_some_and(|character| ThaiScalar(character.character).is_coda());
+
+            // A silent suffix can attach to a coda-capable final base, to an
+            // open explicit rime whose following base supplies that coda, or
+            // to a leading-vowel carrier such as `แอ`. The latter is an
+            // implicit atom in the scanner even though `แ` is the written
+            // vowel, so it cannot be recognized through `has_explicit_rime`.
+            // An onset-only leading-vowel candidate ending in `ห`, such as
+            // `มเห` before `นทร์`, has no legal left owner and stays separate.
+            previous_final_is_coda
+                || previous.has_explicit_rime()
+                || previous.has_carrier()
+                || (previous.starts_with_leading_vowel()
+                    && previous
+                        .first_base()
+                        .is_some_and(|character| ThaiScalar(character).is_vowel_carrier()))
+        })
+    }
 }
