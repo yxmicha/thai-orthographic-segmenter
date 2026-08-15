@@ -91,6 +91,7 @@ mod resolution_bare_run;
 mod resolution_candidates;
 mod resolution_hard_ending;
 mod resolution_input;
+mod resolution_nucleus;
 mod resolution_ordinary_run;
 mod rule_analysis;
 
