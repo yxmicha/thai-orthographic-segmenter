@@ -170,6 +170,30 @@ impl ResolutionState<'_> {
             .is_some_and(|character| ThaiScalar(character).is_coda())
     }
 
+    pub(crate) fn absorb_leading_bases(&mut self) -> usize {
+        // Rule: leading bases have no preceding syllable. Absorb them only when
+        // their following shape proves the attachment, using explicit cluster
+        // structure or a leading-vowel spelling. Otherwise keep onset-only bases
+        // visible. Examples: `มเหสี` absorbs `ม` into `เห`, while `มหา` keeps
+        // `ม` separate from the base-led `หา` candidate.
+        // The helper never invents a left-hand part that the source does not have.
+        let Some(nucleus_index) = self
+            .atoms()
+            .iter()
+            .position(super::atom::ThaiAtom::has_nucleus)
+        else {
+            return 0;
+        };
+        let prefix = &self.atoms()[..nucleus_index];
+        if prefix.is_empty() || !prefix.iter().all(|atom| atom.first_base().is_some()) {
+            return 0;
+        }
+
+        self.absorb_leading_pair(nucleus_index)
+            .or_else(|| self.absorb_leading_single(nucleus_index))
+            .unwrap_or(0)
+    }
+
     /// Resolves a leading run of two or more bases before the nucleus at `nucleus_index`; `None`
     /// when the run does not start with a pair this handles.
     fn absorb_leading_pair(&mut self, nucleus_index: usize) -> Option<usize> {
