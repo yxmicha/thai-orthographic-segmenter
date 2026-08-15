@@ -1,5 +1,6 @@
 use crate::character::ThaiCharacter;
 use crate::ownership_plan::OwnershipPlan;
+use crate::part::Part;
 use crate::resolution_input::FollowingSource;
 use crate::resolution_input::ThaiRun;
 
@@ -51,5 +52,29 @@ impl<'a> ResolutionState<'a> {
 
     pub(crate) fn atoms(&self) -> &[crate::atom::ThaiAtom] {
         &self.atoms
+    }
+
+    fn resolve(mut self) -> Vec<Part> {
+        // Rule: a leading bare base has no left attachment, but it is absorbed
+        // only when the following shape proves that it is part of that spelling.
+        // Examples: `มเหสี` keeps `ม` with the following leading-vowel candidate,
+        // while `มหา` exposes `ม` before the independent `หา` candidate.
+        let index = self.absorb_leading_bases();
+
+        let mut index = index;
+        while index < self.atoms.len() {
+            if self.atoms[index].has_nucleus() {
+                index = self.resolve_nucleus(index);
+                continue;
+            }
+
+            index = self.resolve_bare_run(index);
+        }
+
+        {
+            let plan = self.ownership;
+            debug_assert_eq!(plan.emitted_end(), plan.source_offset + plan.text.len());
+            plan.parts
+        }
     }
 }
