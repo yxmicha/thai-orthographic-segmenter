@@ -80,4 +80,28 @@ impl ResolutionState<'_> {
         }
         None
     }
+
+    /// Extends the last syllable through any undecided parts after it up to `end`, when nothing
+    /// but undecided parts follows that syllable.
+    fn extend_last_syllable_through_undecided(&mut self, end: usize) -> bool {
+        let plan = &mut self.ownership;
+        debug_assert!(end <= plan.source_offset + plan.text.len());
+        debug_assert!(plan.text.is_char_boundary(end - plan.source_offset));
+        debug_assert!(end >= plan.emitted_end());
+        let Some(syllable_index) = plan.parts.iter().rposition(Part::is_syllable) else {
+            return false;
+        };
+        if plan.parts[syllable_index + 1..]
+            .iter()
+            .any(|part| !part.is_undecided())
+        {
+            return false;
+        }
+        plan.parts.truncate(syllable_index + 1);
+        let Some(Part::Syllable(range)) = plan.parts.last_mut() else {
+            return false;
+        };
+        range.end = end;
+        true
+    }
 }
