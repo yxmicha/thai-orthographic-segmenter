@@ -78,3 +78,10 @@ impl<'a> ResolutionState<'a> {
         }
     }
 }
+
+impl ThaiRun<'_> {
+    /// Resolves ownership of the run's prepared candidates into public parts.
+    pub(crate) fn resolve(self) -> Vec<Part> {
+        ResolutionState::new(self).resolve()
+    }
+}
