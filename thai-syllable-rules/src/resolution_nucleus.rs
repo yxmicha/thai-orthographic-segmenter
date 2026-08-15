@@ -1,8 +1,86 @@
 use crate::character::ThaiScalar;
+use crate::completeness::Completeness;
 use crate::part::Part;
 use crate::resolution::ResolutionState;
 
 impl ResolutionState<'_> {
+    pub(crate) fn resolve_nucleus(&mut self, index: usize) -> usize {
+        let completeness = Completeness::of_atom(&self.atoms()[index], self.text());
+        let atom_end = self.ownership.atom_absolute_range(index).end;
+        let extended_previous_syllable = matches!(completeness, Completeness::RequiresHost)
+            && self.extend_last_syllable_through_undecided(atom_end);
+        if extended_previous_syllable {
+            // A wholly silenced consonant cell has no independent onset. It
+            // can extend a spelling after its spoken coda is complete, and
+            // any unresolved bases immediately before the suffix must remain
+            // in that same owned spelling. Examples: `พันธุ์`, `พฤกษ์`, and
+            // `กฤตย์` cannot expose a hostless `ษ์`, `ย์`, or similar suffix.
+            return index + 1;
+        }
+        match completeness {
+            Completeness::Complete => {}
+            Completeness::RequiresHost
+            | Completeness::RequiresConstituent
+            | Completeness::RequiresCoda
+            | Completeness::RequiresCarrierOrCoda => {
+                // Incomplete candidates have already had first claim on
+                // eligible material during construction. A missing host,
+                // constituent, or ending cannot be supplied by a run
+                // boundary or by the presence of a vowel.
+                let range = self.ownership.atom_absolute_range(index);
+                self.ownership.validate_next(&range);
+                self.ownership.parts.push(Part::Invalid(range));
+                return index + 1;
+            }
+        }
+
+        if let Some(next) = self.resolve_ambiguous_bare_carrier(index) {
+            return next;
+        }
+
+        // Rule: every resolved nucleus normally becomes Syllable. An opaque
+        // silent-mark candidate with no carrier has positive suffix evidence:
+        // its garan mark silences the local bases, so it cannot stand as an
+        // independent spoken onset when an open syllable can host it. This
+        // includes a consonant pair such as `กร์`: the initial-cluster shape
+        // describes the spelling, but does not give the garan-silenced tail a
+        // vowel of its own. The non-hard-ending guard proves that the previous
+        // atom can still accept a continuation. Examples: `ศุกร์` is one
+        // syllable, while `น้องหงส์` keeps `หงส์` separate because `น้อง` is
+        // already hard-closed. This is not an absence-of-lookahead merge: the
+        // garan shape supplies the ownership proof.
+        let can_attach_opaque_silent_suffix = self.can_attach_opaque_silent_suffix(index);
+        if self.atoms()[index]
+            .first_base()
+            .is_some_and(|character| ThaiScalar(character).is_vowel_carrier())
+            && self.atoms()[index].has_silent_mark()
+            && index > 0
+            && self.atoms()[index - 1].starts_with_leading_vowel()
+            && self.ownership.last_is_syllable()
+        {
+            // Rule: a garan-bearing อ carrier has no independent onset; it must
+            // remain attached to the preceding syllable when one exists, rather
+            // than being emitted as `อ...์` alone.
+            // Example: a leading-vowel spelling followed by an `อ...์` carrier
+            // keeps the carrier with that preceding part; it does not emit an
+            // invalid standalone `อ์`-like syllable.
+            self.ownership.extend_last_syllable(atom_end);
+            return index + 1;
+        }
+        if self.atoms()[index].is_opaque()
+            && !self.atoms()[index].opaque_has_carrier()
+            && (index == 0 || !self.atoms()[index - 1].has_hard_ending())
+            && self.ownership.last_is_syllable()
+            && can_attach_opaque_silent_suffix
+        {
+            self.ownership.extend_last_syllable(atom_end);
+            return index + 1;
+        }
+
+        self.ownership
+            .push_syllable(self.ownership.atom_absolute_range(index));
+        index + 1
+    }
 
     /// Exposes a bare อ-carrier with its final base as separate undecided parts when an opaque
     /// garan candidate or an open leading vowel keeps their ownership ambiguous; `None` when the
