@@ -1,3 +1,6 @@
+use crate::character::ThaiCharacter;
+use crate::character::ThaiScalar;
+use crate::character_sequence::CharacterSequence;
 use crate::{RHanPattern, ReadingAlternative};
 
 /// Recoverable readings alongside the flat, source-preserving rules projection.
@@ -21,6 +24,44 @@ pub struct RuleAnalysis {
 }
 
 impl RuleAnalysis {
+    /// Inspects possible weak initials, consonant sharing, vowel scope, and รร.
+    /// All offsets refer to `source`; non-Thai characters terminate the scan.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::RuleAnalysis;
+    ///
+    /// assert!(RuleAnalysis::new("กะ").reading_alternatives().is_empty());
+    /// assert_eq!(RuleAnalysis::new("กะตกลม").reading_alternatives().len(), 4);
+    /// ```
+    #[must_use]
+    pub fn new(source: &str) -> Self {
+        let mut alternatives = Vec::new();
+        let mut r_han = Vec::new();
+        let mut run = Vec::new();
+        for (start, character) in source.char_indices() {
+            if ThaiScalar(character).is_accepted() {
+                run.push(ThaiCharacter {
+                    character,
+                    start,
+                    end: start + character.len_utf8(),
+                });
+            } else {
+                let patterns = CharacterSequence(&run).r_han_patterns();
+                alternatives.extend(CharacterSequence(&run).reading_alternatives(&patterns));
+                r_han.extend(patterns);
+                run.clear();
+            }
+        }
+        let patterns = CharacterSequence(&run).r_han_patterns();
+        alternatives.extend(CharacterSequence(&run).reading_alternatives(&patterns));
+        r_han.extend(patterns);
+        Self {
+            alternatives,
+            r_han,
+        }
+    }
 
     /// Returns unresolved pronunciation relationships, never a chosen reading.
     ///
