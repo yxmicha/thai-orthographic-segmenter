@@ -80,4 +80,19 @@ impl RuleAnalysis {
     pub fn reading_alternatives(&self) -> &[ReadingAlternative] {
         &self.alternatives
     }
+
+    /// Returns recognized written รร nuclei and possible final consonants.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::RuleAnalysis;
+    ///
+    /// assert_eq!(RuleAnalysis::new("สรรพ").r_han_patterns().len(), 1);
+    /// assert!(RuleAnalysis::new("กะ").r_han_patterns().is_empty());
+    /// ```
+    #[must_use]
+    pub fn r_han_patterns(&self) -> &[RHanPattern] {
+        &self.r_han
+    }
 }
