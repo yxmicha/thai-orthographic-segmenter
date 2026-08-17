@@ -105,6 +105,61 @@ impl<'a> ThaiRun<'a> {
         atoms.push(tail);
     }
 
+    /// Keeps a terminal implicit-vowel syllable available as a following candidate.
+    fn promote_terminal_implicit_syllable(&mut self) {
+        // Rule: keep a terminal implicit-vowel syllable available as the following
+        // candidate when preceding consonants remain ambiguous.
+        // Examples: in `กะตกลม`, a terminal `ลม` candidate gives the preceding
+        // bare tail a right-hand anchor; without that candidate the tail would
+        // incorrectly be absorbed into `กะ`. The promoted range remains contiguous
+        // with the original terminal atoms.
+        let Some(last_nucleus) = self
+            .atoms
+            .iter()
+            .rposition(super::atom::ThaiAtom::has_nucleus)
+        else {
+            self.promote_bare_consonant_syllable_candidates();
+            return;
+        };
+        let atoms = &mut self.atoms;
+        let unresolved_start = last_nucleus + 1;
+        let unresolved_count = atoms.len().saturating_sub(unresolved_start);
+        if unresolved_count < 2 {
+            return;
+        }
+        let implicit_length = if unresolved_count == 2 {
+            // Rule: a short terminal tail is one conservative implicit candidate;
+            // splitting it further would manufacture an orphan consonant without
+            // a right-hand syllable to receive it.
+            // Example: a two-atom terminal tail such as `จม` stays one candidate;
+            // it does not become `จ | ม` merely to create more boundaries when
+            // neither side has a following structural nucleus.
+            unresolved_count
+        } else if AtomSequence(&atoms[atoms.len() - 3..]).is_implicit_glide_syllable() {
+            3
+        } else {
+            2
+        };
+        if unresolved_count < implicit_length {
+            return;
+        }
+
+        let syllable_start = atoms.len() - implicit_length;
+        let syllable_atoms = &atoms[syllable_start..];
+        if syllable_atoms
+            .iter()
+            .any(|atom| atom.has_nucleus() || atom.first_base().is_none())
+        {
+            return;
+        }
+
+        let Some(syllable) = ThaiAtom::synthetic_implicit(syllable_atoms) else {
+            return;
+        };
+        atoms.truncate(syllable_start);
+        atoms.push(syllable);
+    }
+
     /// Gives an all-bare terminal run structural left and right candidates.
     fn promote_bare_consonant_syllable_candidates(&mut self) {
         // Rule: an all-bare terminal run gets structural left and right candidates
