@@ -164,4 +164,22 @@ impl RuleAnalysis {
         }
         recovered
     }
+
+    /// Whether one bare source scalar is explicitly available as a weak syllable.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::RuleAnalysis;
+    ///
+    /// let analysis = RuleAnalysis::new("เกรียน");
+    /// assert!(analysis.permits_weak_initial(&(3..6)));
+    /// assert!(!analysis.permits_weak_initial(&(0..3)));
+    /// ```
+    #[must_use]
+    pub fn permits_weak_initial(&self, range: &ByteRange) -> bool {
+        self.alternatives.iter().any(|alternative| {
+            matches!(alternative, ReadingAlternative::WeakInitial { source_range, .. } if source_range == range)
+        })
+    }
 }
