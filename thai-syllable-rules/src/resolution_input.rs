@@ -1,3 +1,6 @@
+use crate::character_sequence::CharacterSequence;
+use winnow::Parser;
+
 use crate::atom::ThaiAtom;
 use crate::character::{ThaiCharacter, thai_characters};
 
@@ -32,4 +35,25 @@ pub(crate) struct ThaiRun<'a> {
     pub(crate) following_source: FollowingSource,
     pub(crate) characters: Vec<ThaiCharacter>,
     pub(crate) atoms: Vec<ThaiAtom>,
+}
+
+impl<'a> ThaiRun<'a> {
+    /// Parses one maximal Thai source run into scalar metadata and local atoms.
+    pub(crate) fn parse(
+        text: &'a str,
+        source_offset: usize,
+        following_source: FollowingSource,
+    ) -> Option<Self> {
+        let mut parser = thai_characters;
+        let characters = parser.parse(text).ok()?;
+        let atoms = CharacterSequence(&characters).thai_atoms();
+
+        Some(Self {
+            text,
+            source_offset,
+            following_source,
+            characters,
+            atoms,
+        })
+    }
 }
