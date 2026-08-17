@@ -1,3 +1,4 @@
+use crate::atom_sequence::AtomSequence;
 use crate::character_sequence::CharacterSequence;
 use winnow::Parser;
 
@@ -55,5 +56,52 @@ impl<'a> ThaiRun<'a> {
             characters,
             atoms,
         })
+    }
+
+    /// Splits a valid leading implicit candidate from a final bare singleton.
+    fn promote_bare_prefix_before_singleton(&mut self) {
+        // Rule: before one period, split a valid leading implicit candidate from a
+        // final bare singleton so the singleton can represent an abbreviation.
+        // The candidate may be the whole Thai run or the bare suffix after an
+        // earlier nucleus. Examples: `นะก.` becomes `นะ | ?ก | .`, `จมก.`
+        // becomes `จม | ?ก | .`, and `ในจมก.` becomes `ใน | จม | ?ก | .`.
+        // Repeated periods do not enter this helper.
+        let text = self.text;
+        let atoms = &mut self.atoms;
+        if atoms.len() < 3 {
+            return;
+        }
+
+        let tail_index = atoms.len() - 1;
+        let Some(tail) = atoms.get(tail_index) else {
+            return;
+        };
+        if tail.first_base().is_none()
+            || tail.has_silent_mark()
+            || text[tail.relative_range().clone()].chars().count() != 1
+        {
+            return;
+        }
+
+        let unresolved_start = atoms[..tail_index]
+            .iter()
+            .rposition(ThaiAtom::has_nucleus)
+            .map_or(0, |index| index + 1);
+        let prefix = &atoms[unresolved_start..tail_index];
+        if prefix.iter().any(|atom| atom.first_base().is_none())
+            || AtomSequence(prefix).implicit_syllable_sequence_start() != Some(prefix.len())
+        {
+            return;
+        }
+
+        let Some(leading) = ThaiAtom::synthetic_implicit(prefix) else {
+            return;
+        };
+        let Some(tail) = atoms.pop() else {
+            return;
+        };
+        atoms.truncate(unresolved_start);
+        atoms.push(leading);
+        atoms.push(tail);
     }
 }
