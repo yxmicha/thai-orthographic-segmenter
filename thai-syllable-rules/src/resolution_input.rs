@@ -104,4 +104,49 @@ impl<'a> ThaiRun<'a> {
         atoms.push(leading);
         atoms.push(tail);
     }
+
+    /// Gives an all-bare terminal run structural left and right candidates.
+    fn promote_bare_consonant_syllable_candidates(&mut self) {
+        // Rule: an all-bare terminal run gets structural left and right candidates
+        // only when both have the minimum implicit shape; the middle remains
+        // undecided for the caller.
+        // Examples: a four-atom run can expose two two-atom candidates with the
+        // intervening attachment made explicit; a three-atom run is preserved
+        // instead of yielding a standalone middle consonant. This keeps every
+        // `Undecided` part between real candidates.
+        let atoms = &mut self.atoms;
+        let implicit_length = if atoms.len() >= 3
+            && AtomSequence(&atoms[atoms.len() - 3..]).is_implicit_glide_syllable()
+        {
+            3
+        } else {
+            2
+        };
+        let ambiguous_length = implicit_length + 1;
+        let reserved_suffix_length = implicit_length + ambiguous_length;
+        let Some(leading_length) = atoms.len().checked_sub(reserved_suffix_length) else {
+            return;
+        };
+        if leading_length < 2
+            || atoms
+                .iter()
+                .any(|atom| atom.has_nucleus() || atom.first_base().is_none())
+        {
+            return;
+        }
+
+        let terminal_start = leading_length + ambiguous_length;
+        let Some(leading) = ThaiAtom::synthetic_implicit(&atoms[..leading_length]) else {
+            return;
+        };
+        let Some(terminal) = ThaiAtom::synthetic_implicit(&atoms[terminal_start..]) else {
+            return;
+        };
+        let middle = atoms[leading_length..terminal_start].to_vec();
+
+        atoms.clear();
+        atoms.push(leading);
+        atoms.extend(middle);
+        atoms.push(terminal);
+    }
 }
