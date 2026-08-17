@@ -58,6 +58,25 @@ impl<'a> ThaiRun<'a> {
         })
     }
 
+    /// Adds structural candidates without deciding public ownership.
+    pub(crate) fn prepare_candidates(&mut self) {
+        // Rule: a terminal bare run may need a synthetic right-hand candidate
+        // so the preceding run can expose ambiguity instead of swallowing it.
+        // Example: in `กะตกลม`, the terminal `ลม` candidate gives the bare
+        // material after `กะ` a right-hand anchor. Without that candidate, the
+        // resolver would have no structural reason to expose the choice.
+        if self.following_source.has_single_period() {
+            // Rule: before one adjacent period, a bare singleton may be an
+            // abbreviation tail, so keep the prior candidate and singleton
+            // split. Example: `นะก.` becomes `นะ | ?ก | .`, and the same
+            // suffix pass makes `ในจมก.` become `ใน | จม | ?ก | .`; a
+            // repeated `นะก..` does not receive this exception because the
+            // source scanner classifies the punctuation as ordinary `Text`.
+            self.promote_bare_prefix_before_singleton();
+        }
+        self.promote_terminal_implicit_syllable();
+    }
+
     /// Splits a valid leading implicit candidate from a final bare singleton.
     fn promote_bare_prefix_before_singleton(&mut self) {
         // Rule: before one period, split a valid leading implicit candidate from a
