@@ -1,6 +1,7 @@
 use crate::character::ThaiCharacter;
 use crate::character::ThaiScalar;
 use crate::character_sequence::CharacterSequence;
+use crate::part::{ByteRange, Part};
 use crate::{RHanPattern, ReadingAlternative};
 
 /// Recoverable readings alongside the flat, source-preserving rules projection.
@@ -94,5 +95,73 @@ impl RuleAnalysis {
     #[must_use]
     pub fn r_han_patterns(&self) -> &[RHanPattern] {
         &self.r_han
+    }
+
+    /// Refines caller-validated parts at recoverable boundaries. Source ownership
+    /// remains disjoint; a รร nucleus is kept together even if flat rules split it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::{Part, RuleAnalysis, split};
+    ///
+    /// let source = "เกรียน";
+    /// let parts = RuleAnalysis::new(source).recover_parts(&split(source));
+    /// // The single syllable is reopened at the weak initial `กร`'s boundary.
+    /// assert_eq!(parts, [Part::Undecided(0..6), Part::Undecided(6..18)]);
+    /// ```
+    #[must_use]
+    pub fn recover_parts(&self, parts: &[Part]) -> Vec<Part> {
+        let mut boundaries = Vec::new();
+        for part in parts {
+            let range = part.byte_range();
+            boundaries.extend([range.start, range.end]);
+        }
+        for alternative in &self.alternatives {
+            boundaries.push(alternative.boundary());
+            if let ReadingAlternative::WeakInitial { source_range, .. } = alternative
+                && !self.alternatives.iter().any(|other| matches!(other, ReadingAlternative::LeadingVowelScope { consonant_range, .. } if consonant_range == source_range))
+            {
+                boundaries.push(source_range.start);
+            }
+        }
+        for pattern in &self.r_han {
+            boundaries.extend([pattern.nucleus_range.start, pattern.nucleus_range.end]);
+            if let Some(final_range) = &pattern.possible_final {
+                boundaries.push(final_range.end);
+            }
+        }
+        boundaries.sort_unstable();
+        boundaries.dedup();
+        boundaries.retain(|offset| {
+            !self.r_han.iter().any(|pattern| {
+                pattern.nucleus_range.start < *offset && *offset < pattern.nucleus_range.end
+            })
+        });
+        let mut recovered = Vec::with_capacity(boundaries.len().saturating_sub(1));
+        let mut original_index = 0;
+        for pair in boundaries.windows(2) {
+            let range = pair[0]..pair[1];
+            while parts
+                .get(original_index)
+                .is_some_and(|part| part.byte_range().end <= range.start)
+            {
+                original_index += 1;
+            }
+            let Some(first) = parts.get(original_index) else {
+                break;
+            };
+            if first.byte_range() == range {
+                recovered.push(first.clone());
+                continue;
+            }
+            recovered.push(match first {
+                Part::Syllable(_) | Part::Undecided(_) => Part::Undecided(range),
+                Part::Invalid(_) => Part::Invalid(range),
+                Part::Dot(_) => Part::Dot(range),
+                Part::Text(_) => Part::Text(range),
+            });
+        }
+        recovered
     }
 }
