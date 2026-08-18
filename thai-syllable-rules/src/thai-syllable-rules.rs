@@ -94,6 +94,7 @@ mod resolution_input;
 mod resolution_nucleus;
 mod resolution_ordinary_run;
 mod rule_analysis;
+mod thai_legality;
 
 pub use r_han::RHanPattern;
 pub use reading_alternative::ReadingAlternative;
