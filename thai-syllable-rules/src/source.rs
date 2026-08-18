@@ -92,6 +92,63 @@ fn split_source(text: &str) -> Vec<Part> {
     parts
 }
 
+fn normalize_syllable_parts(source: &str, parts: Vec<Part>) -> Vec<Part> {
+    let mut normalized = Vec::with_capacity(parts.len());
+    for part in parts {
+        let Part::Syllable(range) = part else {
+            normalized.push(part);
+            continue;
+        };
+        let text = &source[range.clone()];
+        if text.chars().count() < 2 {
+            normalized.push(Part::Undecided(range));
+            continue;
+        }
+
+        let candidate_parts = split_source(text);
+        let candidate_parts_are_stable = candidate_parts.len() == 1
+            && candidate_parts.first().is_some_and(|candidate_part| {
+                matches!(candidate_part, Part::Syllable(candidate_range)
+                    if candidate_range.start == 0 && candidate_range.end == text.len())
+            });
+        let candidate_parts = if candidate_parts_are_stable {
+            candidate_parts
+        } else {
+            normalize_syllable_parts(text, candidate_parts)
+        };
+        let candidate_is_minimum_shape = !candidate_parts
+            .iter()
+            .any(|part| matches!(part, Part::Invalid(_) | Part::Dot(_) | Part::Text(_)))
+            && candidate_parts.iter().any(|part| {
+                matches!(part, Part::Syllable(candidate_range) if text[candidate_range.clone()]
+                .chars()
+                .count()
+                >= 2)
+            });
+        if candidate_is_minimum_shape {
+            normalized.push(Part::Syllable(range));
+            continue;
+        }
+
+        for candidate_part in candidate_parts {
+            let candidate_range = candidate_part.byte_range();
+            let absolute_range =
+                (range.start + candidate_range.start)..(range.start + candidate_range.end);
+            match candidate_part {
+                Part::Syllable(_) if source[absolute_range.clone()].chars().count() < 2 => {
+                    normalized.push(Part::Undecided(absolute_range));
+                }
+                Part::Syllable(_) => normalized.push(Part::Syllable(absolute_range)),
+                Part::Undecided(_) => normalized.push(Part::Undecided(absolute_range)),
+                Part::Invalid(_) => normalized.push(Part::Invalid(absolute_range)),
+                Part::Dot(_) => normalized.push(Part::Dot(absolute_range)),
+                Part::Text(_) => push_text(&mut normalized, absolute_range),
+            }
+        }
+    }
+    normalized
+}
+
 impl Part {
     fn can_precede_dot(&self) -> bool {
         // Rule: a period has Thai punctuation status only immediately after a
