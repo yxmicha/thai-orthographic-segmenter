@@ -6,3 +6,17 @@ pub(crate) struct ThaiLegality<'a> {
     source_offset: usize,
     following_source: FollowingSource,
 }
+
+impl<'a> ThaiLegality<'a> {
+    pub(crate) const fn new(
+        text: &'a str,
+        source_offset: usize,
+        following_source: FollowingSource,
+    ) -> Self {
+        Self {
+            text,
+            source_offset,
+            following_source,
+        }
+    }
+}
