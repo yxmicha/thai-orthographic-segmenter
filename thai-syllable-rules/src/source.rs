@@ -33,3 +33,11 @@ enum SourceChunk<'a> {
     // their original order instead of being normalized away.
     Text(&'a str),
 }
+
+impl SourceChunk<'_> {
+    fn text(&self) -> &str {
+        match self {
+            Self::Thai(text) | Self::Periods(text) | Self::Text(text) => text,
+        }
+    }
+}
