@@ -78,6 +78,28 @@ impl SyllablePattern {
         Self::inspect_with(source, SilentConsonants::Counted)
     }
 
+    /// Counts substantial constructions for the one-pattern dataset constraint.
+    ///
+    /// Like [`Self::inspect`], but consonant-only silent-mark atoms do
+    /// not introduce a vowel pattern. For example, the opaque `มพ์` continuation
+    /// in `พิมพ์` is not another vowel. Bare consonants likewise add no pattern.
+    /// Compound vowels and r-han remain single constructions. This is a structural
+    /// upper-bound check, not proof of completeness or a phonetic syllable count.
+    /// The original scanner count is preserved for existing model score semantics.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::SyllablePattern;
+    ///
+    /// assert_eq!(SyllablePattern::inspect_substantial("กะ").map(|pattern| pattern.vowel_pattern_count()), Some(1));
+    /// assert!(SyllablePattern::inspect_substantial("abc").is_none());
+    /// ```
+    #[must_use]
+    pub fn inspect_substantial(source: &str) -> Option<Self> {
+        Self::inspect_with(source, SilentConsonants::Excluded)
+    }
+
     fn inspect_with(source: &str, silent_consonants: SilentConsonants) -> Option<Self> {
         let mut input = source;
         let characters = thai_characters(&mut input).ok()?;
