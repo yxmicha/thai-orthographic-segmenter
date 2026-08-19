@@ -97,6 +97,7 @@ mod rule_analysis;
 mod source;
 mod syllable_pattern;
 mod thai_legality;
+pub use part::{ByteRange, Part};
 
 pub use r_han::RHanPattern;
 pub use reading_alternative::ReadingAlternative;

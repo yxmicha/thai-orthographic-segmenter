@@ -1,4 +1,6 @@
 use crate::character::ThaiScalar;
+use crate::character_sequence::CharacterSequence;
+use crate::{Part, character::thai_characters, source::split};
 
 /// Structural vowel-pattern facts for one rule candidate.
 ///
@@ -53,6 +55,44 @@ impl SyllablePattern {
     #[must_use]
     pub const fn starts_with_leading_vowel(&self) -> bool {
         self.starts_with_leading_vowel
+    }
+
+    fn inspect_with(source: &str, silent_consonants: SilentConsonants) -> Option<Self> {
+        let mut input = source;
+        let characters = thai_characters(&mut input).ok()?;
+        if !input.is_empty() {
+            return None;
+        }
+        let atoms = CharacterSequence(&characters).thai_atoms();
+        let r_han = CharacterSequence(&characters).r_han_patterns();
+        Some(Self {
+            vowel_pattern_count: atoms
+                .iter()
+                .filter(|atom| {
+                    atom.has_nucleus()
+                        && !(silent_consonants == SilentConsonants::Excluded
+                            && atom.has_silent_mark()
+                            && !atom.has_explicit_rime()
+                            && !atom.starts_with_leading_vowel()
+                            && !atom.has_carrier()
+                            && !atom.has_glide())
+                        && !starts_with_silenced_cell(&source[atom.relative_range().clone()])
+                        && !matches!(
+                            crate::completeness::Completeness::of_atom(atom, source),
+                            crate::completeness::Completeness::RequiresHost
+                        )
+                        && !r_han.iter().any(|pattern| {
+                            let range = atom.relative_range();
+                            range.start < pattern.nucleus_range.end
+                                && pattern.nucleus_range.start < range.end
+                        })
+                })
+                .count()
+                + r_han.len(),
+            starts_with_leading_vowel: atoms
+                .first()
+                .is_some_and(super::atom::ThaiAtom::starts_with_leading_vowel),
+        })
     }
 }
 
