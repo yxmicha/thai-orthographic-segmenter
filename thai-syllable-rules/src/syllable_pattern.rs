@@ -57,6 +57,27 @@ impl SyllablePattern {
         self.starts_with_leading_vowel
     }
 
+    /// Inspects one complete Thai candidate's local vowel-pattern structure.
+    ///
+    /// Returns `None` for empty, non-Thai, or otherwise unparseable source. This
+    /// inspects scanner nuclei without validating mark legality or completeness;
+    /// it is not a count of spoken syllables or an exhaustive parse forest. A
+    /// candidate such as `ลิ` reports one pattern, while a bare terminal pair such
+    /// as `ตร` reports zero because it can still serve as continuation material.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::SyllablePattern;
+    ///
+    /// assert!(SyllablePattern::inspect("กะ").is_some());
+    /// assert!(SyllablePattern::inspect("abc").is_none());
+    /// ```
+    #[must_use]
+    pub fn inspect(source: &str) -> Option<Self> {
+        Self::inspect_with(source, SilentConsonants::Counted)
+    }
+
     fn inspect_with(source: &str, silent_consonants: SilentConsonants) -> Option<Self> {
         let mut input = source;
         let characters = thai_characters(&mut input).ok()?;
