@@ -139,6 +139,39 @@ impl SyllablePattern {
     }
 }
 
+/// Returns whether `source` contains at least one complete syllable pattern.
+///
+/// A nucleus-bearing atom counts only when its spelling contains at least two
+/// Thai characters. A pair of adjacent consonant atoms also counts: Thai's
+/// implicit-vowel spelling can be represented by two consonants even when the
+/// atom scanner keeps their ownership unresolved. This deliberately answers a
+/// minimum-shape question, not whether the source is exactly one syllable;
+/// callers that need the number of patterns should use
+/// [`SyllablePattern::inspect`].
+///
+/// # Examples
+///
+/// ```
+/// use thai_syllable_rules::is_one_syllable_or_more;
+///
+/// assert!(is_one_syllable_or_more("กะ"));
+/// assert!(!is_one_syllable_or_more("abc"));
+/// ```
+#[must_use]
+pub fn is_one_syllable_or_more(source: &str) -> bool {
+    let parts = split(source);
+    if parts.is_empty()
+        || parts
+            .iter()
+            .any(|part| matches!(part, Part::Invalid(_) | Part::Dot(_) | Part::Text(_)))
+    {
+        return false;
+    }
+    parts
+        .iter()
+        .any(|part| matches!(part, Part::Syllable(_)) && part.text(source).chars().count() >= 2)
+}
+
 fn starts_with_silenced_cell(source: &str) -> bool {
     let mut characters = source.chars();
     if !characters
