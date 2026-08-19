@@ -10,6 +10,71 @@ use crate::part::{Part, push_text};
 use crate::resolution_input::FollowingSource;
 use crate::thai_legality::ThaiLegality;
 
+/// Splits arbitrary UTF-8 text into conservative Thai rule parts.
+///
+/// The returned ranges are contiguous, non-empty, and cover the input exactly.
+/// Every public [`Part::Syllable`] range contains at least two Thai characters;
+/// shorter candidate ranges remain unresolved or are projected into their
+/// source-preserving child parts.
+/// A period is a [`Part::Dot`] only when it is a single period immediately
+/// following a [`Part::Syllable`] or [`Part::Undecided`].
+///
+/// # Examples
+///
+/// ```
+/// use thai_syllable_rules::{Part, split};
+///
+/// assert_eq!(split("กา."), [Part::Syllable(0..6), Part::Dot(6..7)]);
+/// assert_eq!(split("abc"), [Part::Text(0..3)]);
+/// ```
+pub fn split(text: &str) -> Vec<Part> {
+    let mut parts = normalize_syllable_parts(text, split_source(text));
+    for index in 0..parts.len() {
+        let Part::Syllable(range) = &parts[index] else {
+            continue;
+        };
+        let candidate = &text[range.clone()];
+        let pronounced = if candidate.ends_with('์') {
+            candidate
+                .char_indices()
+                .rev()
+                .find(|(_, character)| !ThaiScalar(*character).is_combining_mark())
+                .map_or(candidate, |(start, _)| &candidate[..start])
+        } else {
+            candidate
+        };
+        let ends_with_open_ue = pronounced
+            .trim_end_matches(|character| ThaiScalar(character).is_tone_mark())
+            .ends_with('ื');
+        let possible_completion = parts.get(index + 1).is_some_and(|part| {
+            matches!(part, Part::Undecided(_))
+                && part
+                    .text(text)
+                    .chars()
+                    .next()
+                    .is_some_and(|character| ThaiScalar(character).is_coda())
+        });
+        if ends_with_open_ue && !possible_completion {
+            // A tone cannot supply the missing อ or final. Check original
+            // context after recursive projection so พื้ | ?น stays available.
+            parts[index] = Part::Invalid(range.clone());
+        }
+    }
+    let mut resolved = Vec::with_capacity(parts.len());
+    for part in parts {
+        match part {
+            Part::Dot(range) if !resolved.last().is_some_and(Part::can_precede_dot) => {
+                push_text(&mut resolved, range);
+            }
+            Part::Text(range) => push_text(&mut resolved, range),
+            Part::Syllable(_) | Part::Undecided(_) | Part::Invalid(_) | Part::Dot(_) => {
+                resolved.push(part);
+            }
+        }
+    }
+    resolved
+}
+
 fn split_source(text: &str) -> Vec<Part> {
     // Rule: scan maximal runs without normalizing, dropping, or reordering
     // any scalar. The parser receives only the Thai runs from this layer.
