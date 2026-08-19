@@ -35,4 +35,21 @@ impl SyllablePattern {
     pub const fn vowel_pattern_count(&self) -> usize {
         self.vowel_pattern_count
     }
+
+    /// Whether the candidate begins with a preposed vowel construction.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::SyllablePattern;
+    ///
+    /// let leading = SyllablePattern::inspect("เกรียน").expect("Thai candidate");
+    /// let plain = SyllablePattern::inspect("กะ").expect("Thai candidate");
+    /// assert!(leading.starts_with_leading_vowel());
+    /// assert!(!plain.starts_with_leading_vowel());
+    /// ```
+    #[must_use]
+    pub const fn starts_with_leading_vowel(&self) -> bool {
+        self.starts_with_leading_vowel
+    }
 }
