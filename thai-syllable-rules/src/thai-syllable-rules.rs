@@ -95,6 +95,7 @@ mod resolution_nucleus;
 mod resolution_ordinary_run;
 mod rule_analysis;
 mod source;
+mod syllable_pattern;
 mod thai_legality;
 
 pub use r_han::RHanPattern;
