@@ -70,3 +70,10 @@ fn starts_with_silenced_cell(source: &str) -> bool {
         })
         .any(|character| ThaiScalar(character).is_garan_mark())
 }
+
+/// Whether consonant-only silent-mark atoms count as vowel patterns.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum SilentConsonants {
+    Counted,
+    Excluded,
+}
