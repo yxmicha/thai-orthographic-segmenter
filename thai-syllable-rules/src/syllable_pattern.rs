@@ -100,6 +100,61 @@ impl SyllablePattern {
         Self::inspect_with(source, SilentConsonants::Excluded)
     }
 
+    /// Whether `source`, whose pattern this is, is a complete orthographic candidate.
+    ///
+    /// `self` must be the result of [`Self::inspect`] for the same `source`, so the pattern is
+    /// not recomputed. Unlike the minimum-shape query [`is_one_syllable_or_more`], this rejects
+    /// ordinary material following a hard-closed rime. Context-licensed weak initials are
+    /// handled by `RuleAnalysis`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::SyllablePattern;
+    ///
+    /// let source = "กะ";
+    /// let pattern = SyllablePattern::inspect(source).expect("Thai candidate");
+    /// assert!(pattern.is_candidate(source));
+    /// // Ambiguous consonants between two syllables are not one candidate.
+    /// assert!(!SyllablePattern::inspect("กะตกลม").expect("Thai").is_candidate("กะตกลม"));
+    /// ```
+    #[must_use]
+    pub fn is_candidate(self, source: &str) -> bool {
+        // The pattern count is the cheap check; `is_one_syllable_or_more` runs a full split.
+        if self.vowel_pattern_count > 1 || !is_one_syllable_or_more(source) {
+            return false;
+        }
+        let mut input = source;
+        let Ok(characters) = thai_characters(&mut input) else {
+            return false;
+        };
+        let atoms = CharacterSequence(&characters).thai_atoms();
+        if atoms
+            .first()
+            .is_some_and(|atom| starts_with_silenced_cell(&source[atom.relative_range().clone()]))
+        {
+            return false;
+        }
+        for (index, atom) in atoms.iter().enumerate() {
+            if atom.has_hard_ending()
+                && !matches!(
+                    crate::completeness::Completeness::of_atom(atom, source),
+                    crate::completeness::Completeness::RequiresHost
+                )
+                && atoms[index + 1..].iter().any(|following| {
+                    following.first_base().is_some()
+                        && !matches!(
+                            crate::completeness::Completeness::of_atom(following, source),
+                            crate::completeness::Completeness::RequiresHost
+                        )
+                })
+            {
+                return false;
+            }
+        }
+        true
+    }
+
     fn inspect_with(source: &str, silent_consonants: SilentConsonants) -> Option<Self> {
         let mut input = source;
         let characters = thai_characters(&mut input).ok()?;
