@@ -1,3 +1,5 @@
+use crate::character::ThaiScalar;
+
 /// Structural vowel-pattern facts for one rule candidate.
 ///
 /// This describes local orthography only. It does not decide whether the
@@ -52,4 +54,19 @@ impl SyllablePattern {
     pub const fn starts_with_leading_vowel(&self) -> bool {
         self.starts_with_leading_vowel
     }
+}
+
+fn starts_with_silenced_cell(source: &str) -> bool {
+    let mut characters = source.chars();
+    if !characters
+        .next()
+        .is_some_and(|character| ThaiScalar(character).is_base())
+    {
+        return false;
+    }
+    characters
+        .take_while(|character| {
+            !ThaiScalar(*character).is_base() && !ThaiScalar(*character).is_leading_vowel()
+        })
+        .any(|character| ThaiScalar(character).is_garan_mark())
 }
