@@ -18,3 +18,21 @@ pub struct SyllablePattern {
     pub(crate) vowel_pattern_count: usize,
     pub(crate) starts_with_leading_vowel: bool,
 }
+
+impl SyllablePattern {
+    /// Number of atom-level vowel nuclei in the candidate.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_rules::SyllablePattern;
+    ///
+    /// assert_eq!(SyllablePattern::inspect("ลิ").map(|pattern| pattern.vowel_pattern_count()), Some(1));
+    /// // A bare terminal pair is continuation material and has no nucleus.
+    /// assert_eq!(SyllablePattern::inspect("ตร").map(|pattern| pattern.vowel_pattern_count()), Some(0));
+    /// ```
+    #[must_use]
+    pub const fn vowel_pattern_count(&self) -> usize {
+        self.vowel_pattern_count
+    }
+}
