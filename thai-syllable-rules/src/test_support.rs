@@ -6,10 +6,13 @@
 //! the normal library API. The atom module keeps its one read-only semantic
 //! trace behind the same `test` feature gate.
 
-
+use crate::character_sequence::CharacterSequence;
 use std::ops::Range;
 
+use winnow::Parser;
+
 use crate::atom::{EndingShape, NucleusShape, OnsetShape, SilentMarkShape, ThaiAtom};
+use crate::character::thai_characters;
 
 /// The semantic onset shape captured by atomization.
 #[doc(hidden)]
@@ -177,4 +180,17 @@ impl AtomSnapshot {
     fn from_atoms(atoms: &[ThaiAtom]) -> Vec<Self> {
         atoms.iter().map(Self::from).collect()
     }
+}
+
+/// Parses a complete Thai run and returns the atomization snapshot.
+#[doc(hidden)]
+pub fn parsed_atoms(source: &str) -> Option<Vec<AtomSnapshot>> {
+    let mut input = source;
+    let characters = thai_characters.parse_next(&mut input).ok()?;
+    if !input.is_empty() {
+        return None;
+    }
+    Some(AtomSnapshot::from_atoms(
+        &CharacterSequence(&characters).thai_atoms(),
+    ))
 }
