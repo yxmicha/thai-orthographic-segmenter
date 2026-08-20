@@ -97,6 +97,11 @@ mod rule_analysis;
 mod source;
 mod syllable_pattern;
 mod thai_legality;
+
+/// Internal stage snapshots used by repository integration tests.
+#[doc(hidden)]
+#[cfg(feature = "test-support")]
+pub mod test_support;
 pub use part::{ByteRange, Part};
 
 pub use r_han::RHanPattern;
