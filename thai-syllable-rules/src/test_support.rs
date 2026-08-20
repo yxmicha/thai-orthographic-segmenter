@@ -60,3 +60,20 @@ pub enum EndingSnapshot {
     /// The atom has a hard structural ending.
     Hard,
 }
+
+/// The semantic silent-mark shape captured by atomization.
+#[doc(hidden)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SilentMarkSnapshot {
+    /// No garan mark is present.
+    None,
+    /// A garan mark is attached without an opaque suffix classification.
+    Attached,
+    /// A garan-bearing opaque suffix and its shape flags.
+    Opaque {
+        /// Whether the suffix contains a vowel carrier.
+        has_carrier: bool,
+        /// Whether the suffix starts with an initial cluster.
+        has_initial_cluster: bool,
+    },
+}
