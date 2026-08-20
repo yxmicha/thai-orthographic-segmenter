@@ -9,6 +9,8 @@
 
 use std::ops::Range;
 
+use crate::atom::{EndingShape, NucleusShape, OnsetShape, SilentMarkShape, ThaiAtom};
+
 /// The semantic onset shape captured by atomization.
 #[doc(hidden)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -106,4 +108,56 @@ pub struct AtomSnapshot {
     pub has_nucleus: bool,
     /// The semantic shape classifications used by resolution.
     pub semantic: SemanticAtomSnapshot,
+}
+
+impl From<&ThaiAtom> for SemanticAtomSnapshot {
+    fn from(atom: &ThaiAtom) -> Self {
+        let (onset_shape, nucleus_shape, ending_shape, silent_mark_shape) =
+            (atom.onset, atom.nucleus, atom.ending, atom.silent_mark);
+        let onset = match onset_shape {
+            OnsetShape::None => OnsetSnapshot::None,
+            OnsetShape::Base(base) => OnsetSnapshot::Base(base),
+            OnsetShape::LeadingVowel { base } => OnsetSnapshot::LeadingVowel { base },
+            OnsetShape::IndependentVowel(vowel) => OnsetSnapshot::IndependentVowel(vowel),
+            OnsetShape::DependentMark => OnsetSnapshot::DependentMark,
+        };
+        let nucleus = match nucleus_shape {
+            NucleusShape::None => NucleusSnapshot::None,
+            NucleusShape::OrphanRime => NucleusSnapshot::OrphanRime,
+            NucleusShape::Implicit => NucleusSnapshot::Implicit,
+            NucleusShape::Rime {
+                explicit,
+                carrier,
+                completed_ue_carrier,
+                glide,
+            } => NucleusSnapshot::Rime {
+                explicit,
+                carrier,
+                completed_ue_carrier,
+                glide,
+            },
+            NucleusShape::IndependentVowel => NucleusSnapshot::IndependentVowel,
+        };
+        let ending = match ending_shape {
+            EndingShape::Open => EndingSnapshot::Open,
+            EndingShape::Hard => EndingSnapshot::Hard,
+        };
+        let silent_mark = match silent_mark_shape {
+            SilentMarkShape::None => SilentMarkSnapshot::None,
+            SilentMarkShape::Attached => SilentMarkSnapshot::Attached,
+            SilentMarkShape::Opaque {
+                has_carrier,
+                has_initial_cluster,
+            } => SilentMarkSnapshot::Opaque {
+                has_carrier,
+                has_initial_cluster,
+            },
+        };
+        Self {
+            onset,
+            nucleus,
+            ending,
+            silent_mark,
+        }
+    }
 }
