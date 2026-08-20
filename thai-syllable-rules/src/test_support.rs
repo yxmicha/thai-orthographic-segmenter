@@ -77,3 +77,17 @@ pub enum SilentMarkSnapshot {
         has_initial_cluster: bool,
     },
 }
+
+/// Semantic shape metadata for one atom.
+#[doc(hidden)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SemanticAtomSnapshot {
+    /// The atom's onset shape.
+    pub onset: OnsetSnapshot,
+    /// The atom's nucleus shape.
+    pub nucleus: NucleusSnapshot,
+    /// The atom's ending shape.
+    pub ending: EndingSnapshot,
+    /// The atom's silent-mark shape.
+    pub silent_mark: SilentMarkSnapshot,
+}
