@@ -161,3 +161,14 @@ impl From<&ThaiAtom> for SemanticAtomSnapshot {
         }
     }
 }
+
+impl From<&ThaiAtom> for AtomSnapshot {
+    fn from(atom: &ThaiAtom) -> Self {
+        Self {
+            range: atom.relative_range().clone(),
+            has_hard_ending: atom.has_hard_ending(),
+            has_nucleus: atom.has_nucleus(),
+            semantic: SemanticAtomSnapshot::from(atom),
+        }
+    }
+}
