@@ -172,3 +172,9 @@ impl From<&ThaiAtom> for AtomSnapshot {
         }
     }
 }
+
+impl AtomSnapshot {
+    fn from_atoms(atoms: &[ThaiAtom]) -> Vec<Self> {
+        atoms.iter().map(Self::from).collect()
+    }
+}
