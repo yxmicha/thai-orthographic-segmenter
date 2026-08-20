@@ -25,3 +25,28 @@ pub enum OnsetSnapshot {
     /// A dependent mark at the start of malformed source material.
     DependentMark,
 }
+
+/// The semantic nucleus shape captured by atomization.
+#[doc(hidden)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum NucleusSnapshot {
+    /// No nucleus was found.
+    None,
+    /// Dependent vowel material without a consonant base.
+    OrphanRime,
+    /// An implicit vowel nucleus.
+    Implicit,
+    /// An explicit rime and its structural flags.
+    Rime {
+        /// Whether the rime contains an explicit vowel mark.
+        explicit: bool,
+        /// Whether an `อ` carrier participates in the rime.
+        carrier: bool,
+        /// Whether a `ือ` carrier was completed.
+        completed_ue_carrier: bool,
+        /// Whether a `ย` or `ว` glide participates in the rime.
+        glide: bool,
+    },
+    /// An independent `ฤ` or `ฦ` nucleus.
+    IndependentVowel,
+}
