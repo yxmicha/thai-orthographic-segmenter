@@ -50,3 +50,13 @@ pub enum NucleusSnapshot {
     /// An independent `ฤ` or `ฦ` nucleus.
     IndependentVowel,
 }
+
+/// The semantic ending shape captured by atomization.
+#[doc(hidden)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum EndingSnapshot {
+    /// The atom does not have a hard structural ending.
+    Open,
+    /// The atom has a hard structural ending.
+    Hard,
+}
