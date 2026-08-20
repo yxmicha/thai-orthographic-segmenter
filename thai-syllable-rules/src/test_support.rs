@@ -7,6 +7,8 @@
 //! trace behind the same `test` feature gate.
 
 
+use std::ops::Range;
+
 /// The semantic onset shape captured by atomization.
 #[doc(hidden)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -90,4 +92,18 @@ pub struct SemanticAtomSnapshot {
     pub ending: EndingSnapshot,
     /// The atom's silent-mark shape.
     pub silent_mark: SilentMarkSnapshot,
+}
+
+/// A read-only snapshot of an atom emitted by Thai atomization.
+#[doc(hidden)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AtomSnapshot {
+    /// The atom's source-relative UTF-8 range.
+    pub range: Range<usize>,
+    /// Whether the atom's local ending is structurally closed.
+    pub has_hard_ending: bool,
+    /// Whether the atom contains a recognized nucleus.
+    pub has_nucleus: bool,
+    /// The semantic shape classifications used by resolution.
+    pub semantic: SemanticAtomSnapshot,
 }
