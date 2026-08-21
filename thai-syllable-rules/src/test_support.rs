@@ -194,3 +194,15 @@ pub fn parsed_atoms(source: &str) -> Option<Vec<AtomSnapshot>> {
         &CharacterSequence(&characters).thai_atoms(),
     ))
 }
+
+/// A read-only snapshot of a prepared Thai run and its source context.
+#[doc(hidden)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PreparedRunSnapshot {
+    /// The run's absolute source offset.
+    pub source_offset: usize,
+    /// Whether one adjacent period follows the run.
+    pub followed_by_single_period: bool,
+    /// The prepared atom sequence.
+    pub atoms: Vec<AtomSnapshot>,
+}
