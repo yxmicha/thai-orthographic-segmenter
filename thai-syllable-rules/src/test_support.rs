@@ -13,6 +13,7 @@ use winnow::Parser;
 
 use crate::atom::{EndingShape, NucleusShape, OnsetShape, SilentMarkShape, ThaiAtom};
 use crate::character::thai_characters;
+use crate::resolution_input::{FollowingSource, ThaiRun};
 
 /// The semantic onset shape captured by atomization.
 #[doc(hidden)]
@@ -205,4 +206,21 @@ pub struct PreparedRunSnapshot {
     pub followed_by_single_period: bool,
     /// The prepared atom sequence.
     pub atoms: Vec<AtomSnapshot>,
+}
+
+impl<'a> ThaiRun<'a> {
+    fn from_test_source(
+        source: &'a str,
+        source_offset: usize,
+        followed_by_single_period: bool,
+    ) -> Option<Self> {
+        let following_source = if followed_by_single_period {
+            FollowingSource::SinglePeriod
+        } else {
+            FollowingSource::None
+        };
+        let mut run = ThaiRun::parse(source, source_offset, following_source)?;
+        run.prepare_candidates();
+        Some(run)
+    }
 }
