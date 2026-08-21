@@ -224,3 +224,16 @@ impl<'a> ThaiRun<'a> {
         Some(run)
     }
 }
+
+impl From<&ThaiRun<'_>> for PreparedRunSnapshot {
+    fn from(prepared: &ThaiRun<'_>) -> Self {
+        Self {
+            source_offset: prepared.source_offset,
+            followed_by_single_period: matches!(
+                prepared.following_source,
+                FollowingSource::SinglePeriod
+            ),
+            atoms: AtomSnapshot::from_atoms(&prepared.atoms),
+        }
+    }
+}
