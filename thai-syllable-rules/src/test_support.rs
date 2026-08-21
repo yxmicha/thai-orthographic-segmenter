@@ -272,3 +272,13 @@ pub enum PartKind {
     /// Preserved non-Thai or otherwise invalid source material.
     Text,
 }
+
+/// A canonical source range trace used for both planned and projected output.
+#[doc(hidden)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TracePart {
+    /// The public classification of the range.
+    pub kind: PartKind,
+    /// The exact UTF-8 range in the original source.
+    pub range: Range<usize>,
+}
