@@ -249,3 +249,10 @@ impl From<&ThaiRun<'_>> for PreparedRunSnapshot {
         }
     }
 }
+
+/// Runs candidate preparation and returns its resulting atom snapshot.
+#[doc(hidden)]
+#[must_use]
+pub fn prepared_atoms(source: &str, followed_by_single_period: bool) -> Option<Vec<AtomSnapshot>> {
+    prepared_run(source, 0, followed_by_single_period).map(|prepared| prepared.atoms)
+}
