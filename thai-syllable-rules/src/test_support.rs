@@ -13,6 +13,7 @@ use winnow::Parser;
 
 use crate::atom::{EndingShape, NucleusShape, OnsetShape, SilentMarkShape, ThaiAtom};
 use crate::character::thai_characters;
+use crate::part::Part;
 use crate::resolution_input::{FollowingSource, ThaiRun};
 
 /// The semantic onset shape captured by atomization.
@@ -281,4 +282,20 @@ pub struct TracePart {
     pub kind: PartKind,
     /// The exact UTF-8 range in the original source.
     pub range: Range<usize>,
+}
+
+impl From<&Part> for TracePart {
+    fn from(part: &Part) -> Self {
+        let kind = match part {
+            Part::Syllable(_) => PartKind::Syllable,
+            Part::Undecided(_) => PartKind::Undecided,
+            Part::Invalid(_) => PartKind::Invalid,
+            Part::Dot(_) => PartKind::Dot,
+            Part::Text(_) => PartKind::Text,
+        };
+        Self {
+            kind,
+            range: part.byte_range(),
+        }
+    }
 }
