@@ -256,3 +256,19 @@ impl From<&ThaiRun<'_>> for PreparedRunSnapshot {
 pub fn prepared_atoms(source: &str, followed_by_single_period: bool) -> Option<Vec<AtomSnapshot>> {
     prepared_run(source, 0, followed_by_single_period).map(|prepared| prepared.atoms)
 }
+
+/// The public classification of one projected source range.
+#[doc(hidden)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PartKind {
+    /// A complete structural Thai syllable.
+    Syllable,
+    /// Thai material with unresolved ownership.
+    Undecided,
+    /// A recognized but invalid standalone local Thai unit.
+    Invalid,
+    /// A valid single period following a Thai part.
+    Dot,
+    /// Preserved non-Thai or otherwise invalid source material.
+    Text,
+}
