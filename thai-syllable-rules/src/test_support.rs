@@ -225,6 +225,18 @@ impl<'a> ThaiRun<'a> {
     }
 }
 
+/// Runs candidate preparation and returns its source context and atom snapshot.
+#[doc(hidden)]
+#[must_use]
+pub fn prepared_run(
+    source: &str,
+    source_offset: usize,
+    followed_by_single_period: bool,
+) -> Option<PreparedRunSnapshot> {
+    let prepared = ThaiRun::from_test_source(source, source_offset, followed_by_single_period)?;
+    Some(PreparedRunSnapshot::from(&prepared))
+}
+
 impl From<&ThaiRun<'_>> for PreparedRunSnapshot {
     fn from(prepared: &ThaiRun<'_>) -> Self {
         Self {
