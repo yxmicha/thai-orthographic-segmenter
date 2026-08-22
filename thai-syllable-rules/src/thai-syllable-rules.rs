@@ -110,6 +110,7 @@ pub use syllable_pattern::{SyllablePattern, is_one_syllable_or_more};
 
 pub use r_han::RHanPattern;
 pub use reading_alternative::ReadingAlternative;
+pub use rule_analysis::RuleAnalysis;
 
 #[cfg(doctest)]
 #[doc = include_str!("../README.md")]
