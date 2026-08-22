@@ -102,6 +102,8 @@ mod thai_legality;
 #[doc(hidden)]
 #[cfg(feature = "test-support")]
 pub mod test_support;
+
+pub use character::ThaiScalar;
 pub use part::{ByteRange, Part};
 pub use source::split;
 
