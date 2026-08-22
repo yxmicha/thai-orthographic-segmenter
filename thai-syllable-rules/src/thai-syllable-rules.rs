@@ -106,6 +106,7 @@ pub mod test_support;
 pub use character::ThaiScalar;
 pub use part::{ByteRange, Part};
 pub use source::split;
+pub use syllable_pattern::{SyllablePattern, is_one_syllable_or_more};
 
 pub use r_han::RHanPattern;
 pub use reading_alternative::ReadingAlternative;
