@@ -107,3 +107,7 @@ pub use source::split;
 
 pub use r_han::RHanPattern;
 pub use reading_alternative::ReadingAlternative;
+
+#[cfg(doctest)]
+#[doc = include_str!("../README.md")]
+struct ReadmeDoctests;
