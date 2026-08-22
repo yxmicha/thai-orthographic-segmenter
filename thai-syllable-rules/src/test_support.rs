@@ -299,3 +299,14 @@ impl From<&Part> for TracePart {
         }
     }
 }
+
+/// Resolves a prepared Thai run and returns its canonical source range trace.
+#[doc(hidden)]
+pub fn planned_parts(
+    source: &str,
+    source_offset: usize,
+    followed_by_single_period: bool,
+) -> Option<Vec<TracePart>> {
+    let prepared = ThaiRun::from_test_source(source, source_offset, followed_by_single_period)?;
+    Some(prepared.resolve().iter().map(TracePart::from).collect())
+}
