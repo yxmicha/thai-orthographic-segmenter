@@ -103,6 +103,7 @@ mod thai_legality;
 #[cfg(feature = "test-support")]
 pub mod test_support;
 pub use part::{ByteRange, Part};
+pub use source::split;
 
 pub use r_han::RHanPattern;
 pub use reading_alternative::ReadingAlternative;

@@ -310,3 +310,9 @@ pub fn planned_parts(
     let prepared = ThaiRun::from_test_source(source, source_offset, followed_by_single_period)?;
     Some(prepared.resolve().iter().map(TracePart::from).collect())
 }
+
+/// Projects a source string and returns its public range snapshots.
+#[doc(hidden)]
+pub fn projected_parts(source: &str) -> Vec<TracePart> {
+    crate::split(source).iter().map(TracePart::from).collect()
+}
