@@ -160,3 +160,17 @@ fn public_parts_expose_source_preserving_kinds_and_ranges() {
         ]
     );
 }
+
+#[test]
+fn projected_ranges_are_contiguous_for_mixed_source() {
+    let source = "ไทย English ๑ กะ.";
+    let parts = projected_parts(source);
+
+    assert_eq!(parts.first().map(|part| part.range.start), Some(0));
+    assert_eq!(parts.last().map(|part| part.range.end), Some(source.len()));
+    assert!(
+        parts
+            .windows(2)
+            .all(|window| window[0].range.end == window[1].range.start)
+    );
+}
