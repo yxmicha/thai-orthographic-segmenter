@@ -33,3 +33,7 @@ winnow.workspace = true
 proptest.workspace = true
 serde_json.workspace = true
 
+[[test]]
+name = "architecture_contracts"
+path = "tests/architecture_contracts.rs"
+required-features = ["test-support"]
