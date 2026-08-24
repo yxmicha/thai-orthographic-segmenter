@@ -131,3 +131,32 @@ fn prepared_context_and_planned_ranges_remain_source_relative_and_explicit() {
         ]
     );
 }
+
+#[test]
+fn public_parts_expose_source_preserving_kinds_and_ranges() {
+    assert_eq!(
+        projected_parts("นะก่กา. /"),
+        vec![
+            TracePart {
+                kind: PartKind::Syllable,
+                range: 0..6,
+            },
+            TracePart {
+                kind: PartKind::Invalid,
+                range: 6..12,
+            },
+            TracePart {
+                kind: PartKind::Syllable,
+                range: 12..18,
+            },
+            TracePart {
+                kind: PartKind::Dot,
+                range: 18..19,
+            },
+            TracePart {
+                kind: PartKind::Text,
+                range: 19..21,
+            },
+        ]
+    );
+}
