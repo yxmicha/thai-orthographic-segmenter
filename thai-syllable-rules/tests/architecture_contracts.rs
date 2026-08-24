@@ -89,3 +89,45 @@ fn candidate_preparation_adds_a_terminal_implicit_anchor() {
         })
     );
 }
+
+#[test]
+fn prepared_context_and_planned_ranges_remain_source_relative_and_explicit() {
+    let prepared = prepared_run("กะตก", 11, true);
+    assert!(prepared.is_some(), "fixture must be one Thai run");
+    let Some(prepared) = prepared else {
+        return;
+    };
+    assert_eq!(prepared.source_offset, 11);
+    assert!(prepared.followed_by_single_period);
+
+    let planned = planned_parts("กะตกลมเตะ", 7, false);
+    assert!(planned.is_some(), "fixture must be one Thai run");
+    let Some(planned) = planned else {
+        return;
+    };
+    assert_eq!(
+        planned,
+        vec![
+            TracePart {
+                kind: PartKind::Syllable,
+                range: 7..13,
+            },
+            TracePart {
+                kind: PartKind::Syllable,
+                range: 13..19,
+            },
+            TracePart {
+                kind: PartKind::Undecided,
+                range: 19..22,
+            },
+            TracePart {
+                kind: PartKind::Undecided,
+                range: 22..25,
+            },
+            TracePart {
+                kind: PartKind::Syllable,
+                range: 25..34,
+            },
+        ]
+    );
+}
