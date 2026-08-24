@@ -62,3 +62,30 @@ fn atomization_preserves_an_orphan_dependent_rime_as_non_nucleus() {
         ])
     );
 }
+
+#[test]
+fn candidate_preparation_adds_a_terminal_implicit_anchor() {
+    let parsed = parsed_atoms("กะตก");
+    let prepared = prepared_atoms("กะตก", false);
+    assert!(parsed.is_some(), "fixture must be one Thai run");
+    assert!(prepared.is_some(), "fixture must be one Thai run");
+    let (Some(parsed), Some(prepared)) = (parsed, prepared) else {
+        return;
+    };
+
+    assert!(prepared.len() < parsed.len());
+    assert_eq!(
+        prepared.last(),
+        Some(&AtomSnapshot {
+            range: 6..12,
+            has_hard_ending: false,
+            has_nucleus: true,
+            semantic: SemanticAtomSnapshot {
+                onset: OnsetSnapshot::Base('ต'),
+                nucleus: NucleusSnapshot::Implicit,
+                ending: EndingSnapshot::Open,
+                silent_mark: SilentMarkSnapshot::None,
+            },
+        })
+    );
+}
