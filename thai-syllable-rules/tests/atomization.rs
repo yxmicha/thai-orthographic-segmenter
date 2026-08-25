@@ -204,3 +204,20 @@ fn keeps_short_vowel_codas_and_separates_independent_vowel_patterns() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+#[test]
+fn leaves_ambiguous_consonant_attachment_explicit() {
+    let source = "อนุญาตนะคะ";
+    let parts = split(source);
+
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Undecided("อ"),
+            TextPart::Syllable("นุ"),
+            TextPart::Syllable("ญา"),
+            TextPart::Undecided("ต"),
+            TextPart::Syllable("นะ"),
+            TextPart::Syllable("คะ"),
+        ]
+    );
+}
