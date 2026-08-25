@@ -238,3 +238,44 @@ fn does_not_leave_a_leading_consonant_without_a_preceding_candidate() {
         ]
     );
 }
+#[test]
+fn keeps_silent_mark_runs_with_the_preceding_syllable() {
+    let cases = [
+        (
+            "ฟิล์มและ",
+            vec![TextPart::Syllable("ฟิล์ม"), TextPart::Syllable("และ")],
+        ),
+        (
+            "โฟล์คและ",
+            vec![TextPart::Syllable("โฟล์ค"), TextPart::Syllable("และ")],
+        ),
+        (
+            "เสน่ห์และ",
+            vec![TextPart::Syllable("เสน่ห์"), TextPart::Syllable("และ")],
+        ),
+        (
+            "การ์ดา",
+            vec![TextPart::Syllable("การ์"), TextPart::Syllable("ดา")],
+        ),
+        (
+            "อาร์ตี้",
+            vec![TextPart::Syllable("อาร์"), TextPart::Syllable("ตี้")],
+        ),
+        (
+            "ซอฟต์แวร์",
+            vec![TextPart::Syllable("ซอฟต์"), TextPart::Syllable("แวร์")],
+        ),
+        (
+            "ซอฟท์แอนด์เซฟ",
+            vec![
+                TextPart::Syllable("ซอฟท์"),
+                TextPart::Syllable("แอนด์"),
+                TextPart::Syllable("เซฟ"),
+            ],
+        ),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
