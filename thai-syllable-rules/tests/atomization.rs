@@ -180,3 +180,27 @@ fn keeps_following_onsets_and_dependent_marks_structurally_attached() {
         ]
     );
 }
+#[test]
+fn keeps_short_vowel_codas_and_separates_independent_vowel_patterns() {
+    let cases = [
+        (
+            "อสัง",
+            vec![TextPart::Undecided("อ"), TextPart::Syllable("สัง")],
+        ),
+        (
+            "ตะวันระยะราวัณ",
+            vec![
+                TextPart::Syllable("ตะ"),
+                TextPart::Syllable("วัน"),
+                TextPart::Syllable("ระ"),
+                TextPart::Syllable("ยะ"),
+                TextPart::Syllable("รา"),
+                TextPart::Syllable("วัณ"),
+            ],
+        ),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
