@@ -221,3 +221,20 @@ fn leaves_ambiguous_consonant_attachment_explicit() {
         ]
     );
 }
+
+#[test]
+fn does_not_leave_a_leading_consonant_without_a_preceding_candidate() {
+    let source = "อนญาตนะคะ";
+    let parts = split(source);
+
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Syllable("อน"),
+            TextPart::Syllable("ญา"),
+            TextPart::Undecided("ต"),
+            TextPart::Syllable("นะ"),
+            TextPart::Syllable("คะ"),
+        ]
+    );
+}
