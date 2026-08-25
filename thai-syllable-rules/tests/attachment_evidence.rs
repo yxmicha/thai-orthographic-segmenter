@@ -18,3 +18,15 @@ fn required_coda_takes_a_following_onset_when_its_remainder_is_complete() {
         );
     }
 }
+
+#[test]
+fn required_coda_completion_is_independent_of_a_preceding_syllable() {
+    assert_eq!(
+        text_parts("นะก้บอก", &split("นะก้บอก")),
+        vec![
+            TextPart::Syllable("นะ"),
+            TextPart::Syllable("ก้บ"),
+            TextPart::Syllable("อก"),
+        ]
+    );
+}
