@@ -152,3 +152,31 @@ fn attaches_tone_marked_onsets_to_the_following_vowel() {
         ]
     );
 }
+#[test]
+fn keeps_following_onsets_and_dependent_marks_structurally_attached() {
+    assert_eq!(
+        text_parts("สาวคนล่าสุด", &split("สาวคนล่าสุด")),
+        vec![
+            TextPart::Syllable("สา"),
+            TextPart::Undecided("ว"),
+            TextPart::Undecided("ค"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ล่า"),
+            TextPart::Syllable("สุด"),
+        ]
+    );
+    assert_eq!(
+        text_parts("เสนอข่าวที่บริษัท", &split("เสนอข่าวที่บริษัท")),
+        vec![
+            TextPart::Syllable("เส"),
+            TextPart::Undecided("น"),
+            TextPart::Undecided("อ"),
+            TextPart::Syllable("ข่า"),
+            TextPart::Undecided("ว"),
+            TextPart::Syllable("ที่"),
+            TextPart::Undecided("บ"),
+            TextPart::Syllable("ริ"),
+            TextPart::Syllable("ษัท"),
+        ]
+    );
+}
