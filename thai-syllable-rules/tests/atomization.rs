@@ -141,3 +141,14 @@ fn does_not_merge_distinct_vowel_nuclei_into_one_syllable() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+#[test]
+fn attaches_tone_marked_onsets_to_the_following_vowel() {
+    assert_eq!(
+        text_parts("ช่วยป้องกัน", &split("ช่วยป้องกัน")),
+        vec![
+            TextPart::Syllable("ช่วย"),
+            TextPart::Syllable("ป้อง"),
+            TextPart::Syllable("กัน"),
+        ]
+    );
+}
