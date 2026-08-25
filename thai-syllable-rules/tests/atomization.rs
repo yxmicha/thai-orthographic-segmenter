@@ -279,3 +279,17 @@ fn keeps_silent_mark_runs_with_the_preceding_syllable() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+#[test]
+fn keeps_unmarked_consonant_runs_ambiguous_between_syllables() {
+    let source = "คอนเสิร์ต";
+    let parts = split(source);
+
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Syllable("คอ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("เสิร์ต"),
+        ]
+    );
+}
