@@ -41,3 +41,103 @@ fn separates_adjacent_complete_spoken_syllables() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn does_not_merge_distinct_vowel_nuclei_into_one_syllable() {
+    let cases = [
+        (
+            "พรรคสา",
+            vec![
+                TextPart::Syllable("พร"),
+                TextPart::Undecided("ร"),
+                TextPart::Undecided("ค"),
+                TextPart::Syllable("สา"),
+            ],
+        ),
+        (
+            "และยัง",
+            vec![TextPart::Syllable("และ"), TextPart::Syllable("ยัง")],
+        ),
+        (
+            "เบียร์ลดลง",
+            vec![
+                TextPart::Syllable("เบียร์"),
+                TextPart::Syllable("ลด"),
+                TextPart::Syllable("ลง"),
+            ],
+        ),
+        (
+            "ใหญ่อา",
+            vec![TextPart::Syllable("ใหญ่"), TextPart::Syllable("อา")],
+        ),
+        (
+            "นาวา",
+            vec![TextPart::Syllable("นา"), TextPart::Syllable("วา")],
+        ),
+        (
+            "ตะวัน",
+            vec![TextPart::Syllable("ตะ"), TextPart::Syllable("วัน")],
+        ),
+        (
+            "ราวัณ",
+            vec![TextPart::Syllable("รา"), TextPart::Syllable("วัณ")],
+        ),
+        (
+            "สุวรร",
+            vec![
+                TextPart::Syllable("สุ"),
+                TextPart::Undecided("ว"),
+                TextPart::Syllable("รร"),
+            ],
+        ),
+        (
+            "อ้วนนน",
+            vec![TextPart::Syllable("อ้วน"), TextPart::Syllable("นน")],
+        ),
+        (
+            "ม้วนได้",
+            vec![
+                TextPart::Syllable("ม้ว"),
+                TextPart::Undecided("น"),
+                TextPart::Syllable("ได้"),
+            ],
+        ),
+        (
+            "ติพร",
+            vec![TextPart::Syllable("ติ"), TextPart::Syllable("พร")],
+        ),
+        (
+            "น้องหงส์",
+            vec![TextPart::Syllable("น้อง"), TextPart::Syllable("หงส์")],
+        ),
+        (
+            "ล่องหน",
+            vec![
+                TextPart::Syllable("ล่อ"),
+                TextPart::Undecided("ง"),
+                TextPart::Syllable("หน"),
+            ],
+        ),
+        (
+            "ขอนหงส์",
+            vec![
+                TextPart::Syllable("ขอ"),
+                TextPart::Undecided("น"),
+                TextPart::Syllable("หงส์"),
+            ],
+        ),
+        (
+            "กอนกรา",
+            vec![
+                TextPart::Syllable("กอ"),
+                TextPart::Undecided("น"),
+                TextPart::Undecided("ก"),
+                TextPart::Syllable("รา"),
+            ],
+        ),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
