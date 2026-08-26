@@ -58,3 +58,18 @@ fn silent_mark_leaves_a_forced_following_implicit_pair_intact() {
         vec![TextPart::Syllable("ศิลป์"), TextPart::Syllable("คน"),],
     );
 }
+
+#[test]
+fn internal_silent_mark_preserves_a_competing_coda_and_onset() {
+    let source = "ฟิล์มคน";
+    let parts = split(source);
+
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Syllable("ฟิล์"),
+            TextPart::Undecided("ม"),
+            TextPart::Syllable("คน"),
+        ],
+    );
+}
