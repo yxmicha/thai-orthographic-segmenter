@@ -30,3 +30,20 @@ fn required_coda_completion_is_independent_of_a_preceding_syllable() {
         ]
     );
 }
+
+#[test]
+fn short_i_keeps_a_final_r_cluster_onset_undecided() {
+    for (source, following) in [("อิสรา", "รา"), ("อิสรอ", "รอ")] {
+        let parts = split(source);
+
+        assert_eq!(
+            text_parts(source, &parts),
+            vec![
+                TextPart::Syllable("อิ"),
+                TextPart::Undecided("ส"),
+                TextPart::Syllable(following),
+            ],
+            "{source}",
+        );
+    }
+}
