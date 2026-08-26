@@ -17,3 +17,11 @@ fn public_types_are_thread_safe_and_inspectable() {
     assert_data::<ThaiScalar>();
     assert_send_sync_debug::<ThaiScalar>();
 }
+
+#[test]
+fn scalars_convert_from_and_to_characters() {
+    let scalar = ThaiScalar::from('ก');
+    assert_eq!(char::from(scalar), 'ก');
+    assert_eq!(scalar, ThaiScalar::new('ก'));
+    assert!(ThaiScalar::new('ก') < ThaiScalar::new('ข'));
+}
