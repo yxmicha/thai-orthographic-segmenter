@@ -2,3 +2,4 @@
 
 
 fn assert_send_sync_debug<T: Send + Sync + std::fmt::Debug>() {}
+fn assert_data<T: Clone + Eq + std::hash::Hash + Send + Sync + std::fmt::Debug>() {}
