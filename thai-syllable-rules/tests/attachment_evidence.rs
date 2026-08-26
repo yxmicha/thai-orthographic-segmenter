@@ -73,3 +73,18 @@ fn internal_silent_mark_preserves_a_competing_coda_and_onset() {
         ],
     );
 }
+
+#[test]
+fn terminal_internal_silence_retains_its_pronounced_final() {
+    let source = "ฟิล์ม ฟอร์ม";
+    let parts = split(source);
+
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Syllable("ฟิล์ม"),
+            TextPart::Text(" "),
+            TextPart::Syllable("ฟอร์ม"),
+        ],
+    );
+}
