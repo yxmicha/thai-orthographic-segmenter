@@ -114,3 +114,20 @@ fn deferred_silent_coda_keeps_competing_implicit_groupings_visible() {
         );
     }
 }
+
+#[test]
+fn an_existing_coda_is_not_reopened_by_a_silent_suffix() {
+    let source = "สัตว์ตกลมกะ";
+    let parts = split(source);
+
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Syllable("สัตว์"),
+            TextPart::Syllable("ตก"),
+            TextPart::Undecided("ล"),
+            TextPart::Undecided("ม"),
+            TextPart::Syllable("กะ"),
+        ],
+    );
+}
