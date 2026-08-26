@@ -88,3 +88,29 @@ fn terminal_internal_silence_retains_its_pronounced_final() {
         ],
     );
 }
+
+#[test]
+fn deferred_silent_coda_keeps_competing_implicit_groupings_visible() {
+    for source in ["ฟิล์มตกลมกะ", "ฟอร์มตกลมกะ"] {
+        let parts = split(source);
+        let prefix = if source.starts_with("ฟิล์") {
+            "ฟิล์"
+        } else {
+            "ฟอร์"
+        };
+
+        assert_eq!(
+            text_parts(source, &parts),
+            vec![
+                TextPart::Syllable(prefix),
+                TextPart::Undecided("ม"),
+                TextPart::Undecided("ต"),
+                TextPart::Undecided("ก"),
+                TextPart::Undecided("ล"),
+                TextPart::Undecided("ม"),
+                TextPart::Syllable("กะ"),
+            ],
+            "{source}",
+        );
+    }
+}
