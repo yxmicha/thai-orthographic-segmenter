@@ -47,3 +47,14 @@ fn short_i_keeps_a_final_r_cluster_onset_undecided() {
         );
     }
 }
+
+#[test]
+fn silent_mark_leaves_a_forced_following_implicit_pair_intact() {
+    let source = "ศิลป์คน";
+    let parts = split(source);
+
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![TextPart::Syllable("ศิลป์"), TextPart::Syllable("คน"),],
+    );
+}
