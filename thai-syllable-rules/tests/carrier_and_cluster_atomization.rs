@@ -176,3 +176,13 @@ fn keeps_ue_carrier_with_the_vowel_syllable() {
         ]
     );
 }
+
+#[test]
+fn does_not_consume_a_carrier_that_starts_the_next_rime() {
+    let source = "ซื้ออิน";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![TextPart::Syllable("ซื้อ"), TextPart::Syllable("อิน")]
+    );
+}
