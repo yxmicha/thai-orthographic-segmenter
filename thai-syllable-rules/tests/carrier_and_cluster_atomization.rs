@@ -93,3 +93,19 @@ fn attaches_a_carrier_to_the_following_pattern_but_preserves_left_ambiguity() {
         ]
     );
 }
+
+#[test]
+fn treats_standalone_ko_taikhu_as_a_syllable_before_a_carrier() {
+    let source = "ก็รอ";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![TextPart::Syllable("ก็"), TextPart::Syllable("รอ")],
+    );
+
+    let started_before = "เก็บกา";
+    assert_eq!(
+        text_parts(started_before, &split(started_before)),
+        vec![TextPart::Syllable("เก็บ"), TextPart::Syllable("กา")],
+    );
+}
