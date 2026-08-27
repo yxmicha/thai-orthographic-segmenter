@@ -132,3 +132,18 @@ fn keeps_a_bare_carrier_and_final_base_as_one_implicit_syllable() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn keeps_a_complete_bare_carrier_candidate_before_an_ordinary_syllable() {
+    let source = "มาลองใช้";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("มา"),
+            TextPart::Undecided("ล"),
+            TextPart::Syllable("อง"),
+            TextPart::Syllable("ใช้"),
+        ]
+    );
+}
