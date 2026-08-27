@@ -24,3 +24,48 @@ fn attaches_an_onset_only_singleton_to_a_following_cluster() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn preserves_r_attachment_before_a_following_carrier() {
+    let cases = [
+        (
+            "กุรอก",
+            vec![
+                TextPart::Syllable("กุ"),
+                TextPart::Undecided("ร"),
+                TextPart::Syllable("อก"),
+            ],
+        ),
+        (
+            "กีรอก",
+            vec![
+                TextPart::Syllable("กี"),
+                TextPart::Undecided("ร"),
+                TextPart::Syllable("อก"),
+            ],
+        ),
+        (
+            "จมรรอก",
+            vec![
+                TextPart::Syllable("จม"),
+                TextPart::Undecided("ร"),
+                TextPart::Undecided("ร"),
+                TextPart::Syllable("อก"),
+            ],
+        ),
+        (
+            "ตอนนอนสิ",
+            vec![
+                TextPart::Syllable("ตอ"),
+                TextPart::Undecided("น"),
+                TextPart::Syllable("นอ"),
+                TextPart::Undecided("น"),
+                TextPart::Syllable("สิ"),
+            ],
+        ),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
