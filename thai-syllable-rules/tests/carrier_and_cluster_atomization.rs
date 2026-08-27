@@ -147,3 +147,18 @@ fn keeps_a_complete_bare_carrier_candidate_before_an_ordinary_syllable() {
         ]
     );
 }
+
+#[test]
+fn leaves_cluster_attachment_explicit_without_invalidating_the_syllables() {
+    let source = "ทุกรุ่น";
+    let parts = split(source);
+
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Syllable("ทุ"),
+            TextPart::Undecided("ก"),
+            TextPart::Syllable("รุ่น"),
+        ]
+    );
+}
