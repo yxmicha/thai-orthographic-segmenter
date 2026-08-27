@@ -109,3 +109,26 @@ fn treats_standalone_ko_taikhu_as_a_syllable_before_a_carrier() {
         vec![TextPart::Syllable("เก็บ"), TextPart::Syllable("กา")],
     );
 }
+
+#[test]
+fn keeps_a_bare_carrier_and_final_base_as_one_implicit_syllable() {
+    let cases = [
+        ("อน", vec![TextPart::Syllable("อน")]),
+        (
+            "ขออน",
+            vec![TextPart::Syllable("ขอ"), TextPart::Syllable("อน")],
+        ),
+        (
+            "อนา",
+            vec![TextPart::Undecided("อ"), TextPart::Syllable("นา")],
+        ),
+        (
+            "อนุ",
+            vec![TextPart::Undecided("อ"), TextPart::Syllable("นุ")],
+        ),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
