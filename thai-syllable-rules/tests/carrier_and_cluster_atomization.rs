@@ -186,3 +186,26 @@ fn does_not_consume_a_carrier_that_starts_the_next_rime() {
         vec![TextPart::Syllable("ซื้อ"), TextPart::Syllable("อิน")]
     );
 }
+
+#[test]
+fn recognizes_common_vowels_and_initial_clusters() {
+    let cases = [
+        (
+            "เกรด",
+            vec![TextPart::Syllable("เก"), TextPart::Syllable("รด")],
+        ),
+        ("กล้า", vec![TextPart::Syllable("กล้า")]),
+        ("ขวัญ", vec![TextPart::Syllable("ขวัญ")]),
+        ("ไทย", vec![TextPart::Syllable("ไทย")]),
+        ("เครื่อง", vec![TextPart::Syllable("เครื่อง")]),
+        (
+            "เซรั่ม",
+            vec![TextPart::Syllable("เซ"), TextPart::Syllable("รั่ม")],
+        ),
+        ("ชื่อ", vec![TextPart::Syllable("ชื่อ")]),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
