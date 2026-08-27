@@ -162,3 +162,17 @@ fn leaves_cluster_attachment_explicit_without_invalidating_the_syllables() {
         ]
     );
 }
+#[test]
+fn keeps_ue_carrier_with_the_vowel_syllable() {
+    let source = "ชื่อโลทา";
+    let parts = split(source);
+
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Syllable("ชื่อ"),
+            TextPart::Syllable("โล"),
+            TextPart::Syllable("ทา"),
+        ]
+    );
+}
