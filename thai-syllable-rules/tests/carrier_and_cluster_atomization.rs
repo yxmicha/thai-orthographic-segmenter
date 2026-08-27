@@ -69,3 +69,27 @@ fn preserves_r_attachment_before_a_following_carrier() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn attaches_a_carrier_to_the_following_pattern_but_preserves_left_ambiguity() {
+    let following = "ขออนุญาต";
+    assert_eq!(
+        text_parts(following, &split(following)),
+        vec![
+            TextPart::Syllable("ขอ"),
+            TextPart::Syllable("อนุ"),
+            TextPart::Syllable("ญาต"),
+        ]
+    );
+
+    let leading = "เธอก็ไม่";
+    assert_eq!(
+        text_parts(leading, &split(leading)),
+        vec![
+            TextPart::Syllable("เธ"),
+            TextPart::Undecided("อ"),
+            TextPart::Syllable("ก็"),
+            TextPart::Syllable("ไม่"),
+        ]
+    );
+}
