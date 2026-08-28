@@ -209,3 +209,48 @@ fn recognizes_common_vowels_and_initial_clusters() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+#[test]
+fn recognizes_the_extended_initial_cluster_inventory() {
+    let cases = [
+        (
+            "กะซรา",
+            vec![TextPart::Syllable("กะ"), TextPart::Syllable("ซรา")],
+        ),
+        (
+            "กะฟรา",
+            vec![TextPart::Syllable("กะ"), TextPart::Syllable("ฟรา")],
+        ),
+        (
+            "กะฟลา",
+            vec![TextPart::Syllable("กะ"), TextPart::Syllable("ฟลา")],
+        ),
+        (
+            "กะอยา",
+            vec![TextPart::Syllable("กะ"), TextPart::Syllable("อยา")],
+        ),
+        (
+            "กะกฤ",
+            vec![TextPart::Syllable("กะ"), TextPart::Syllable("กฤ")],
+        ),
+        (
+            "กะตฤ",
+            vec![TextPart::Syllable("กะ"), TextPart::Syllable("ตฤ")],
+        ),
+        (
+            "กะปฤ",
+            vec![TextPart::Syllable("กะ"), TextPart::Syllable("ปฤ")],
+        ),
+        (
+            "กะพฤ",
+            vec![TextPart::Syllable("กะ"), TextPart::Syllable("พฤ")],
+        ),
+        (
+            "กะทฤ",
+            vec![TextPart::Syllable("กะ"), TextPart::Syllable("ทฤ")],
+        ),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
