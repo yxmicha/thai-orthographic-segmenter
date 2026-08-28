@@ -88,3 +88,91 @@ fn keeps_a_coda_ambiguous_after_an_onset_only_carrier_syllable() {
         ]
     );
 }
+
+#[test]
+fn applies_the_carrier_rule_to_every_non_coda_base() {
+    // These are all accepted Thai bases that cannot be Thai codas. The test
+    // Each spelling is written out so every member of the structural class is
+    // visible in the test and cannot be omitted by a future inventory change.
+    assert_eq!(
+        text_parts("ว่าฃอนด้า", &split("ว่าฃอนด้า")),
+        vec![
+            TextPart::Syllable("ว่า"),
+            TextPart::Syllable("ฃอ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ด้า"),
+        ]
+    );
+    assert_eq!(
+        text_parts("ว่าฅอนด้า", &split("ว่าฅอนด้า")),
+        vec![
+            TextPart::Syllable("ว่า"),
+            TextPart::Syllable("ฅอ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ด้า"),
+        ]
+    );
+    assert_eq!(
+        text_parts("ว่าฉอนด้า", &split("ว่าฉอนด้า")),
+        vec![
+            TextPart::Syllable("ว่า"),
+            TextPart::Syllable("ฉอ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ด้า"),
+        ]
+    );
+    assert_eq!(
+        text_parts("ว่าฌอนด้า", &split("ว่าฌอนด้า")),
+        vec![
+            TextPart::Syllable("ว่า"),
+            TextPart::Syllable("ฌอ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ด้า"),
+        ]
+    );
+    assert_eq!(
+        text_parts("ว่าผอนด้า", &split("ว่าผอนด้า")),
+        vec![
+            TextPart::Syllable("ว่า"),
+            TextPart::Syllable("ผอ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ด้า"),
+        ]
+    );
+    assert_eq!(
+        text_parts("ว่าฝอนด้า", &split("ว่าฝอนด้า")),
+        vec![
+            TextPart::Syllable("ว่า"),
+            TextPart::Syllable("ฝอ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ด้า"),
+        ]
+    );
+    assert_eq!(
+        text_parts("ว่าหอนด้า", &split("ว่าหอนด้า")),
+        vec![
+            TextPart::Syllable("ว่า"),
+            TextPart::Syllable("หอ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ด้า"),
+        ]
+    );
+    assert_eq!(
+        text_parts("ว่าออนด้า", &split("ว่าออนด้า")),
+        vec![
+            TextPart::Syllable("ว่า"),
+            TextPart::Syllable("ออ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ด้า"),
+        ]
+    );
+    assert_eq!(
+        text_parts("ว่าฮอนด้า", &split("ว่าฮอนด้า")),
+        vec![
+            TextPart::Syllable("ว่า"),
+            TextPart::Syllable("ฮอ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ด้า"),
+        ]
+    );
+}
