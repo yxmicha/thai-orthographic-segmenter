@@ -73,3 +73,18 @@ fn keeps_short_i_coda_and_following_carrier_attachments_explicit() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_coda_ambiguous_after_an_onset_only_carrier_syllable() {
+    let source = "ว่าฮอนด้า";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("ว่า"),
+            TextPart::Syllable("ฮอ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ด้า"),
+        ]
+    );
+}
