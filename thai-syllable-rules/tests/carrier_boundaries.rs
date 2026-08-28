@@ -176,3 +176,18 @@ fn applies_the_carrier_rule_to_every_non_coda_base() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_bare_carrier_prefix_after_short_i_ambiguous() {
+    let source = "กิจอสัง";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("กิ"),
+            TextPart::Undecided("จ"),
+            TextPart::Undecided("อ"),
+            TextPart::Syllable("สัง"),
+        ]
+    );
+}
