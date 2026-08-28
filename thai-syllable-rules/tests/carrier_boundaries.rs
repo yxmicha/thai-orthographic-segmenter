@@ -30,3 +30,17 @@ fn attaches_a_carrier_after_a_tone_marked_base_before_an_ambiguous_glide() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_tone_marked_carrier_glide_ambiguous_before_a_following_syllable() {
+    let source = "ค่อยไป";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("ค่อ"),
+            TextPart::Undecided("ย"),
+            TextPart::Syllable("ไป"),
+        ]
+    );
+}
