@@ -44,3 +44,17 @@ fn keeps_a_tone_marked_carrier_glide_ambiguous_before_a_following_syllable() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_tone_marked_carrier_final_ambiguous_before_a_leading_vowel() {
+    let source = "ห้องเด้อะ";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("ห้อ"),
+            TextPart::Undecided("ง"),
+            TextPart::Syllable("เด้อะ"),
+        ]
+    );
+}
