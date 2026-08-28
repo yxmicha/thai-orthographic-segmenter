@@ -16,3 +16,17 @@ fn leaves_a_garan_trailing_base_undecided_before_an_open_carrier() {
         ]
     );
 }
+
+#[test]
+fn attaches_a_carrier_after_a_tone_marked_base_before_an_ambiguous_glide() {
+    let source = "อร่อยที่";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("อร่อ"),
+            TextPart::Undecided("ย"),
+            TextPart::Syllable("ที่"),
+        ]
+    );
+}
