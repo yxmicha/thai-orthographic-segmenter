@@ -58,3 +58,18 @@ fn keeps_a_tone_marked_carrier_final_ambiguous_before_a_leading_vowel() {
         ]
     );
 }
+
+#[test]
+fn keeps_short_i_coda_and_following_carrier_attachments_explicit() {
+    let source = "วิฟอยู่";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("วิ"),
+            TextPart::Undecided("ฟ"),
+            TextPart::Undecided("อ"),
+            TextPart::Syllable("ยู่"),
+        ]
+    );
+}
