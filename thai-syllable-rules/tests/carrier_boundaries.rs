@@ -227,3 +227,17 @@ fn keeps_a_glide_ambiguous_before_a_following_syllable() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_y_glide_ambiguous_before_a_following_syllable() {
+    let source = "ตายที่";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("ตา"),
+            TextPart::Undecided("ย"),
+            TextPart::Syllable("ที่"),
+        ]
+    );
+}
