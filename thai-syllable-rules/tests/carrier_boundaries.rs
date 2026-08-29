@@ -257,3 +257,17 @@ fn keeps_a_glide_ambiguous_before_a_following_implicit_candidate() {
         ]
     );
 }
+
+#[test]
+fn keeps_an_inherent_final_coda_ambiguous_before_a_following_carrier() {
+    let source = "ไหนโอ";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("ไห"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("โอ"),
+        ]
+    );
+}
