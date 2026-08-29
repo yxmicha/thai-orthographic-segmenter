@@ -205,3 +205,11 @@ fn keeps_a_single_carrier_ambiguous_between_leading_vowel_candidates() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_tone_marked_glide_with_its_following_syllable() {
+    assert_eq!(
+        text_parts("รู้ว่า", &split("รู้ว่า")),
+        vec![TextPart::Syllable("รู้"), TextPart::Syllable("ว่า")]
+    );
+}
