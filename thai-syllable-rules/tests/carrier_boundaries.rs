@@ -271,3 +271,17 @@ fn keeps_an_inherent_final_coda_ambiguous_before_a_following_carrier() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_ue_carrier_final_ambiguous_before_a_leading_vowel() {
+    let source = "เหมือนแส";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("เหมือ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("แส"),
+        ]
+    );
+}
