@@ -241,3 +241,19 @@ fn keeps_a_y_glide_ambiguous_before_a_following_syllable() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_glide_ambiguous_before_a_following_implicit_candidate() {
+    let source = "คราวกมรา";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("ครา"),
+            TextPart::Undecided("ว"),
+            TextPart::Undecided("ก"),
+            TextPart::Undecided("ม"),
+            TextPart::Syllable("รา"),
+        ]
+    );
+}
