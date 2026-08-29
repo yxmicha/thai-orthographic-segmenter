@@ -285,3 +285,17 @@ fn keeps_a_ue_carrier_final_ambiguous_before_a_leading_vowel() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_ue_carrier_final_ambiguous_before_another_leading_vowel() {
+    let source = "เทือนแร";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("เทือ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("แร"),
+        ]
+    );
+}
