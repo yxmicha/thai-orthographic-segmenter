@@ -299,3 +299,17 @@ fn keeps_a_ue_carrier_final_ambiguous_before_another_leading_vowel() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_ue_carrier_final_ambiguous_before_an_open_carrier_syllable() {
+    let source = "เหมือนตอ";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("เหมือ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ตอ"),
+        ]
+    );
+}
