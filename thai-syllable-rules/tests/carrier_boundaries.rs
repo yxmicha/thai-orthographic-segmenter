@@ -213,3 +213,17 @@ fn keeps_a_tone_marked_glide_with_its_following_syllable() {
         vec![TextPart::Syllable("รู้"), TextPart::Syllable("ว่า")]
     );
 }
+
+#[test]
+fn keeps_a_glide_ambiguous_before_a_following_syllable() {
+    let source = "คราวนี้";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("ครา"),
+            TextPart::Undecided("ว"),
+            TextPart::Syllable("นี้"),
+        ]
+    );
+}
