@@ -313,3 +313,17 @@ fn keeps_a_ue_carrier_final_ambiguous_before_an_open_carrier_syllable() {
         ]
     );
 }
+
+#[test]
+fn keeps_an_unmarked_carrier_final_ambiguous_before_a_cluster() {
+    let source = "ลอกหนัง";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("ลอ"),
+            TextPart::Undecided("ก"),
+            TextPart::Syllable("หนัง"),
+        ]
+    );
+}
