@@ -191,3 +191,17 @@ fn keeps_a_bare_carrier_prefix_after_short_i_ambiguous() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_single_carrier_ambiguous_between_leading_vowel_candidates() {
+    let source = "เจอแบ";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("เจ"),
+            TextPart::Undecided("อ"),
+            TextPart::Syllable("แบ"),
+        ]
+    );
+}
