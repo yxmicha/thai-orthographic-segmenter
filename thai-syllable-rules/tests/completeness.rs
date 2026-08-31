@@ -14,3 +14,14 @@ fn required_rime_endings_are_not_supplied_by_the_end_of_input() {
         );
     }
 }
+
+#[test]
+fn hostless_silent_cells_are_not_standalone_syllables() {
+    for source in ["ธุ์", "กิ์", "ก์"] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Invalid(source)],
+            "{source}"
+        );
+    }
+}
