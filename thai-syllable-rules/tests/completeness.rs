@@ -53,3 +53,10 @@ fn required_coda_cannot_steal_an_onset_that_has_its_own_spacing_vowel() {
         vec![TextPart::Invalid("กั"), TextPart::Syllable("กา"),]
     );
 }
+
+#[test]
+fn adopting_a_prefix_does_not_supply_a_missing_rime_ending() {
+    let source = "ขกั";
+    let parts = split(source);
+    assert_eq!(text_parts(source, &parts), vec![TextPart::Invalid("ขกั")]);
+}
