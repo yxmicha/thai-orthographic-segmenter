@@ -357,3 +357,61 @@ fn separates_a_carrier_before_a_following_initial_cluster() {
         ]
     );
 }
+
+#[test]
+fn keeps_ambiguous_carrier_and_garan_boundaries_structural() {
+    let cases = [
+        (
+            "ยาณอัศจรรย์",
+            vec![
+                TextPart::Syllable("ยา"),
+                TextPart::Undecided("ณ"),
+                TextPart::Syllable("อัศ"),
+                TextPart::Syllable("จรรย์"),
+            ],
+        ),
+        (
+            "แกล้งพจน์",
+            vec![
+                TextPart::Syllable("แกล้"),
+                TextPart::Undecided("ง"),
+                TextPart::Undecided("พ"),
+                TextPart::Syllable("จน์"),
+            ],
+        ),
+        (
+            "เคราะห์ฟอร์ม",
+            vec![TextPart::Syllable("เคราะห์"), TextPart::Syllable("ฟอร์ม")],
+        ),
+        (
+            "เหนื่อยผลัวะช่วง",
+            vec![
+                TextPart::Syllable("เหนื่อย"),
+                TextPart::Syllable("ผลัวะ"),
+                TextPart::Syllable("ช่วง"),
+            ],
+        ),
+        (
+            "จักรวาล",
+            vec![
+                TextPart::Syllable("จัก"),
+                TextPart::Undecided("ร"),
+                TextPart::Syllable("วาล"),
+            ],
+        ),
+        (
+            "ธันวาคมสุข",
+            vec![
+                TextPart::Syllable("ธัน"),
+                TextPart::Syllable("วา"),
+                TextPart::Undecided("ค"),
+                TextPart::Undecided("ม"),
+                TextPart::Syllable("สุข"),
+            ],
+        ),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
