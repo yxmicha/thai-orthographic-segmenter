@@ -341,3 +341,19 @@ fn keeps_a_carrier_rime_from_stealing_a_previous_short_i_final() {
         ]
     );
 }
+
+#[test]
+fn separates_a_carrier_before_a_following_initial_cluster() {
+    let source = "เพื่อตรวจสอบ";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("เพื่อ"),
+            TextPart::Undecided("ต"),
+            TextPart::Undecided("ร"),
+            TextPart::Syllable("วจ"),
+            TextPart::Syllable("สอบ"),
+        ]
+    );
+}
