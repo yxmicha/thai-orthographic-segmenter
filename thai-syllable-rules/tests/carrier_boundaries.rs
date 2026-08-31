@@ -327,3 +327,17 @@ fn keeps_an_unmarked_carrier_final_ambiguous_before_a_cluster() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_carrier_rime_from_stealing_a_previous_short_i_final() {
+    let source = "กลิ่นอับ";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("กลิ่"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("อับ"),
+        ]
+    );
+}
