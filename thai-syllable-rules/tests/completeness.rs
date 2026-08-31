@@ -25,3 +25,21 @@ fn hostless_silent_cells_are_not_standalone_syllables() {
         );
     }
 }
+
+#[test]
+fn compound_vowel_frames_need_all_written_constituents() {
+    for source in ["เกี", "เกืก"] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Invalid(source)],
+            "{source}"
+        );
+    }
+    for source in ["เกีย", "เกือ"] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Syllable(source)],
+            "{source}"
+        );
+    }
+}
