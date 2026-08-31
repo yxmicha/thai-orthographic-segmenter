@@ -60,3 +60,16 @@ fn adopting_a_prefix_does_not_supply_a_missing_rime_ending() {
     let parts = split(source);
     assert_eq!(text_parts(source, &parts), vec![TextPart::Invalid("ขกั")]);
 }
+
+#[test]
+fn completing_material_remains_available_before_invalidity_is_decided() {
+    for source in ["กัด", "เกิน", "เด็ก", "คืน", "มือ", "ตัว", "ก็", "บัติ"]
+    {
+        let parts = split(source);
+        assert_eq!(
+            text_parts(source, &parts),
+            vec![TextPart::Syllable(source)],
+            "{source}"
+        );
+    }
+}
