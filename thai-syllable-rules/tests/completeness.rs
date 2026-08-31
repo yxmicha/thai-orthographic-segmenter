@@ -43,3 +43,13 @@ fn compound_vowel_frames_need_all_written_constituents() {
         );
     }
 }
+
+#[test]
+fn required_coda_cannot_steal_an_onset_that_has_its_own_spacing_vowel() {
+    let source = "กักา";
+    let parts = split(source);
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![TextPart::Invalid("กั"), TextPart::Syllable("กา"),]
+    );
+}
