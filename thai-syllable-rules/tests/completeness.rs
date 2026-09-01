@@ -73,3 +73,18 @@ fn completing_material_remains_available_before_invalidity_is_decided() {
         );
     }
 }
+
+#[test]
+fn required_rimes_take_the_adjacent_coda_before_a_carrier_remainder() {
+    for (source, first, second) in [
+        ("ส่งออก", "ส่ง", "ออก"),
+        ("เงินออม", "เงิน", "ออม"),
+        ("เปิดออก", "เปิด", "ออก"),
+    ] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Syllable(first), TextPart::Syllable(second)],
+            "{source}"
+        );
+    }
+}
