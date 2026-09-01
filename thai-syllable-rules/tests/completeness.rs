@@ -126,3 +126,14 @@ fn a_following_vowel_keeps_y_as_the_next_onset() {
         ]
     );
 }
+
+#[test]
+fn hostless_garan_suffixes_attach_through_intervening_undecided_bases() {
+    for source in ["พฤกษ์", "กฤตย์", "กฤษณ์"] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Syllable(source)],
+            "{source}"
+        );
+    }
+}
