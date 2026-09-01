@@ -114,3 +114,15 @@ fn tone_marks_do_not_break_a_written_e_iya_frame() {
         );
     }
 }
+
+#[test]
+fn a_following_vowel_keeps_y_as_the_next_onset() {
+    assert_eq!(
+        text_parts("เสรียัง", &split("เสรียัง")),
+        vec![
+            TextPart::Syllable("เส"),
+            TextPart::Syllable("รี"),
+            TextPart::Syllable("ยัง"),
+        ]
+    );
+}
