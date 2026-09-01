@@ -88,3 +88,18 @@ fn required_rimes_take_the_adjacent_coda_before_a_carrier_remainder() {
         );
     }
 }
+
+#[test]
+fn complete_leading_vowels_do_not_swallow_the_next_carrier_rime() {
+    for (source, first, second) in [
+        ("เสรี", "เส", "รี"),
+        ("เหลืออีก", "เหลือ", "อีก"),
+        ("โมอับ", "โม", "อับ"),
+    ] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Syllable(first), TextPart::Syllable(second)],
+            "{source}"
+        );
+    }
+}
