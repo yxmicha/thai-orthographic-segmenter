@@ -28,3 +28,14 @@ fn completes_terminal_pairs_after_leading_vowels() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn keeps_compound_e_ao_rimes_as_positive_constructions() {
+    for source in ["เฉพาะ", "เสนาะ", "เรพาะ"] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Syllable(source)],
+            "{source}"
+        );
+    }
+}
