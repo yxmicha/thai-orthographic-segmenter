@@ -103,3 +103,14 @@ fn complete_leading_vowels_do_not_swallow_the_next_carrier_rime() {
         );
     }
 }
+
+#[test]
+fn tone_marks_do_not_break_a_written_e_iya_frame() {
+    for source in ["เปลี่ยน", "เหนี่ยว", "เกลี่ย"] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Syllable(source)],
+            "{source}"
+        );
+    }
+}
