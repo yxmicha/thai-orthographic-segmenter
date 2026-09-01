@@ -137,3 +137,19 @@ fn hostless_garan_suffixes_attach_through_intervening_undecided_bases() {
         );
     }
 }
+
+#[test]
+fn a_complete_candidate_can_still_have_competing_extensions() {
+    for (source, prefix, middle, suffix) in [("การออก", "กา", "ร", "ออก"), ("อิสรา", "อิ", "ส", "รา")]
+    {
+        let parts = split(source);
+        assert_eq!(
+            text_parts(source, &parts),
+            vec![
+                TextPart::Syllable(prefix),
+                TextPart::Undecided(middle),
+                TextPart::Syllable(suffix),
+            ]
+        );
+    }
+}
