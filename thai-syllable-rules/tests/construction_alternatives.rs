@@ -39,3 +39,11 @@ fn keeps_compound_e_ao_rimes_as_positive_constructions() {
         );
     }
 }
+
+#[test]
+fn completes_a_terminal_bare_pair_after_short_i() {
+    assert_eq!(
+        text_parts("ลิตร", &split("ลิตร")),
+        vec![TextPart::Syllable("ลิ"), TextPart::Syllable("ตร"),],
+    );
+}
