@@ -47,3 +47,15 @@ fn completes_a_terminal_bare_pair_after_short_i() {
         vec![TextPart::Syllable("ลิ"), TextPart::Syllable("ตร"),],
     );
 }
+
+#[test]
+fn earlier_leading_vowel_does_not_change_a_later_terminal_pair() {
+    assert_eq!(
+        text_parts("เกาอิสร", &split("เกาอิสร")),
+        vec![
+            TextPart::Syllable("เกา"),
+            TextPart::Syllable("อิ"),
+            TextPart::Syllable("สร"),
+        ]
+    );
+}
