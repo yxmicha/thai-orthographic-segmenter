@@ -89,3 +89,17 @@ fn closes_hard_syllable_endings_before_following_syllables() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn keeps_taikhu_final_ambiguous_before_a_following_syllable() {
+    let source = "บล็อกหยุด";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("บล็อ"),
+            TextPart::Undecided("ก"),
+            TextPart::Syllable("หยุด"),
+        ]
+    );
+}
