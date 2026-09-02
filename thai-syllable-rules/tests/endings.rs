@@ -187,3 +187,18 @@ fn closes_inherent_final_vowels_and_preserves_cluster_tail_ambiguity() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+#[test]
+fn does_not_emit_a_single_consonant_after_a_hard_ending() {
+    let source = "กะตกลมเตะ";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Syllable("ตก"),
+            TextPart::Undecided("ล"),
+            TextPart::Undecided("ม"),
+            TextPart::Syllable("เตะ"),
+        ]
+    );
+}
