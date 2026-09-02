@@ -113,3 +113,77 @@ fn keeps_garan_extension_after_an_inherent_final_vowel() {
         vec![TextPart::Syllable("กำน์"), TextPart::Syllable("กะ")]
     );
 }
+#[test]
+fn closes_inherent_final_vowels_and_preserves_cluster_tail_ambiguity() {
+    let cases = [
+        (
+            "กำกะ",
+            vec![TextPart::Syllable("กำ"), TextPart::Syllable("กะ")],
+        ),
+        (
+            "ไกกะ",
+            vec![TextPart::Syllable("ไก"), TextPart::Syllable("กะ")],
+        ),
+        (
+            "ใจกะ",
+            vec![TextPart::Syllable("ใจ"), TextPart::Syllable("กะ")],
+        ),
+        (
+            "เกากะ",
+            vec![TextPart::Syllable("เกา"), TextPart::Syllable("กะ")],
+        ),
+        (
+            "กรำกะ",
+            vec![TextPart::Syllable("กรำ"), TextPart::Syllable("กะ")],
+        ),
+        (
+            "ไตรกะ",
+            vec![
+                TextPart::Syllable("ไต"),
+                TextPart::Undecided("ร"),
+                TextPart::Syllable("กะ"),
+            ],
+        ),
+        (
+            "ใครกะ",
+            vec![
+                TextPart::Syllable("ใค"),
+                TextPart::Undecided("ร"),
+                TextPart::Syllable("กะ"),
+            ],
+        ),
+        (
+            "เกลากะ",
+            vec![TextPart::Syllable("เกลา"), TextPart::Syllable("กะ")],
+        ),
+        (
+            "ไกยกะ",
+            vec![
+                TextPart::Syllable("ไก"),
+                TextPart::Undecided("ย"),
+                TextPart::Syllable("กะ"),
+            ],
+        ),
+        (
+            "ไชยกะ",
+            vec![
+                TextPart::Syllable("ไช"),
+                TextPart::Undecided("ย"),
+                TextPart::Syllable("กะ"),
+            ],
+        ),
+        ("ไกย", vec![TextPart::Syllable("ไกย")]),
+        (
+            "ไตรย์กะ",
+            vec![TextPart::Syllable("ไตรย์"), TextPart::Syllable("กะ")],
+        ),
+        (
+            "เสาร์กะ",
+            vec![TextPart::Syllable("เสาร์"), TextPart::Syllable("กะ")],
+        ),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
