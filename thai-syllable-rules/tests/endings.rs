@@ -202,3 +202,53 @@ fn does_not_emit_a_single_consonant_after_a_hard_ending() {
         ]
     );
 }
+
+#[test]
+fn closes_tone_marked_implicit_syllables_before_following_rimes() {
+    let cases = [
+        (
+            "นะก่กา",
+            vec![
+                TextPart::Syllable("นะ"),
+                TextPart::Invalid("ก่"),
+                TextPart::Syllable("กา"),
+            ],
+        ),
+        (
+            "นะก้กา",
+            vec![
+                TextPart::Syllable("นะ"),
+                TextPart::Invalid("ก้"),
+                TextPart::Syllable("กา"),
+            ],
+        ),
+        (
+            "นะก๊กา",
+            vec![
+                TextPart::Syllable("นะ"),
+                TextPart::Invalid("ก๊"),
+                TextPart::Syllable("กา"),
+            ],
+        ),
+        (
+            "นะก๋กา",
+            vec![
+                TextPart::Syllable("นะ"),
+                TextPart::Invalid("ก๋"),
+                TextPart::Syllable("กา"),
+            ],
+        ),
+        (
+            "นะส่งกา",
+            vec![
+                TextPart::Syllable("นะ"),
+                TextPart::Syllable("ส่ง"),
+                TextPart::Syllable("กา"),
+            ],
+        ),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
