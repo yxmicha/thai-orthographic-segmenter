@@ -103,3 +103,13 @@ fn keeps_taikhu_final_ambiguous_before_a_following_syllable() {
         ]
     );
 }
+
+#[test]
+fn keeps_garan_extension_after_an_inherent_final_vowel() {
+    let source = "กำน์กะ";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![TextPart::Syllable("กำน์"), TextPart::Syllable("กะ")]
+    );
+}
