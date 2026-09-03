@@ -109,3 +109,18 @@ fn keeps_cluster_tail_and_following_onset_ambiguous() {
         ],
     );
 }
+
+#[test]
+fn keeps_tone_marked_garan_boundary_ambiguous() {
+    let source = "แกล้งพจน์";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("แกล้"),
+            TextPart::Undecided("ง"),
+            TextPart::Undecided("พ"),
+            TextPart::Syllable("จน์"),
+        ]
+    );
+}
