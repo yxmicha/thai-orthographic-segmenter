@@ -94,3 +94,18 @@ fn keeps_an_inherent_final_cluster_tail_ambiguous_before_a_marked_syllable() {
         ]
     );
 }
+
+#[test]
+fn keeps_cluster_tail_and_following_onset_ambiguous() {
+    let source = "ไหนครับ";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("ไห"),
+            TextPart::Undecided("น"),
+            TextPart::Undecided("ค"),
+            TextPart::Syllable("รับ"),
+        ],
+    );
+}
