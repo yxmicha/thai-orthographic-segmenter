@@ -42,3 +42,19 @@ fn leaves_an_ordinary_leading_cluster_coda_ambiguous_before_a_leading_vowel() {
         ]
     );
 }
+
+#[test]
+fn keeps_both_final_r_boundaries_ambiguous_in_a_chained_spelling() {
+    let source = "บัตรเครดิต";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("บัต"),
+            TextPart::Undecided("ร"),
+            TextPart::Syllable("เค"),
+            TextPart::Undecided("ร"),
+            TextPart::Syllable("ดิต"),
+        ]
+    );
+}
