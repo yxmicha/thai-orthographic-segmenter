@@ -28,3 +28,17 @@ fn leaves_a_leading_cluster_coda_ambiguous_before_a_following_rime() {
         ]
     );
 }
+
+#[test]
+fn leaves_an_ordinary_leading_cluster_coda_ambiguous_before_a_leading_vowel() {
+    let source = "โพรเท็ค";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("โพ"),
+            TextPart::Undecided("ร"),
+            TextPart::Syllable("เท็ค"),
+        ]
+    );
+}
