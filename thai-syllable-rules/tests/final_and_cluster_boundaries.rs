@@ -80,3 +80,17 @@ fn keeps_a_coda_undecided_before_a_following_h_nucleus_cluster() {
         ]
     );
 }
+
+#[test]
+fn keeps_an_inherent_final_cluster_tail_ambiguous_before_a_marked_syllable() {
+    let source = "ไหลย้อน";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("ไห"),
+            TextPart::Undecided("ล"),
+            TextPart::Syllable("ย้อน"),
+        ]
+    );
+}
