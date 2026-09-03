@@ -66,3 +66,17 @@ fn completes_a_terminal_leading_cluster_as_two_candidates() {
         vec![TextPart::Syllable("เบ"), TextPart::Syllable("รก")]
     );
 }
+
+#[test]
+fn keeps_a_coda_undecided_before_a_following_h_nucleus_cluster() {
+    let source = "เดือนหน้า";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("เดือ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("หน้า"),
+        ]
+    );
+}
