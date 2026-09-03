@@ -124,3 +124,42 @@ fn keeps_tone_marked_garan_boundary_ambiguous() {
         ]
     );
 }
+
+#[test]
+fn keeps_requested_compound_examples_structurally_conservative() {
+    let cases = [
+        (
+            "มนสิการ",
+            vec![
+                TextPart::Syllable("มน"),
+                TextPart::Syllable("สิ"),
+                TextPart::Syllable("การ"),
+            ],
+        ),
+        (
+            "ธรรมสวนะ",
+            vec![
+                TextPart::Syllable("ธร"),
+                TextPart::Undecided("ร"),
+                TextPart::Undecided("ม"),
+                TextPart::Undecided("ส"),
+                TextPart::Undecided("ว"),
+                TextPart::Syllable("นะ"),
+            ],
+        ),
+        (
+            "กรกฎาคม",
+            vec![
+                TextPart::Syllable("กร"),
+                TextPart::Undecided("ก"),
+                TextPart::Syllable("ฎา"),
+                TextPart::Syllable("คม"),
+            ],
+        ),
+        ("กรณ", vec![TextPart::Syllable("กรณ")]),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
