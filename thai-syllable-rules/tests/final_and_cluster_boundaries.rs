@@ -211,3 +211,46 @@ fn covers_final_r_and_consonant_cluster_spellings() {
         ],
     );
 }
+
+#[test]
+fn keeps_phrom_compounds_structurally_conservative() {
+    let source = "พรหมพรหมโลกพรหมชาติพรหมวิหารพรหมจรรย์พรหมลิขิต";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("พร"),
+            TextPart::Undecided("ห"),
+            TextPart::Undecided("ม"),
+            TextPart::Undecided("พ"),
+            TextPart::Undecided("ร"),
+            TextPart::Undecided("ห"),
+            TextPart::Undecided("ม"),
+            TextPart::Syllable("โล"),
+            TextPart::Undecided("ก"),
+            TextPart::Undecided("พ"),
+            TextPart::Undecided("ร"),
+            TextPart::Undecided("ห"),
+            TextPart::Undecided("ม"),
+            TextPart::Syllable("ชา"),
+            TextPart::Syllable("ติ"),
+            TextPart::Undecided("พ"),
+            TextPart::Undecided("ร"),
+            TextPart::Undecided("ห"),
+            TextPart::Undecided("ม"),
+            TextPart::Syllable("วิ"),
+            TextPart::Syllable("หา"),
+            TextPart::Undecided("ร"),
+            TextPart::Undecided("พ"),
+            TextPart::Undecided("ร"),
+            TextPart::Undecided("ห"),
+            TextPart::Undecided("ม"),
+            TextPart::Syllable("จรรย์"),
+            TextPart::Syllable("พร"),
+            TextPart::Undecided("ห"),
+            TextPart::Undecided("ม"),
+            TextPart::Syllable("ลิ"),
+            TextPart::Syllable("ขิต"),
+        ],
+    );
+}
