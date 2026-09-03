@@ -163,3 +163,51 @@ fn keeps_requested_compound_examples_structurally_conservative() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn covers_final_r_and_consonant_cluster_spellings() {
+    let source = "ฉัตรเนตรเกษตรบุตรสมุทรสูตรจิตรปุตรภัทรมารุตรพรหมพุทธ";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("ฉัต"),
+            TextPart::Undecided("ร"),
+            TextPart::Syllable("เน"),
+            TextPart::Undecided("ต"),
+            TextPart::Undecided("ร"),
+            TextPart::Syllable("เก"),
+            TextPart::Undecided("ษ"),
+            TextPart::Undecided("ต"),
+            TextPart::Undecided("ร"),
+            TextPart::Syllable("บุ"),
+            TextPart::Undecided("ต"),
+            TextPart::Undecided("ร"),
+            TextPart::Undecided("ส"),
+            TextPart::Syllable("มุ"),
+            TextPart::Undecided("ท"),
+            TextPart::Undecided("ร"),
+            TextPart::Syllable("สู"),
+            TextPart::Undecided("ต"),
+            TextPart::Undecided("ร"),
+            TextPart::Syllable("จิ"),
+            TextPart::Undecided("ต"),
+            TextPart::Undecided("ร"),
+            TextPart::Syllable("ปุ"),
+            TextPart::Undecided("ต"),
+            TextPart::Undecided("ร"),
+            TextPart::Syllable("ภัท"),
+            TextPart::Undecided("ร"),
+            TextPart::Syllable("มา"),
+            TextPart::Syllable("รุ"),
+            TextPart::Undecided("ต"),
+            TextPart::Undecided("ร"),
+            TextPart::Undecided("พ"),
+            TextPart::Undecided("ร"),
+            TextPart::Undecided("ห"),
+            TextPart::Undecided("ม"),
+            TextPart::Syllable("พุท"),
+            TextPart::Undecided("ธ"),
+        ],
+    );
+}
