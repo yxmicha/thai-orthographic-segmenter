@@ -58,3 +58,11 @@ fn keeps_both_final_r_boundaries_ambiguous_in_a_chained_spelling() {
         ]
     );
 }
+
+#[test]
+fn completes_a_terminal_leading_cluster_as_two_candidates() {
+    assert_eq!(
+        text_parts("เบรก", &split("เบรก")),
+        vec![TextPart::Syllable("เบ"), TextPart::Syllable("รก")]
+    );
+}
