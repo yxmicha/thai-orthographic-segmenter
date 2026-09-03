@@ -14,3 +14,17 @@ fn leaves_the_final_r_cluster_ambiguous_before_the_following_syllable() {
         ]
     );
 }
+
+#[test]
+fn leaves_a_leading_cluster_coda_ambiguous_before_a_following_rime() {
+    let source = "เครดิต";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("เค"),
+            TextPart::Undecided("ร"),
+            TextPart::Syllable("ดิต"),
+        ]
+    );
+}
