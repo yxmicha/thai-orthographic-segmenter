@@ -254,3 +254,21 @@ fn keeps_phrom_compounds_structurally_conservative() {
         ],
     );
 }
+
+#[test]
+fn keeps_ambiguous_material_before_terminal_garan_suffix_visible() {
+    let source = "หารพรหมจรรย์";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("หา"),
+            TextPart::Undecided("ร"),
+            TextPart::Undecided("พ"),
+            TextPart::Undecided("ร"),
+            TextPart::Undecided("ห"),
+            TextPart::Undecided("ม"),
+            TextPart::Syllable("จรรย์"),
+        ],
+    );
+}
