@@ -16,6 +16,9 @@ mod han_solo_expected {
     pub(super) mod records_192_to_199;
 }
 
+use text_part::{TextPart, text_parts};
+use thai_syllable_rules::split;
+
 const HAN_SOLO_TEST_DATA: &str = r#"ซื้อที่ไหนครับ ขนาดลิตร
 วรรณษา จรัลพรไพศาล มาลองใช้ลอรีเอะ ซอฟท์แอนด์เซฟ เอ็กซ์ตร้าโพเทคชั่น แอนตี้แบคทีเรียใส่ตอนนอนสิ แล้วจะหลงรัก แผ่นใหญ่ปกป้องดีเยี่ยม ลดการสะสมของแบคทีเรีย ไร้กลิ่นอับชื้นกวนใจไร้กังวล บล็อกหยุดการซึมเปื้อน หลับสบายไม่ต้องกังวลว่าจะเลอะที่นอน ตื่นมาสดชื่นนนนน
 สู้ไปด้วยกันคะ✌🏼
@@ -215,3 +218,45 @@ Ceraveมีขายที่เมืองไทยหรอพี่ปู
 ควัน vape มันเป็นไอน้ำ มันไม่ได้มีการเผาไหม้ ไอน้ำเหมือนน้ำมันหอมระเหย แต่พ่นออกปากอีกที คนบอกว่า vape ควันเหม็นพอๆกับบุหรี่ กูว่ากลิ่นปากคนดูดแม่งลอยมาด้วยแหง 555+ แต่กูก็เข้าใจนะ ควันแม่งออกจากปากใคร มันก็ไม่มีใครอยากดมหรอก
 ชุดนี้แหละค่ะ แต่ที่กำแพงเพชรให้จับสลากเลือกชุดฟรี
 พน.จัด"#;
+
+#[test]
+fn matches_every_han_solo_test_line_as_text_parts() {
+    let expected: Vec<Vec<TextPart<'static>>> = [
+        han_solo_expected::records_001_to_020::lines(),
+        han_solo_expected::records_021_to_030::lines(),
+        han_solo_expected::records_031_to_047::lines(),
+        han_solo_expected::records_048_to_067::lines(),
+        han_solo_expected::records_068_to_080::lines(),
+        han_solo_expected::records_081_to_096::lines(),
+        han_solo_expected::records_097_to_113::lines(),
+        han_solo_expected::records_114_to_134::lines(),
+        han_solo_expected::records_135_to_149::lines(),
+        han_solo_expected::records_150_to_160::lines(),
+        han_solo_expected::records_161_to_173::lines(),
+        han_solo_expected::records_174_to_189::lines(),
+        han_solo_expected::records_190_to_191::lines(),
+        han_solo_expected::records_192_to_199::lines(),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
+
+    assert_eq!(HAN_SOLO_TEST_DATA.lines().count(), expected.len());
+
+    let mut mismatches = Vec::new();
+    for (line_number, (source, expected)) in HAN_SOLO_TEST_DATA.lines().zip(expected).enumerate() {
+        let actual = text_parts(source, &split(source));
+        if actual != expected {
+            mismatches.push(format!(
+                "line {}\nsource: {source}\nactual: {actual:?}\nexpected: {expected:?}",
+                line_number + 1
+            ));
+        }
+    }
+    assert!(
+        mismatches.is_empty(),
+        "Han-solo mismatches ({}):\n{}",
+        mismatches.len(),
+        mismatches.join("\n\n")
+    );
+}
