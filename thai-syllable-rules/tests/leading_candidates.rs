@@ -154,3 +154,112 @@ fn keeps_noncluster_h_onsets_separate_from_leading_bases() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn attaches_a_leading_base_to_a_leading_vowel_after_a_hard_ending() {
+    assert_eq!(
+        text_parts("กะมเหสี", &split("กะมเหสี")),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Syllable("มเห"),
+            TextPart::Syllable("สี"),
+        ]
+    );
+    assert_eq!(
+        text_parts("กะมเหศ", &split("กะมเหศ")),
+        vec![TextPart::Syllable("กะ"), TextPart::Syllable("มเหศ")]
+    );
+    assert_eq!(
+        text_parts("กะมเหศวร", &split("กะมเหศวร")),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Syllable("มเห"),
+            TextPart::Undecided("ศ"),
+            TextPart::Syllable("วร"),
+        ]
+    );
+    assert_eq!(
+        text_parts("กะมเหศวรี", &split("กะมเหศวรี")),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Syllable("มเห"),
+            TextPart::Undecided("ศ"),
+            TextPart::Undecided("ว"),
+            TextPart::Syllable("รี"),
+        ]
+    );
+    assert_eq!(
+        text_parts("กะมเหศักดิ์", &split("กะมเหศักดิ์")),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Syllable("มเห"),
+            TextPart::Syllable("ศักดิ์"),
+        ]
+    );
+    assert_eq!(
+        text_parts("กะมเหสักข์", &split("กะมเหสักข์")),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Syllable("มเห"),
+            TextPart::Syllable("สักข์"),
+        ]
+    );
+    assert_eq!(
+        text_parts("กะมเหนทร์", &split("กะมเหนทร์")),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Syllable("มเห"),
+            TextPart::Syllable("นทร์"),
+        ]
+    );
+    assert_eq!(
+        text_parts("กะมเหยงค์", &split("กะมเหยงค์")),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Syllable("มเห"),
+            TextPart::Syllable("ยงค์"),
+        ]
+    );
+    assert_eq!(
+        text_parts("กะกเฬวร", &split("กะกเฬวร")),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Syllable("กเฬ"),
+            TextPart::Syllable("วร"),
+        ]
+    );
+    assert_eq!(
+        text_parts("กะกเฬวราก", &split("กะกเฬวราก")),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Syllable("กเฬ"),
+            TextPart::Undecided("ว"),
+            TextPart::Syllable("ราก"),
+        ]
+    );
+    assert_eq!(
+        text_parts("กะกเรณุ", &split("กะกเรณุ")),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Syllable("กเร"),
+            TextPart::Syllable("ณุ"),
+        ]
+    );
+    assert_eq!(
+        text_parts("กะกเรณุกา", &split("กะกเรณุกา")),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Syllable("กเร"),
+            TextPart::Syllable("ณุ"),
+            TextPart::Syllable("กา"),
+        ]
+    );
+    assert_eq!(
+        text_parts("กะกเรนทร์", &split("กะกเรนทร์")),
+        vec![TextPart::Syllable("กะ"), TextPart::Syllable("กเรนทร์"),]
+    );
+    assert_eq!(
+        text_parts("กะกเบนทร์", &split("กะกเบนทร์")),
+        vec![TextPart::Syllable("กะ"), TextPart::Syllable("กเบนทร์")]
+    );
+}
