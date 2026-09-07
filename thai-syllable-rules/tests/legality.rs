@@ -72,3 +72,10 @@ fn an_unpaired_preposed_vowel_is_preserved_as_text() {
         );
     }
 }
+
+#[test]
+fn rejecting_a_cell_does_not_strand_its_preposed_vowel() {
+    let source = "เกิี";
+    let parts = split(source);
+    assert_eq!(text_parts(source, &parts), vec![TextPart::Invalid(source)]);
+}
