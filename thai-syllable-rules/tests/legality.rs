@@ -24,3 +24,17 @@ fn a_mark_without_an_adjacent_base_does_not_claim_a_later_consonant() {
         ]
     );
 }
+
+#[test]
+fn an_orphan_spacing_vowel_does_not_hide_stranded_consonants() {
+    let source = "กีาก";
+    let parts = split(source);
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Syllable("กี"),
+            TextPart::Text("า"),
+            TextPart::Undecided("ก"),
+        ]
+    );
+}
