@@ -38,3 +38,25 @@ fn an_orphan_spacing_vowel_does_not_hide_stranded_consonants() {
         ]
     );
 }
+
+#[test]
+fn incompatible_mark_roles_and_reversed_vowels_are_invalid() {
+    // Each source spells its marks in the order the legality check must reject, so the escapes
+    // keep them from being normalized by an editor or formatter.
+    for source in [
+        "\u{0e01}\u{0e48}\u{0e4c}",
+        "\u{0e01}\u{0e47}\u{0e49}",
+        "\u{0e01}\u{0e48}\u{0e34}",
+        "\u{0e01}\u{0e38}\u{0e3a}",
+        "\u{0e01}\u{0e48}\u{0e38}",
+        "\u{0e01}\u{0e49}\u{0e39}",
+        "\u{0e01}\u{0e4c}\u{0e38}",
+    ] {
+        let parts = split(source);
+        assert_eq!(
+            text_parts(source, &parts),
+            vec![TextPart::Invalid(source)],
+            "{source}"
+        );
+    }
+}
