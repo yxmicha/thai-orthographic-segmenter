@@ -10,3 +10,17 @@ fn conflicting_combining_marks_cannot_become_a_syllable() {
         assert_eq!(text_parts(source, &parts), vec![TextPart::Invalid(source)]);
     }
 }
+
+#[test]
+fn a_mark_without_an_adjacent_base_does_not_claim_a_later_consonant() {
+    let source = "กะ่ก";
+    let parts = split(source);
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Text("่"),
+            TextPart::Undecided("ก"),
+        ]
+    );
+}
