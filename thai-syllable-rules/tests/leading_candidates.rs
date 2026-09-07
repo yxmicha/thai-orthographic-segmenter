@@ -263,3 +263,18 @@ fn attaches_a_leading_base_to_a_leading_vowel_after_a_hard_ending() {
         vec![TextPart::Syllable("กะ"), TextPart::Syllable("กเบนทร์")]
     );
 }
+#[test]
+fn keeps_the_tail_of_a_bare_run_undecided_before_a_nonleading_syllable() {
+    let source = "กะตกลมบัตร";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Syllable("ตก"),
+            TextPart::Undecided("ล"),
+            TextPart::Undecided("ม"),
+            TextPart::Syllable("บัตร"),
+        ]
+    );
+}
