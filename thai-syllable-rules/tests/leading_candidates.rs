@@ -83,3 +83,74 @@ fn keeps_leading_vowel_words_together_at_the_start_of_a_run() {
         vec![TextPart::Syllable("กเบนทร์")]
     );
 }
+
+#[test]
+fn keeps_noncluster_h_onsets_separate_from_leading_bases() {
+    let cases = [
+        (
+            "มหา",
+            vec![TextPart::Undecided("ม"), TextPart::Syllable("หา")],
+        ),
+        (
+            "ทหาร",
+            vec![TextPart::Undecided("ท"), TextPart::Syllable("หาร")],
+        ),
+        (
+            "รหัส",
+            vec![TextPart::Undecided("ร"), TextPart::Syllable("หัส")],
+        ),
+        (
+            "สหกรณ์",
+            vec![
+                TextPart::Undecided("ส"),
+                TextPart::Undecided("ห"),
+                TextPart::Syllable("กรณ์"),
+            ],
+        ),
+        (
+            "สหภาพ",
+            vec![
+                TextPart::Undecided("ส"),
+                TextPart::Undecided("ห"),
+                TextPart::Syllable("ภาพ"),
+            ],
+        ),
+        (
+            "สหาย",
+            vec![TextPart::Undecided("ส"), TextPart::Syllable("หาย")],
+        ),
+        (
+            "คหบดี",
+            vec![
+                TextPart::Undecided("ค"),
+                TextPart::Undecided("ห"),
+                TextPart::Undecided("บ"),
+                TextPart::Syllable("ดี"),
+            ],
+        ),
+        (
+            "พหุ",
+            vec![TextPart::Undecided("พ"), TextPart::Syllable("หุ")],
+        ),
+        (
+            "พหูพจน์",
+            vec![
+                TextPart::Undecided("พ"),
+                TextPart::Syllable("หู"),
+                TextPart::Syllable("พจน์"),
+            ],
+        ),
+        (
+            "อหังการ",
+            vec![
+                TextPart::Undecided("อ"),
+                TextPart::Syllable("หัง"),
+                TextPart::Syllable("การ"),
+            ],
+        ),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
