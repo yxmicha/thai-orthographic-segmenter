@@ -60,3 +60,15 @@ fn incompatible_mark_roles_and_reversed_vowels_are_invalid() {
         );
     }
 }
+
+#[test]
+fn an_unpaired_preposed_vowel_is_preserved_as_text() {
+    for source in ["เ", "แ", "โ", "ใ", "ไ", "เ่"] {
+        let parts = split(source);
+        assert_eq!(
+            text_parts(source, &parts),
+            vec![TextPart::Text(source)],
+            "{source}"
+        );
+    }
+}
