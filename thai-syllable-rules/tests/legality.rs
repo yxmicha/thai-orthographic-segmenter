@@ -79,3 +79,16 @@ fn rejecting_a_cell_does_not_strand_its_preposed_vowel() {
     let parts = split(source);
     assert_eq!(text_parts(source, &parts), vec![TextPart::Invalid(source)]);
 }
+
+#[test]
+fn valid_stacks_and_decomposed_sara_am_keep_the_original_spelling() {
+    for source in ["กี่", "กุ้ง", "กู้", "น้ำ", "นํ้า", "พันธุ์", "ค่าา"]
+    {
+        let parts = split(source);
+        assert_eq!(
+            text_parts(source, &parts),
+            vec![TextPart::Syllable(source)],
+            "{source}"
+        );
+    }
+}
