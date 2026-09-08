@@ -65,3 +65,19 @@ fn conventional_bo_negator_is_not_an_invalid_tone_cell() {
     );
     assert_eq!(text_parts("ก่", &split("ก่")), vec![TextPart::Invalid("ก่")]);
 }
+
+#[test]
+fn decomposed_am_does_not_accept_a_second_vowel() {
+    for (source, syllable, orphan) in [
+        ("นํ้าะ", "นํ้า", "ะ"),
+        ("กําะ", "กํา", "ะ"),
+        ("นํ้าา", "นํ้า", "า"),
+        ("กําา", "กํา", "า"),
+    ] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Syllable(syllable), TextPart::Text(orphan)],
+            "{source}"
+        );
+    }
+}
