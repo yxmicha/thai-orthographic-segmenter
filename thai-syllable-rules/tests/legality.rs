@@ -92,3 +92,36 @@ fn valid_stacks_and_decomposed_sara_am_keep_the_original_spelling() {
         );
     }
 }
+
+#[test]
+fn illegal_cells_are_local_barriers_with_exact_utf8_ranges() {
+    let source = "🦀กา กี้่ลิตร แสดง ่ก้บอก.";
+    let parts = split(source);
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Text("🦀"),
+            TextPart::Syllable("กา"),
+            TextPart::Text(" "),
+            TextPart::Invalid("กี้่"),
+            TextPart::Syllable("ลิ"),
+            TextPart::Syllable("ตร"),
+            TextPart::Text(" "),
+            TextPart::Syllable("แส"),
+            TextPart::Syllable("ดง"),
+            TextPart::Text(" ่"),
+            TextPart::Syllable("ก้บ"),
+            TextPart::Syllable("อก"),
+            TextPart::Dot("."),
+        ]
+    );
+    let mut end = 0;
+    for part in &parts {
+        let range = part.byte_range();
+        assert_eq!(range.start, end);
+        assert!(range.start < range.end);
+        assert!(source.is_char_boundary(range.start) && source.is_char_boundary(range.end));
+        end = range.end;
+    }
+    assert_eq!(end, source.len());
+}
