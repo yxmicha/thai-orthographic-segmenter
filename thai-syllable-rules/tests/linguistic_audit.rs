@@ -21,3 +21,19 @@ fn bare_carrier_does_not_license_an_onset_only_final() {
         );
     }
 }
+
+#[test]
+fn retained_oe_carrier_is_one_vowel_pattern() {
+    for source in ["เทอม", "เทอญ"] {
+        assert_eq!(
+            SyllablePattern::inspect(source).map(|pattern| pattern.vowel_pattern_count()),
+            Some(1),
+            "{source}"
+        );
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Syllable(source)],
+            "{source}"
+        );
+    }
+}
