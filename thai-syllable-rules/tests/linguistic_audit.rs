@@ -1,0 +1,23 @@
+mod text_part;
+use text_part::{TextPart, text_parts};
+use thai_syllable_rules::{SyllablePattern, split};
+
+#[test]
+fn bare_carrier_does_not_license_an_onset_only_final() {
+    for tail in ["ห", "ฮ", "ฉ", "ฌ", "ผ", "ฝ"] {
+        let source = format!("อ{tail}");
+        assert_eq!(
+            text_parts(&source, &split(&source)),
+            vec![TextPart::Undecided("อ"), TextPart::Undecided(tail)],
+            "{source}"
+        );
+    }
+    for source in ["อก", "อน", "ออ", "อย่า", "อยู่", "อย่าง", "อยาก"]
+    {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Syllable(source)],
+            "{source}"
+        );
+    }
+}
