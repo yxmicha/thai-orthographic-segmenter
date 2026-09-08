@@ -81,3 +81,30 @@ fn decomposed_am_does_not_accept_a_second_vowel() {
         );
     }
 }
+
+#[test]
+fn tone_mark_does_not_complete_terminal_ue() {
+    for source in ["กื", "กื้", "กื๊", "กื๋", "กื้ก์", "กื้กิ์"]
+    {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Invalid(source)],
+            "{source}"
+        );
+    }
+    assert_eq!(
+        text_parts("พื้นที่", &split("พื้นที่")),
+        vec![
+            TextPart::Syllable("พื้"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ที่")
+        ]
+    );
+    for source in ["มือ", "ซื้อ", "คืน", "พื้น"] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Syllable(source)],
+            "{source}"
+        );
+    }
+}
