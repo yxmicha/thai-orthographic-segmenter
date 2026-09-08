@@ -108,3 +108,30 @@ fn tone_mark_does_not_complete_terminal_ue() {
         );
     }
 }
+
+#[test]
+fn complex_silent_endings_keep_hosts_without_swallowing_neighbors() {
+    let source = "ศักดิ์สิทธิ์ พันธุ์ศาสตร์ คอนเสิร์ต";
+    let parts = split(source);
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Syllable("ศักดิ์"),
+            TextPart::Syllable("สิทธิ์"),
+            TextPart::Text(" "),
+            TextPart::Syllable("พันธุ์"),
+            TextPart::Syllable("ศาสตร์"),
+            TextPart::Text(" "),
+            TextPart::Syllable("คอ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("เสิร์ต"),
+        ]
+    );
+    assert_eq!(
+        parts
+            .iter()
+            .map(|part| part.text(source))
+            .collect::<String>(),
+        source
+    );
+}
