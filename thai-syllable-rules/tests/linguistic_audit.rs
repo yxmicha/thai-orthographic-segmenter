@@ -37,3 +37,21 @@ fn retained_oe_carrier_is_one_vowel_pattern() {
         );
     }
 }
+
+#[test]
+fn lakkhangyao_requires_an_independent_vowel() {
+    assert_eq!(
+        text_parts("กๅก", &split("กๅก")),
+        vec![
+            TextPart::Undecided("ก"),
+            TextPart::Text("ๅ"),
+            TextPart::Undecided("ก")
+        ]
+    );
+    for source in ["ฤๅ", "ฦๅ"] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Syllable(source)]
+        );
+    }
+}
