@@ -174,3 +174,15 @@ fn carrier_correction_preserves_other_vowel_boundaries() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn reduced_ua_spellings_remain_terminal_candidates() {
+    for source in ["สวน", "รวม", "บวก", "ดวง", "สวย", "กล้วย", "ช่วย", "ถ้วย"]
+    {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Syllable(source)],
+            "{source}"
+        );
+    }
+}
