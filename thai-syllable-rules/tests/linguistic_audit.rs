@@ -135,3 +135,42 @@ fn complex_silent_endings_keep_hosts_without_swallowing_neighbors() {
         source
     );
 }
+
+#[test]
+fn carrier_correction_preserves_other_vowel_boundaries() {
+    for (source, expected) in [
+        (
+            "โมอับ",
+            vec![TextPart::Syllable("โม"), TextPart::Syllable("อับ")],
+        ),
+        (
+            "เหลืออีก",
+            vec![TextPart::Syllable("เหลือ"), TextPart::Syllable("อีก")],
+        ),
+        (
+            "เธอเอง",
+            vec![
+                TextPart::Syllable("เธ"),
+                TextPart::Undecided("อ"),
+                TextPart::Syllable("เอง"),
+            ],
+        ),
+        (
+            "จมรรอห",
+            vec![
+                TextPart::Syllable("จม"),
+                TextPart::Undecided("ร"),
+                TextPart::Undecided("ร"),
+                TextPart::Undecided("อ"),
+                TextPart::Undecided("ห"),
+            ],
+        ),
+        ("บ่มี", vec![TextPart::Syllable("บ่"), TextPart::Syllable("มี")]),
+        (
+            "บ่ได้",
+            vec![TextPart::Syllable("บ่"), TextPart::Syllable("ได้")],
+        ),
+    ] {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
