@@ -55,3 +55,13 @@ fn lakkhangyao_requires_an_independent_vowel() {
         );
     }
 }
+
+#[test]
+fn conventional_bo_negator_is_not_an_invalid_tone_cell() {
+    assert_eq!(text_parts("บ่", &split("บ่")), vec![TextPart::Syllable("บ่")]);
+    assert_eq!(
+        text_parts("บ่น", &split("บ่น")),
+        vec![TextPart::Syllable("บ่น")]
+    );
+    assert_eq!(text_parts("ก่", &split("ก่")), vec![TextPart::Invalid("ก่")]);
+}
