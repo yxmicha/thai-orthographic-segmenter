@@ -68,3 +68,23 @@ fn implicit_cluster_requires_a_coda_capable_final() {
         );
     }
 }
+
+#[test]
+fn ordinary_final_r_remains_available_after_an_explicit_vowel() {
+    for (source, following) in [("การออก", "ออก"), ("การอม", "อม")]
+    {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![
+                TextPart::Syllable("กา"),
+                TextPart::Undecided("ร"),
+                TextPart::Syllable(following),
+            ],
+            "{source}"
+        );
+    }
+    assert_eq!(
+        text_parts("การ", &split("การ")),
+        vec![TextPart::Syllable("การ")]
+    );
+}
