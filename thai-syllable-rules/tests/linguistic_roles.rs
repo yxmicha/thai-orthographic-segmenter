@@ -12,3 +12,19 @@ fn orphan_marks_are_not_repaired_by_assigning_them_to_a_later_base() {
         );
     }
 }
+
+#[test]
+fn unsupported_phinthu_run_is_not_an_ordinary_implicit_candidate() {
+    assert_eq!(
+        text_parts("กฺก", &split("กฺก")),
+        vec![TextPart::Undecided("กฺ"), TextPart::Undecided("ก")]
+    );
+    assert_eq!(
+        text_parts("กะกฺก", &split("กะกฺก")),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Undecided("กฺ"),
+            TextPart::Undecided("ก")
+        ]
+    );
+}
