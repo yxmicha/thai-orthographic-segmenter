@@ -38,3 +38,13 @@ fn terminal_carrier_completes_a_leading_vowel_without_becoming_a_coda() {
         );
     }
 }
+
+#[test]
+fn incomplete_tone_only_unit_is_not_made_complete_by_run_boundaries() {
+    for source in ["ก่", "ก้", "ก๊", "ก๋"] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Invalid(source)]
+        );
+    }
+}
