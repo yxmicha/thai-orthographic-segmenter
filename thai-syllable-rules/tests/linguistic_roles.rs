@@ -48,3 +48,8 @@ fn incomplete_tone_only_unit_is_not_made_complete_by_run_boundaries() {
         );
     }
 }
+
+#[test]
+fn phinthu_does_not_supply_a_vowel_nucleus() {
+    assert_eq!(text_parts("กฺ", &split("กฺ")), vec![TextPart::Undecided("กฺ")]);
+}
