@@ -186,3 +186,33 @@ fn reduced_ua_spellings_remain_terminal_candidates() {
         );
     }
 }
+
+#[test]
+fn incomplete_ue_does_not_license_a_dot_or_cross_source_boundaries() {
+    let source = "🦀พื้นที่ กื้. / กื้ ก";
+    let parts = split(source);
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Text("🦀"),
+            TextPart::Syllable("พื้"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ที่"),
+            TextPart::Text(" "),
+            TextPart::Invalid("กื้"),
+            TextPart::Text(". / "),
+            TextPart::Invalid("กื้"),
+            TextPart::Text(" "),
+            TextPart::Undecided("ก"),
+        ]
+    );
+    let mut end = 0;
+    for part in parts {
+        let range = part.byte_range();
+        assert_eq!(range.start, end);
+        assert!(range.start < range.end);
+        assert!(source.is_char_boundary(range.start) && source.is_char_boundary(range.end));
+        end = range.end;
+    }
+    assert_eq!(end, source.len());
+}
