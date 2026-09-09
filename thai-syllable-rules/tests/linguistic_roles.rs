@@ -53,3 +53,18 @@ fn incomplete_tone_only_unit_is_not_made_complete_by_run_boundaries() {
 fn phinthu_does_not_supply_a_vowel_nucleus() {
     assert_eq!(text_parts("กฺ", &split("กฺ")), vec![TextPart::Undecided("กฺ")]);
 }
+
+#[test]
+fn implicit_cluster_requires_a_coda_capable_final() {
+    for (source, final_base) in [("กรห", "ห"), ("กรฮ", "ฮ"), ("กรผ", "ผ")] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![
+                TextPart::Undecided("ก"),
+                TextPart::Undecided("ร"),
+                TextPart::Undecided(final_base),
+            ],
+            "{source}"
+        );
+    }
+}
