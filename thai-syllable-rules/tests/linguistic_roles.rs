@@ -28,3 +28,13 @@ fn unsupported_phinthu_run_is_not_an_ordinary_implicit_candidate() {
         ]
     );
 }
+
+#[test]
+fn terminal_carrier_completes_a_leading_vowel_without_becoming_a_coda() {
+    for source in ["เหรอ", "เจอ"] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Syllable(source)]
+        );
+    }
+}
