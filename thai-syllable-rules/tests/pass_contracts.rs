@@ -17,3 +17,13 @@ fn source_scan_pass_preserves_non_thai_runs_as_hard_boundaries() {
         ]
     );
 }
+
+#[test]
+fn thai_parse_pass_keeps_dependent_marks_inside_the_local_unit() {
+    let source = "เครื่อง";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![TextPart::Syllable("เครื่อง")]
+    );
+}
