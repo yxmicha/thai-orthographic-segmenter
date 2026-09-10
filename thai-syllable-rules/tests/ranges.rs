@@ -35,3 +35,13 @@ fn preserves_text_and_ranges_exactly() {
             .all(|window| window[0].end == window[1].start)
     );
 }
+#[test]
+fn does_not_split_dependent_marks_from_their_base() {
+    let source = "เครื่อง";
+    let parts = split(source);
+
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![TextPart::Syllable("เครื่อง")]
+    );
+}
