@@ -58,3 +58,27 @@ fn ownership_resolution_pass_keeps_each_ambiguous_atom_visible() {
         ]
     );
 }
+
+#[test]
+fn public_parts_preserve_every_part_kind_and_source_scalar() {
+    let source = "นะก่กา. /";
+    let parts = split(source);
+
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Syllable("นะ"),
+            TextPart::Invalid("ก่"),
+            TextPart::Syllable("กา"),
+            TextPart::Dot("."),
+            TextPart::Text(" /")
+        ]
+    );
+    assert_eq!(
+        parts
+            .iter()
+            .map(|part| part.text(source))
+            .collect::<String>(),
+        source
+    );
+}
