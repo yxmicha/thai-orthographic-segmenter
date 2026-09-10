@@ -43,3 +43,18 @@ fn candidate_planning_pass_exposes_a_bounded_terminal_anchor() {
         ]
     );
 }
+
+#[test]
+fn ownership_resolution_pass_keeps_each_ambiguous_atom_visible() {
+    let source = "เจียรวนนท์";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("เจีย"),
+            TextPart::Undecided("ร"),
+            TextPart::Undecided("ว"),
+            TextPart::Syllable("นนท์"),
+        ]
+    );
+}
