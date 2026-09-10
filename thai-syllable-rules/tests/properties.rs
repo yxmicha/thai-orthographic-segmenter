@@ -36,3 +36,33 @@ fn assert_partition(source: &str, parts: &[Part]) {
         "parts do not reach the end of {source:?}"
     );
 }
+
+proptest! {
+    #[test]
+    fn parts_partition_the_source(source in text()) {
+        let parts = split(&source);
+        assert_partition(&source, &parts);
+        let joined: String = parts.iter().map(|part| part.text(&source)).collect();
+        prop_assert_eq!(joined, source);
+    }
+
+    #[test]
+    fn analysis_recovers_a_partition_of_the_same_source(source in text()) {
+        let parts = split(&source);
+        let recovered = RuleAnalysis::new(&source).recover_parts(&parts);
+        assert_partition(&source, &recovered);
+    }
+
+    #[test]
+    fn patterns_are_inspectable_for_any_text(source in text()) {
+        if let Some(pattern) = SyllablePattern::inspect(&source) {
+            // Whatever the count, asking whether it is a candidate must not panic.
+            let _ = pattern.is_candidate(&source);
+        }
+    }
+
+    #[test]
+    fn splitting_is_deterministic(source in text()) {
+        prop_assert_eq!(split(&source), split(&source));
+    }
+}
