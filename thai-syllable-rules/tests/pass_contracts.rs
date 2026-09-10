@@ -27,3 +27,19 @@ fn thai_parse_pass_keeps_dependent_marks_inside_the_local_unit() {
         vec![TextPart::Syllable("เครื่อง")]
     );
 }
+
+#[test]
+fn candidate_planning_pass_exposes_a_bounded_terminal_anchor() {
+    let source = "กะตกลมเตะ";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Syllable("ตก"),
+            TextPart::Undecided("ล"),
+            TextPart::Undecided("ม"),
+            TextPart::Syllable("เตะ"),
+        ]
+    );
+}
