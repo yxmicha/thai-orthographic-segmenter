@@ -18,3 +18,22 @@ fn r_han_shared_references_are_emitted_once() {
         assert_eq!(count, 1, "{source}");
     }
 }
+
+#[test]
+fn r_han_nuclei_are_counted_without_inventing_a_pronunciation() {
+    for (source, count) in [
+        ("กรรม", 1),
+        ("กรรมธรรม", 2),
+        ("ภรรยา", 2),
+        ("สรรเสริญ", 2),
+        ("สรรพคุณ", 2),
+    ] {
+        let analysis = RuleAnalysis::new(source);
+        assert!(!analysis.r_han_patterns().is_empty(), "{source}");
+        assert_eq!(
+            SyllablePattern::inspect(source).map(|pattern| pattern.vowel_pattern_count()),
+            Some(count),
+            "{source}"
+        );
+    }
+}
