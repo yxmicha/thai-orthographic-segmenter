@@ -37,3 +37,31 @@ fn r_han_nuclei_are_counted_without_inventing_a_pronunciation() {
         );
     }
 }
+
+#[test]
+fn weak_initials_are_recoverable_while_whole_clusters_remain_available() {
+    for source in ["ขนม", "ถนน", "สนุก", "ตลาด", "จมูก", "อร่อย"]
+    {
+        let analysis = RuleAnalysis::new(source);
+        assert!(analysis.permits_weak_initial(&(0..3)), "{source}");
+        let recovered = analysis.recover_parts(&split(source));
+        assert!(recovered.iter().any(|part| part.byte_range() == (0..3)));
+        assert_eq!(
+            recovered
+                .iter()
+                .map(|part| part.text(source))
+                .collect::<String>(),
+            source
+        );
+    }
+    let analysis = RuleAnalysis::new("ครา");
+    assert_eq!(split("ครา"), [Part::Syllable(0..9)]);
+    assert_eq!(
+        analysis
+            .recover_parts(&split("ครา"))
+            .iter()
+            .map(|part| part.text("ครา"))
+            .collect::<String>(),
+        "ครา"
+    );
+}
