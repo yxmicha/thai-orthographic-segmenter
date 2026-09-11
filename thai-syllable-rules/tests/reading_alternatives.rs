@@ -110,3 +110,15 @@ fn r_han_recovery_keeps_the_nucleus_together_and_exposes_context() {
         );
     }
 }
+
+#[test]
+fn retained_oe_has_one_nucleus_in_context() {
+    for source in ["เทอมนี้", "เทอมหน้า", "เทอญนะ"] {
+        assert_eq!(
+            SyllablePattern::inspect(source).map(|pattern| pattern.vowel_pattern_count()),
+            Some(2),
+            "{source}"
+        );
+    }
+    assert_eq!(split("โมอับ"), [Part::Syllable(0..6), Part::Syllable(6..15)]);
+}
