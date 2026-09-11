@@ -122,3 +122,31 @@ fn retained_oe_has_one_nucleus_in_context() {
     }
     assert_eq!(split("โมอับ"), [Part::Syllable(0..6), Part::Syllable(6..15)]);
 }
+
+#[test]
+fn recovery_preserves_mixed_text_barriers_and_utf8_ranges() {
+    let source = "🦀ขนม ก่้ ภรรยา";
+    let analysis = RuleAnalysis::new(source);
+    let parts = analysis.recover_parts(&split(source));
+    let mut end = 0;
+    for part in &parts {
+        let range = part.byte_range();
+        assert_eq!(range.start, end);
+        assert!(range.start < range.end);
+        assert!(source.is_char_boundary(range.start) && source.is_char_boundary(range.end));
+        end = range.end;
+    }
+    assert_eq!(end, source.len());
+    assert_eq!(
+        parts
+            .iter()
+            .map(|part| part.text(source))
+            .collect::<String>(),
+        source
+    );
+    assert!(
+        parts
+            .iter()
+            .any(|part| matches!(part, Part::Invalid(_)) && part.text(source) == "ก่้")
+    );
+}
