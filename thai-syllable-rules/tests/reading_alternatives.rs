@@ -65,3 +65,18 @@ fn weak_initials_are_recoverable_while_whole_clusters_remain_available() {
         "ครา"
     );
 }
+
+#[test]
+fn shared_consonants_and_preposed_scope_refer_to_original_bytes() {
+    let shared = RuleAnalysis::new("กิจการ");
+    assert!(shared.reading_alternatives().iter().any(|alternative| matches!(alternative,
+        ReadingAlternative::SharedConsonant { source_range, boundary } if *source_range == (6..9) && *boundary == 9
+    )));
+    let scoped = RuleAnalysis::new("เกษม");
+    assert!(scoped.reading_alternatives().iter().any(|alternative| matches!(alternative,
+        ReadingAlternative::LeadingVowelScope { vowel_range, consonant_range, following_onset_range, boundary }
+        if *vowel_range == (0..3) && *consonant_range == (3..6) && *following_onset_range == (6..9) && *boundary == 6
+    )));
+    let parts = scoped.recover_parts(&split("เกษม"));
+    assert!(!parts.iter().any(|part| part.byte_range().end == 3));
+}
