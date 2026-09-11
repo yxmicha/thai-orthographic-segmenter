@@ -80,3 +80,33 @@ fn shared_consonants_and_preposed_scope_refer_to_original_bytes() {
     let parts = scoped.recover_parts(&split("เกษม"));
     assert!(!parts.iter().any(|part| part.byte_range().end == 3));
 }
+
+#[test]
+fn r_han_recovery_keeps_the_nucleus_together_and_exposes_context() {
+    for source in ["กรรไกร", "ภรรยา", "สรรเสริญ", "สรรพคุณ"]
+    {
+        let analysis = RuleAnalysis::new(source);
+        let parts = analysis.recover_parts(&split(source));
+        assert_eq!(
+            parts
+                .iter()
+                .map(|part| part.text(source))
+                .collect::<String>(),
+            source
+        );
+        assert!(
+            parts.iter().any(|part| part.byte_range() == (0..9)),
+            "{source}"
+        );
+        assert!(
+            analysis
+                .reading_alternatives()
+                .iter()
+                .any(|alternative| matches!(
+                    alternative,
+                    ReadingAlternative::SharedConsonant { .. }
+                )),
+            "{source}"
+        );
+    }
+}
