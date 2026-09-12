@@ -25,3 +25,9 @@ fn permits_a_leading_consonant_that_is_silent_before_the_following_pattern() {
     assert!(is_one_syllable_or_more("กล้า"));
     assert!(is_one_syllable_or_more("มเห"));
 }
+
+#[test]
+fn rejects_non_thai_and_orphan_vowel_material() {
+    assert!(!is_one_syllable_or_more("abc"));
+    assert!(!is_one_syllable_or_more("า"));
+}
