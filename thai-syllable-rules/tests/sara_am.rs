@@ -15,3 +15,31 @@ fn decomposed_sara_am_closes_before_an_extra_consonant() {
         );
     }
 }
+
+#[test]
+fn decomposed_sara_am_preserves_boundaries_in_mixed_source() {
+    let source = "🦀นํ้าก น้ำก น้ําก.";
+    let parts = split(source);
+    assert_eq!(
+        text_parts(source, &parts),
+        vec![
+            TextPart::Text("🦀"),
+            TextPart::Syllable("นํ้า"),
+            TextPart::Undecided("ก"),
+            TextPart::Text(" "),
+            TextPart::Syllable("น้ำ"),
+            TextPart::Undecided("ก"),
+            TextPart::Text(" "),
+            TextPart::Syllable("น้ํา"),
+            TextPart::Undecided("ก"),
+            TextPart::Dot("."),
+        ]
+    );
+    let mut end = 0;
+    for part in parts {
+        let range = part.byte_range();
+        assert_eq!(range.start, end);
+        end = range.end;
+    }
+    assert_eq!(end, source.len());
+}
