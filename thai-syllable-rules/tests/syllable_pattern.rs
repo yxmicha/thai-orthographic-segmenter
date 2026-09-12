@@ -8,3 +8,13 @@ fn recognizes_complete_vowel_patterns_with_at_least_two_characters() {
     assert!(!is_one_syllable_or_more("ก"));
     assert!(!is_one_syllable_or_more("ก้"));
 }
+
+#[test]
+fn recognizes_two_consonants_as_an_implicit_vowel_pattern() {
+    assert!(is_one_syllable_or_more("ตร"));
+    assert!(is_one_syllable_or_more("กร"));
+    assert_eq!(
+        SyllablePattern::inspect("ตร").map(|pattern| pattern.vowel_pattern_count()),
+        Some(0)
+    );
+}
