@@ -18,3 +18,10 @@ fn recognizes_two_consonants_as_an_implicit_vowel_pattern() {
         Some(0)
     );
 }
+
+#[test]
+fn permits_a_leading_consonant_that_is_silent_before_the_following_pattern() {
+    assert!(is_one_syllable_or_more("ขนาด"));
+    assert!(is_one_syllable_or_more("กล้า"));
+    assert!(is_one_syllable_or_more("มเห"));
+}
