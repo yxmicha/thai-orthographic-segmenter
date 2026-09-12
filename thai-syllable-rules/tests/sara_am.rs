@@ -43,3 +43,10 @@ fn decomposed_sara_am_preserves_boundaries_in_mixed_source() {
     }
     assert_eq!(end, source.len());
 }
+
+#[test]
+fn sara_am_closure_does_not_apply_to_ordinary_long_a() {
+    let source = "นาก";
+    let parts = split(source);
+    assert_eq!(text_parts(source, &parts), vec![TextPart::Syllable(source)]);
+}
