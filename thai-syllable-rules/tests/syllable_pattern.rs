@@ -1,4 +1,6 @@
 mod text_part;
+
+use text_part::{TextPart, text_parts};
 use thai_syllable_rules::{Part, SyllablePattern, is_one_syllable_or_more, split};
 
 #[test]
@@ -30,4 +32,14 @@ fn permits_a_leading_consonant_that_is_silent_before_the_following_pattern() {
 fn rejects_non_thai_and_orphan_vowel_material() {
     assert!(!is_one_syllable_or_more("abc"));
     assert!(!is_one_syllable_or_more("า"));
+}
+
+#[test]
+fn does_not_emit_single_character_independent_vowels_as_syllables() {
+    for source in ["ฤ", "ฦ"] {
+        assert_eq!(
+            text_parts(source, &split(source)),
+            vec![TextPart::Undecided(source)]
+        );
+    }
 }
