@@ -77,3 +77,21 @@ fn substantial_pattern_audit_does_not_count_silent_consonant_suffixes() {
         Some(2)
     );
 }
+
+#[test]
+fn counts_two_patterns_in_prayot_but_one_in_each_silent_ending_unit() {
+    for (source, count) in [
+        ("ประโยชน์", 2),
+        ("ประ", 1),
+        ("โยชน์", 1),
+        ("พิมพ์", 1),
+        ("ศุกร์", 1),
+    ] {
+        assert_eq!(
+            SyllablePattern::inspect_substantial(source)
+                .map(|pattern| pattern.vowel_pattern_count()),
+            Some(count),
+            "{source}"
+        );
+    }
+}
