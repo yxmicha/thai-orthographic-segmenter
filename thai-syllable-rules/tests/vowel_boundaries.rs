@@ -16,3 +16,38 @@ fn keeps_a_repeated_y_tail_available_to_the_common_base_word() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_short_u_final_ambiguous_before_a_following_nucleus() {
+    let cases = [
+        (
+            "ปทุมธานี",
+            vec![
+                TextPart::Syllable("ปทุ"),
+                TextPart::Undecided("ม"),
+                TextPart::Syllable("ธา"),
+                TextPart::Syllable("นี"),
+            ],
+        ),
+        (
+            "สุขภาพ",
+            vec![
+                TextPart::Syllable("สุ"),
+                TextPart::Undecided("ข"),
+                TextPart::Syllable("ภาพ"),
+            ],
+        ),
+        (
+            "หยุดการ",
+            vec![
+                TextPart::Syllable("หยุ"),
+                TextPart::Undecided("ด"),
+                TextPart::Syllable("การ"),
+            ],
+        ),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
