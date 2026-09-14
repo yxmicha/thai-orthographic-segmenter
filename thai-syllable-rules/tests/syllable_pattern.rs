@@ -56,3 +56,24 @@ fn does_not_emit_contextual_parts_that_fail_the_minimum_check() {
         );
     }
 }
+
+#[test]
+fn substantial_pattern_audit_does_not_count_silent_consonant_suffixes() {
+    for source in ["พิมพ์", "ศุกร์", "โยชน์", "แพทย์", "จารย์", "พันธุ์"]
+    {
+        assert_eq!(
+            SyllablePattern::inspect_substantial(source)
+                .map(|pattern| pattern.vowel_pattern_count()),
+            Some(1),
+            "{source}"
+        );
+    }
+    assert_eq!(
+        SyllablePattern::inspect("พิมพ์").map(|pattern| pattern.vowel_pattern_count()),
+        Some(2)
+    );
+    assert_eq!(
+        SyllablePattern::inspect_substantial("พิมพ์ดี").map(|pattern| pattern.vowel_pattern_count()),
+        Some(2)
+    );
+}
