@@ -51,3 +51,13 @@ fn keeps_a_short_u_final_ambiguous_before_a_following_nucleus() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn does_not_merge_independent_vowel_nuclei_into_one_syllable() {
+    let source = "นาวัฒ";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![TextPart::Syllable("นา"), TextPart::Syllable("วัฒ")]
+    );
+}
