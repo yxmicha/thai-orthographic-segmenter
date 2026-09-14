@@ -43,3 +43,16 @@ fn does_not_emit_single_character_independent_vowels_as_syllables() {
         );
     }
 }
+
+#[test]
+fn does_not_emit_contextual_parts_that_fail_the_minimum_check() {
+    for source in ["กกตต้องติดคุก", "กระทรวงท่องเที่ยวและการกีฬาออกก่อนเลือกตั้ง"]
+    {
+        assert!(
+            split(source).iter().all(|part| {
+                !matches!(part, Part::Syllable(_)) || is_one_syllable_or_more(part.text(source))
+            }),
+            "source emitted a syllable that fails the minimum check: {source}"
+        );
+    }
+}
