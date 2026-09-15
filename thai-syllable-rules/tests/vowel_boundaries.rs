@@ -155,3 +155,17 @@ fn keeps_ordinary_finals_ambiguous_before_following_leading_vowels() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn keeps_a_short_i_final_ambiguous_before_a_following_rime() {
+    let source = "กินซัก";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("กิ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ซัก"),
+        ]
+    );
+}
