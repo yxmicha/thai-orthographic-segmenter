@@ -183,3 +183,17 @@ fn keeps_the_short_i_final_in_vit_undecided_before_a_following_syllable() {
         ]
     );
 }
+
+#[test]
+fn keeps_the_short_i_final_in_nis_undecided_before_a_following_syllable() {
+    let source = "นิสสัน";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("นิ"),
+            TextPart::Undecided("ส"),
+            TextPart::Syllable("สัน"),
+        ]
+    );
+}
