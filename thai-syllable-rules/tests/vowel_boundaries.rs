@@ -169,3 +169,17 @@ fn keeps_a_short_i_final_ambiguous_before_a_following_rime() {
         ]
     );
 }
+
+#[test]
+fn keeps_the_short_i_final_in_vit_undecided_before_a_following_syllable() {
+    let source = "วิตที่";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("วิ"),
+            TextPart::Undecided("ต"),
+            TextPart::Syllable("ที่"),
+        ]
+    );
+}
