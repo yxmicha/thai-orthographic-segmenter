@@ -90,3 +90,18 @@ fn keeps_a_coda_capable_base_in_the_ambiguous_previous_boundary_class() {
         ]
     );
 }
+
+#[test]
+fn keeps_both_bases_between_leading_and_following_syllables_ambiguous() {
+    let source = "เยอรมัน";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("เย"),
+            TextPart::Undecided("อ"),
+            TextPart::Undecided("ร"),
+            TextPart::Syllable("มัน"),
+        ]
+    );
+}
