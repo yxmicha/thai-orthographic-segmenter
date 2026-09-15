@@ -105,3 +105,53 @@ fn keeps_both_bases_between_leading_and_following_syllables_ambiguous() {
         ]
     );
 }
+
+#[test]
+fn keeps_ordinary_finals_ambiguous_before_following_leading_vowels() {
+    let cases = [
+        (
+            "เปลี่ยนยัง",
+            vec![
+                TextPart::Syllable("เปลี่ย"),
+                TextPart::Undecided("น"),
+                TextPart::Syllable("ยัง"),
+            ],
+        ),
+        (
+            "ขายใน",
+            vec![
+                TextPart::Syllable("ขา"),
+                TextPart::Undecided("ย"),
+                TextPart::Syllable("ใน"),
+            ],
+        ),
+        (
+            "เสียงให้",
+            vec![
+                TextPart::Syllable("เสีย"),
+                TextPart::Undecided("ง"),
+                TextPart::Syllable("ให้"),
+            ],
+        ),
+        (
+            "ท้องเสีย",
+            vec![
+                TextPart::Syllable("ท้อ"),
+                TextPart::Undecided("ง"),
+                TextPart::Syllable("เสีย"),
+            ],
+        ),
+        (
+            "ก้อนเจ้า",
+            vec![
+                TextPart::Syllable("ก้อ"),
+                TextPart::Undecided("น"),
+                TextPart::Syllable("เจ้า"),
+            ],
+        ),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
