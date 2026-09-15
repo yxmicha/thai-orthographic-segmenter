@@ -211,3 +211,18 @@ fn keeps_the_short_i_final_in_phalit_undecided_before_a_following_syllable() {
         ]
     );
 }
+
+#[test]
+fn keeps_two_ordinary_consonants_ambiguous_before_a_following_leading_vowel() {
+    let source = "มันรสเหมือน";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("มัน"),
+            TextPart::Undecided("ร"),
+            TextPart::Undecided("ส"),
+            TextPart::Syllable("เหมือน"),
+        ]
+    );
+}
