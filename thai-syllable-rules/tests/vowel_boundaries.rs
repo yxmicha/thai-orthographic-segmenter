@@ -74,3 +74,19 @@ fn keeps_the_cross_atom_ao_pattern_together() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn keeps_a_coda_capable_base_in_the_ambiguous_previous_boundary_class() {
+    let source = "ว่ากอนด้า";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("ว่า"),
+            TextPart::Undecided("ก"),
+            TextPart::Undecided("อ"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ด้า"),
+        ]
+    );
+}
