@@ -197,3 +197,17 @@ fn keeps_the_short_i_final_in_nis_undecided_before_a_following_syllable() {
         ]
     );
 }
+
+#[test]
+fn keeps_the_short_i_final_in_phalit_undecided_before_a_following_syllable() {
+    let source = "ผลิตภัณฑ์";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("ผลิ"),
+            TextPart::Undecided("ต"),
+            TextPart::Syllable("ภัณฑ์"),
+        ]
+    );
+}
