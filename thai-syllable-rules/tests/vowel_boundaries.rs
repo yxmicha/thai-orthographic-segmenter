@@ -61,3 +61,16 @@ fn does_not_merge_independent_vowel_nuclei_into_one_syllable() {
         vec![TextPart::Syllable("นา"), TextPart::Syllable("วัฒ")]
     );
 }
+
+#[test]
+fn keeps_the_cross_atom_ao_pattern_together() {
+    let cases = [
+        ("เฉพาะ", vec![TextPart::Syllable("เฉพาะ")]),
+        ("เรพาะ", vec![TextPart::Syllable("เรพาะ")]),
+        ("เสนาะ", vec![TextPart::Syllable("เสนาะ")]),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
