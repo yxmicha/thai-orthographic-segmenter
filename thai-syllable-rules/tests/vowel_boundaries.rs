@@ -226,3 +226,17 @@ fn keeps_two_ordinary_consonants_ambiguous_before_a_following_leading_vowel() {
         ]
     );
 }
+
+#[test]
+fn does_not_consume_a_second_dependent_vowel_pattern_without_a_base() {
+    let cases = [
+        ("เคราะห์", vec![TextPart::Syllable("เคราะห์")]),
+        ("กีา", vec![TextPart::Syllable("กี"), TextPart::Text("า")]),
+        ("กุา", vec![TextPart::Syllable("กุ"), TextPart::Text("า")]),
+        ("กะา", vec![TextPart::Syllable("กะ"), TextPart::Text("า")]),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
