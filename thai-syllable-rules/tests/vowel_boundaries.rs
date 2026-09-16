@@ -345,3 +345,17 @@ fn does_not_promote_a_terminal_run_ending_in_an_onset_only_base() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_tone_marked_ue_final_undecided_before_a_following_syllable() {
+    let source = "พื้นที่";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("พื้"),
+            TextPart::Undecided("น"),
+            TextPart::Syllable("ที่"),
+        ]
+    );
+}
