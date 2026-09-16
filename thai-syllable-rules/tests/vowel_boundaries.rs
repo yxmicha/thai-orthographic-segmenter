@@ -359,3 +359,18 @@ fn keeps_a_tone_marked_ue_final_undecided_before_a_following_syllable() {
         ]
     );
 }
+
+#[test]
+fn keeps_a_dot_tail_undecided_after_an_inherent_final_syllable() {
+    let source = "ในจมก.";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("ใน"),
+            TextPart::Syllable("จม"),
+            TextPart::Undecided("ก"),
+            TextPart::Dot("."),
+        ]
+    );
+}
