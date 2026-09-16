@@ -257,3 +257,57 @@ fn keeps_a_post_final_dependent_mark_with_a_hard_ending() {
         ]
     );
 }
+
+#[test]
+fn keeps_only_one_possible_attachment_with_the_adjacent_syllable() {
+    let cases = [
+        (
+            "นะก",
+            vec![TextPart::Syllable("นะ"), TextPart::Undecided("ก")],
+        ),
+        (
+            "นะกม",
+            vec![TextPart::Syllable("นะ"), TextPart::Syllable("กม")],
+        ),
+        (
+            "อิสรา",
+            vec![
+                TextPart::Syllable("อิ"),
+                TextPart::Undecided("ส"),
+                TextPart::Syllable("รา"),
+            ],
+        ),
+        (
+            "อิสรอ",
+            vec![
+                TextPart::Syllable("อิ"),
+                TextPart::Undecided("ส"),
+                TextPart::Syllable("รอ"),
+            ],
+        ),
+        (
+            "เหรียญเจือะ",
+            vec![
+                TextPart::Syllable("เหรีย"),
+                TextPart::Undecided("ญ"),
+                TextPart::Syllable("เจือะ"),
+            ],
+        ),
+        (
+            "จมกนะ",
+            vec![
+                TextPart::Syllable("จม"),
+                TextPart::Undecided("ก"),
+                TextPart::Syllable("นะ"),
+            ],
+        ),
+        (
+            "เป็นอยู่",
+            vec![TextPart::Syllable("เป็น"), TextPart::Syllable("อยู่")],
+        ),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
