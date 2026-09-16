@@ -389,3 +389,18 @@ fn keeps_two_ambiguous_bases_between_syllables() {
         ]
     );
 }
+
+#[test]
+fn preserves_an_unpaired_leading_vowel_as_text() {
+    let source = "เแทบขาด";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Text("เ"),
+            TextPart::Syllable("แท"),
+            TextPart::Undecided("บ"),
+            TextPart::Syllable("ขาด"),
+        ]
+    );
+}
