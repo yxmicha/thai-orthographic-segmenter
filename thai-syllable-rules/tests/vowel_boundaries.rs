@@ -404,3 +404,32 @@ fn preserves_an_unpaired_leading_vowel_as_text() {
         ]
     );
 }
+
+#[test]
+fn emits_a_dot_only_after_a_syllable_or_undecided_part() {
+    let valid_syllable = split("นะ.");
+    assert_eq!(
+        text_parts("นะ.", &valid_syllable),
+        vec![TextPart::Syllable("นะ"), TextPart::Dot(".")]
+    );
+
+    let opaque_syllable = split("จมก.");
+    assert_eq!(
+        text_parts("จมก.", &opaque_syllable),
+        vec![
+            TextPart::Syllable("จม"),
+            TextPart::Undecided("ก"),
+            TextPart::Dot("."),
+        ]
+    );
+
+    let abbreviation_tail = split("นะก.");
+    assert_eq!(
+        text_parts("นะก.", &abbreviation_tail),
+        vec![
+            TextPart::Syllable("นะ"),
+            TextPart::Undecided("ก"),
+            TextPart::Dot("."),
+        ]
+    );
+}
