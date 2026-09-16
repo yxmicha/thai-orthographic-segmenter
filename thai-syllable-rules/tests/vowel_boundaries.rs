@@ -331,3 +331,17 @@ fn never_emits_a_single_thai_base_as_a_syllable() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn does_not_promote_a_terminal_run_ending_in_an_onset_only_base() {
+    let source = "กะนห";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("กะ"),
+            TextPart::Undecided("น"),
+            TextPart::Undecided("ห"),
+        ]
+    );
+}
