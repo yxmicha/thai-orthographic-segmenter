@@ -311,3 +311,23 @@ fn keeps_only_one_possible_attachment_with_the_adjacent_syllable() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn never_emits_a_single_thai_base_as_a_syllable() {
+    let cases = [
+        ("ฮ", vec![TextPart::Undecided("ฮ")]),
+        ("อ", vec![TextPart::Undecided("อ")]),
+        (
+            "นะก",
+            vec![TextPart::Syllable("นะ"), TextPart::Undecided("ก")],
+        ),
+        (
+            "กะฮ",
+            vec![TextPart::Syllable("กะ"), TextPart::Undecided("ฮ")],
+        ),
+    ];
+
+    for (source, expected) in cases {
+        assert_eq!(text_parts(source, &split(source)), expected, "{source}");
+    }
+}
