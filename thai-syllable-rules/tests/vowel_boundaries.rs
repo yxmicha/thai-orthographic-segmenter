@@ -240,3 +240,20 @@ fn does_not_consume_a_second_dependent_vowel_pattern_without_a_base() {
         assert_eq!(text_parts(source, &split(source)), expected, "{source}");
     }
 }
+
+#[test]
+fn keeps_a_post_final_dependent_mark_with_a_hard_ending() {
+    let source = "สมบัติมากกว่า";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("สม"),
+            TextPart::Syllable("บัติ"),
+            TextPart::Syllable("มา"),
+            TextPart::Undecided("ก"),
+            TextPart::Undecided("ก"),
+            TextPart::Syllable("ว่า"),
+        ]
+    );
+}
