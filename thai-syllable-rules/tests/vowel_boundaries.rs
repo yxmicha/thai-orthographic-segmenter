@@ -374,3 +374,18 @@ fn keeps_a_dot_tail_undecided_after_an_inherent_final_syllable() {
         ]
     );
 }
+
+#[test]
+fn keeps_two_ambiguous_bases_between_syllables() {
+    let source = "เจียรวนนท์";
+
+    assert_eq!(
+        text_parts(source, &split(source)),
+        vec![
+            TextPart::Syllable("เจีย"),
+            TextPart::Undecided("ร"),
+            TextPart::Undecided("ว"),
+            TextPart::Syllable("นนท์"),
+        ]
+    );
+}
