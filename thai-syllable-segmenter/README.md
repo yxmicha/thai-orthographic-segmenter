@@ -62,3 +62,29 @@ cross-entropy over the lattice with negative log-likelihood on annotated paths.
 
 The crate ships frozen weights; the training pipeline is not part of it.
 
+## Results on the Han-solo test set
+
+198 Thai-bearing records (of 199) with 3,643 annotated Thai syllable spans:
+
+| Syllable segmenter | Thai span precision | Thai span recall | Thai span F1 | Exact Thai segmentation |
+| --- | ---: | ---: | ---: | ---: |
+| `thai-syllable-segmenter` | **98.38%** | **98.30%** | **98.34%** | **172 / 198 (86.87%)** |
+| [Han-solo](https://github.com/PyThaiNLP/Han-solo) released CRF | 98.00% | 98.19% | 98.09% | 165 / 198 (83.33%) |
+| [SSG](https://github.com/ponrawee/ssg) via PyThaiNLP `ssg` | 96.23% | 98.11% | 97.16% | 154 / 198 (77.78%) |
+| PyThaiNLP `dict` | 93.96% | 96.49% | 95.21% | 125 / 198 (63.13%) |
+
+- A **Thai span** is a maximal run of Thai characters that neither a syllable boundary nor a
+  non-Thai character interrupts. Non-Thai characters are never part of a span, so an
+  annotated `จมก.` and a prediction `จมก` + `.` agree.
+- **Precision** and **recall** count predicted and annotated spans with identical start and
+  end offsets. **F1** is their harmonic mean. **Exact** counts records whose predicted span
+  set equals the annotated one.
+- Engine versions: PyThaiNLP 5.1.2, SSG 0.0.8, python-crfsuite 0.9.12, and the released
+  Han-solo checkpoint.
+- The current crate produces output identical to the benchmarked predictions on all 199
+  records. The rows match the benchmark's stored predictions and metrics.
+
+Treat these as benchmark agreement, not a generalization estimate. The test set was used in
+earlier experiments, the development set was used repeatedly for model selection, and
+overlap with the training data was not screened. Annotation conventions differ between
+datasets. No speed or memory comparison is claimed.
