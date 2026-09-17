@@ -433,3 +433,17 @@ fn emits_a_dot_only_after_a_syllable_or_undecided_part() {
         ]
     );
 }
+#[test]
+fn treats_invalid_dot_sequences_as_text() {
+    for source in [".นะ", "นะ..", "นะ .", "abc."] {
+        let parts = split(source);
+        assert!(
+            parts.iter().all(|part| !matches!(part, Part::Dot(_))),
+            "{source:?}"
+        );
+    }
+    assert_eq!(
+        text_parts("นะ..", &split("นะ..")),
+        vec![TextPart::Syllable("นะ"), TextPart::Text("..")]
+    );
+}
