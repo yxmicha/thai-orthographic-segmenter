@@ -53,3 +53,12 @@ concatenation is the input. Empty input gives an empty vector.
   scalars (input is never truncated), `CellTooLong` for one written cell over the 48-scalar
   span limit, plus weight, tensor and invariant errors.
 
+## Training
+
+The bundled model was trained by rules-aware structured distillation: one compact student
+learns the path distribution of a larger ensemble while keeping supervised training on
+annotated orthographic paths. The objective combines edge marginals and complete-path
+cross-entropy over the lattice with negative log-likelihood on annotated paths.
+
+The crate ships frozen weights; the training pipeline is not part of it.
+
