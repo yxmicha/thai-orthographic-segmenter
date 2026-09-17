@@ -5,3 +5,9 @@ Source-preserving Thai syllable segmentation. It combines the candidates from
 and picks the best complete segmentation with a dynamic-programming decoder. It runs on the
 CPU with bundled weights: no model download, CUDA runtime or lexicon.
 
+## Installation
+
+```sh
+cargo add thai-syllable-segmenter
+```
+
