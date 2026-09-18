@@ -19,3 +19,6 @@
 
 /// Value of the `f16_layout` metadata key that marks 16-bit matrices stored as byte planes.
 pub const F16_PLANES: &str = "planes";
+
+/// Metadata key naming the layout of 16-bit tensors.
+pub const F16_LAYOUT_KEY: &str = "f16_layout";
