@@ -50,3 +50,4 @@
 //! that `thai-word-segmenter` can run its own model on the same primitives; most users never
 //! need it.
 
+mod checkpoint;
