@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "thai-syllable-rules",
+    "thai-syllable-segmenter",
 ]
 resolver = "3"
 

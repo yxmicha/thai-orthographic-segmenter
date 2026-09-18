@@ -1,0 +1,31 @@
+[package]
+name = "thai-syllable-segmenter"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+documentation = "https://docs.rs/thai-syllable-segmenter"
+categories.workspace = true
+keywords = ["thai", "syllable", "tokenizer", "nlp", "segmentation"]
+description = "Thai syllable separation using the distilled rules-aware model"
+readme = "README.md"
+exclude = ["tests/dependencies.rs"]
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/thai-syllable-segmenter.rs"
+
+[dependencies]
+safetensors.workspace = true
+thai-syllable-rules.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+burn-pack.workspace = true
+proptest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
