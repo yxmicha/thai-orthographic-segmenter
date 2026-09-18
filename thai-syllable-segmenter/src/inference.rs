@@ -3,3 +3,4 @@
 //! windows. `thai-word-segmenter` reuses them for its contextual model.
 
 mod checkpoint;
+mod numerics;
