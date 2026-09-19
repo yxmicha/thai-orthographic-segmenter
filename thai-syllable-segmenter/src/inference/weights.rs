@@ -51,3 +51,27 @@ pub struct LayerNormWeights {
     gamma: Vec<f32>,
     beta: Vec<f32>,
 }
+
+/// The weights of the self-attention half of a pre-norm encoder layer.
+///
+/// # Examples
+///
+/// ```
+/// use thai_syllable_segmenter::inference::{AttentionWeights, LayerNormWeights, WeightMatrix};
+///
+/// let square = || WeightMatrix::new(vec![0.0; 64], 8, 8, vec![0.0; 8]);
+/// let norm = LayerNormWeights::new(vec![1.0; 8], vec![0.0; 8])?;
+/// // Width 8 with two heads of width 4.
+/// let attention = AttentionWeights::new(norm, square()?, square()?, square()?, square()?, 2)?;
+/// # drop(attention);
+/// # Ok::<(), thai_syllable_segmenter::inference::ShapeError>(())
+/// ```
+#[derive(Clone, Debug)]
+pub struct AttentionWeights {
+    norm: LayerNormWeights,
+    query: WeightMatrix,
+    key: WeightMatrix,
+    value: WeightMatrix,
+    output: WeightMatrix,
+    heads: usize,
+}
