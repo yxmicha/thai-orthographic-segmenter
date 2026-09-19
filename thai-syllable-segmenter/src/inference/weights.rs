@@ -24,3 +24,20 @@ pub struct WeightMatrix {
     outputs: usize,
     bias: Vec<f32>,
 }
+
+/// Layer-normalization scale and shift, one value of each per feature.
+///
+/// # Examples
+///
+/// ```
+/// use thai_syllable_segmenter::inference::LayerNormWeights;
+///
+/// let norm = LayerNormWeights::new(vec![1.0; 8], vec![0.0; 8])?;
+/// assert_eq!(norm.width(), 8);
+/// # Ok::<(), thai_syllable_segmenter::inference::ShapeError>(())
+/// ```
+#[derive(Clone, Debug, PartialEq)]
+pub struct LayerNormWeights {
+    gamma: Vec<f32>,
+    beta: Vec<f32>,
+}
