@@ -33,3 +33,20 @@ pub struct Values<'a>(pub(crate) &'a [f32]);
 /// ```
 #[derive(Debug)]
 pub struct Activations<'a>(pub(crate) &'a mut [f32]);
+
+/// One row of attention scores, before and during its softmax.
+///
+/// # Examples
+///
+/// ```
+/// use thai_syllable_segmenter::inference::AttentionRow;
+///
+/// let mut scores = [1.0, 3.0];
+/// let mut row = AttentionRow::new(&mut scores);
+/// let maximum = row.scale_and_maximum(1.0);
+/// let total = row.exponentiate(maximum);
+/// assert_eq!(maximum, 3.0);
+/// assert!((total - (1.0 + (-2.0_f32).exp())).abs() < 1e-5);
+/// ```
+#[derive(Debug)]
+pub struct AttentionRow<'a>(pub(crate) &'a mut [f32]);
