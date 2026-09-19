@@ -41,3 +41,28 @@ pub struct ShapeError;
 /// ```
 #[derive(Default)]
 pub struct InputBlocks(Vec<f32>);
+
+/// A `[inputs, outputs]` weight matrix with a bias vector, packed for [`Self::multiply`] and [`Self::multiply_into`].
+///
+/// # Examples
+///
+/// ```
+/// use thai_syllable_segmenter::inference::{InputBlocks, PackedMatrix};
+///
+/// // y = x · W + b for a 2x2 identity W and a bias of one.
+/// let matrix = PackedMatrix::new(&[1.0, 0.0, 0.0, 1.0], 2, 2, vec![1.0; 2])?;
+/// let mut output = [0.0; 2];
+/// matrix.multiply_into::<false>(&[3.0, 4.0], &mut InputBlocks::default(), &mut output)?;
+/// assert_eq!(output, [4.0, 5.0]);
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+#[derive(Clone)]
+pub struct PackedMatrix {
+    inputs: usize,
+    outputs: usize,
+    /// `[panel][input][PANEL_WIDTH]`; columns past `outputs` are zero.
+    panels: Vec<f32>,
+    /// One value per output, padded with zeros to a whole number of panels so every panel reads
+    /// [`PANEL_WIDTH`] values.
+    bias: Vec<f32>,
+}
