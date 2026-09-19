@@ -66,3 +66,23 @@ pub struct PackedMatrix {
     /// [`PANEL_WIDTH`] values.
     bias: Vec<f32>,
 }
+
+/// Multiply-add that fuses rounding only where the CPU has the instruction; without it a fused
+/// operation would fall back to a slow software routine.
+///
+/// # Examples
+///
+/// ```
+/// use thai_syllable_segmenter::inference::multiply_add;
+///
+/// assert_eq!(multiply_add::<false>(2.0, 3.0, 1.0), 7.0);
+/// ```
+#[inline(always)]
+#[must_use]
+pub fn multiply_add<const FMA: bool>(left: f32, right: f32, sum: f32) -> f32 {
+    if FMA {
+        left.mul_add(right, sum)
+    } else {
+        left * right + sum
+    }
+}
