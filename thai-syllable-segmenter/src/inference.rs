@@ -4,3 +4,4 @@
 
 mod checkpoint;
 mod numerics;
+mod packed_matrix;
