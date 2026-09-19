@@ -25,6 +25,16 @@ pub struct WeightMatrix {
     bias: Vec<f32>,
 }
 
+impl std::fmt::Debug for WeightMatrix {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("WeightMatrix")
+            .field("inputs", &self.inputs)
+            .field("outputs", &self.outputs)
+            .finish_non_exhaustive()
+    }
+}
+
 /// Layer-normalization scale and shift, one value of each per feature.
 ///
 /// # Examples
