@@ -75,3 +75,24 @@ pub struct AttentionWeights {
     output: WeightMatrix,
     heads: usize,
 }
+
+/// The weights of the feed-forward half of a pre-norm encoder layer.
+///
+/// # Examples
+///
+/// ```
+/// use thai_syllable_segmenter::inference::{FeedForwardWeights, LayerNormWeights, WeightMatrix};
+///
+/// let norm = LayerNormWeights::new(vec![1.0; 8], vec![0.0; 8])?;
+/// let inner = WeightMatrix::new(vec![0.0; 128], 8, 16, vec![0.0; 16])?;
+/// let outer = WeightMatrix::new(vec![0.0; 128], 16, 8, vec![0.0; 8])?;
+/// let feed_forward = FeedForwardWeights::new(norm, inner, outer)?;
+/// # drop(feed_forward);
+/// # Ok::<(), thai_syllable_segmenter::inference::ShapeError>(())
+/// ```
+#[derive(Clone, Debug)]
+pub struct FeedForwardWeights {
+    norm: LayerNormWeights,
+    inner: WeightMatrix,
+    outer: WeightMatrix,
+}
