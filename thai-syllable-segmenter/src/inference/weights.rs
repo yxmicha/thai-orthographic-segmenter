@@ -35,6 +35,20 @@ impl std::fmt::Debug for WeightMatrix {
     }
 }
 
+/// A row-major embedding table, `[rows, width]`.
+///
+/// # Examples
+///
+/// ```
+/// use thai_syllable_segmenter::inference::EmbeddingTable;
+///
+/// // Four rows of three values.
+/// let table = EmbeddingTable::from(vec![0.0; 12]);
+/// assert_eq!(table.values().len(), 12);
+/// ```
+#[derive(Clone)]
+pub struct EmbeddingTable(Vec<f32>);
+
 /// Layer-normalization scale and shift, one value of each per feature.
 ///
 /// # Examples
