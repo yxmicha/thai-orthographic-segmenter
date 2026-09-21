@@ -16,6 +16,7 @@
 //! `[rows, 1]` (one scale per row). Each value is the integer times its scale. The
 //! `convert-checkpoint` example of this crate writes all of these forms.
 
+use std::collections::BTreeMap;
 
 use super::{
     encoder_layer::EncoderLayer,
@@ -91,4 +92,27 @@ pub enum CheckpointError {
     /// The requested weights do not form a valid layer.
     #[error(transparent)]
     Layer(#[from] ShapeError),
+}
+
+/// Named tensors of a trained network, read from a safetensors file.
+///
+/// Each loader method removes the tensors it reads, so data moves out without a copy and
+/// [`Checkpoint::finish`] can report what was never used.
+///
+/// # Examples
+///
+/// ```
+/// use thai_syllable_segmenter::inference::Checkpoint;
+///
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # let bytes = std::fs::read(concat!(env!("CARGO_MANIFEST_DIR"), "/model/weights.safetensors"))?;
+/// let mut checkpoint = Checkpoint::from_bytes(&bytes)?;
+/// // The bundled syllable model has a 72-row, 16-wide character embedding.
+/// let characters = checkpoint.embedding("characters", 72, 16)?;
+/// assert_eq!(characters.values().len(), 72 * 16);
+/// # Ok(())
+/// # }
+/// ```
+pub struct Checkpoint {
+    tensors: BTreeMap<String, (Vec<usize>, Vec<f32>)>,
 }
