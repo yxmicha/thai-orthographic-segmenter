@@ -3,6 +3,7 @@
 //! windows. `thai-word-segmenter` reuses them for its contextual model.
 
 mod checkpoint;
+mod encoder_layer;
 mod numerics;
 mod packed_matrix;
 mod weights;
