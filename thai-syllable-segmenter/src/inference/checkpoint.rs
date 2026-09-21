@@ -17,8 +17,78 @@
 //! `convert-checkpoint` example of this crate writes all of these forms.
 
 
+use super::{
+    encoder_layer::EncoderLayer,
+    packed_matrix::ShapeError,
+    weights::{
+        AttentionWeights, EmbeddingTable, FeedForwardWeights, LayerNormWeights, WeightMatrix,
+    },
+};
+
 /// Value of the `f16_layout` metadata key that marks 16-bit matrices stored as byte planes.
 pub const F16_PLANES: &str = "planes";
 
 /// Metadata key naming the layout of 16-bit tensors.
 pub const F16_LAYOUT_KEY: &str = "f16_layout";
+
+/// Failures reading a checkpoint or asking it for weights.
+///
+/// # Examples
+///
+/// ```
+/// use thai_syllable_segmenter::inference::{Checkpoint, CheckpointError};
+///
+/// // Bytes that are not a safetensors file are rejected.
+/// assert!(matches!(Checkpoint::from_bytes(b"not a checkpoint"), Err(CheckpointError::Read(_))));
+/// ```
+#[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
+pub enum CheckpointError {
+    /// The bytes are not a readable safetensors file.
+    #[error("read safetensors checkpoint")]
+    Read(#[source] Box<dyn std::error::Error + Send + Sync>),
+    /// A tensor is stored as neither 32-bit nor 16-bit floats.
+    #[error("checkpoint tensor {name:?} is not 32-bit or 16-bit floating point")]
+    UnsupportedType {
+        /// Name of the tensor.
+        name: String,
+    },
+    /// A requested tensor is not in the checkpoint.
+    #[error("checkpoint has no tensor {0:?}")]
+    Missing(String),
+    /// A tensor has a different shape from the one requested.
+    #[error("checkpoint tensor {name:?} has shape {found:?}, expected {expected:?}")]
+    Shape {
+        /// Name of the tensor.
+        name: String,
+        /// Shape stored in the checkpoint.
+        found: Vec<usize>,
+        /// Shape the caller asked for.
+        expected: Vec<usize>,
+    },
+    /// An 8-bit tensor lacks a usable `{name}.scale` tensor.
+    #[error(
+        "int8 checkpoint tensor {name:?} needs an f32 `{name}.scale` of shape [1, columns] or [rows, 1]"
+    )]
+    Scale {
+        /// Name of the quantized tensor.
+        name: String,
+    },
+    /// A tensor given to [`Checkpoint::from_tensors`] holds a different number of values than
+    /// its shape implies.
+    #[error("checkpoint tensor {name:?} has {found} values for shape {shape:?}")]
+    Length {
+        /// Name of the tensor.
+        name: String,
+        /// Number of values supplied.
+        found: usize,
+        /// Shape supplied.
+        shape: Vec<usize>,
+    },
+    /// Tensors remain that no loader asked for.
+    #[error("checkpoint has unused tensors {0:?}")]
+    Unused(Vec<String>),
+    /// The requested weights do not form a valid layer.
+    #[error(transparent)]
+    Layer(#[from] ShapeError),
+}
