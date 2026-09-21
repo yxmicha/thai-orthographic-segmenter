@@ -16,6 +16,31 @@ struct Norm {
     beta: Vec<f32>,
 }
 
+/// Activations of one forward pass over stacked windows, reused by every layer.
+///
+/// # Examples
+///
+/// ```
+/// use thai_syllable_segmenter::inference::{InputBlocks, Scratch};
+///
+/// // Buffers for 3 positions of width 8, with a feed-forward width of 16 and windows of 3.
+/// let scratch = Scratch::new(3, 8, 16, 3, InputBlocks::default());
+/// assert!(format!("{scratch:?}").contains("rows: 3"));
+/// ```
+pub struct Scratch {
+    /// Reusable copies of matrix inputs, shared by every product of the pass.
+    pub(crate) blocks: InputBlocks,
+    rows: usize,
+    window_capacity: usize,
+    normalized: Vec<f32>,
+    qkv: Vec<f32>,
+    context: Vec<f32>,
+    projected: Vec<f32>,
+    hidden: Vec<f32>,
+    scores: Vec<f32>,
+    keys: Vec<f32>,
+}
+
 /// One encoder layer with fused query/key/value projections.
 ///
 /// # Examples
