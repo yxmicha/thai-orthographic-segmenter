@@ -8,6 +8,8 @@
     reason = "runtime CPU-feature dispatch only works when every callee is inlined into the `#[target_feature]` function"
 )]
 
+use std::sync::{Mutex, PoisonError};
+
 /// Operands of a matrix operation whose lengths do not match the matrix shape.
 ///
 /// # Examples
@@ -41,6 +43,21 @@ pub struct ShapeError;
 /// ```
 #[derive(Default)]
 pub struct InputBlocks(Vec<f32>);
+
+/// Input-row storage shared by the forward passes of one model, so each pass starts from buffers
+/// that earlier passes already grew instead of allocating and faulting in fresh memory.
+///
+/// # Examples
+///
+/// ```
+/// use thai_syllable_segmenter::inference::BlockPool;
+///
+/// let pool = BlockPool::default();
+/// let blocks = pool.take();
+/// pool.give_back(blocks);
+/// ```
+#[derive(Default)]
+pub struct BlockPool(Mutex<Vec<InputBlocks>>);
 
 /// A `[inputs, outputs]` weight matrix with a bias vector, packed for [`Self::multiply`] and [`Self::multiply_into`].
 ///
