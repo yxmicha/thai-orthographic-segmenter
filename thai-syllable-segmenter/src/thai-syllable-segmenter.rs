@@ -56,3 +56,4 @@ mod error;
 pub mod inference;
 mod lattice;
 mod model_config;
+mod vocabulary;

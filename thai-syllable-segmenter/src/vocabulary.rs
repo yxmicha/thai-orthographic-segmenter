@@ -1,0 +1,12 @@
+/// Character and n-gram vocabulary with a stable unknown row and fingerprint.
+///
+/// Row zero is the unknown entry; entry order fixes every other embedding row.
+#[derive(Clone, Debug)]
+pub(crate) struct CharacterVocabulary {
+    pub(crate) characters: Vec<char>,
+    pub(crate) ngrams: Vec<&'static str>,
+    fingerprint: u64,
+    /// `(packed characters, row)` of every bigram and trigram, sorted by packed key.
+    bigrams: Vec<(u64, usize)>,
+    trigrams: Vec<(u64, usize)>,
+}
