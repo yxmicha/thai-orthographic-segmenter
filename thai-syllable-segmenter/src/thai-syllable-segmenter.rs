@@ -51,6 +51,7 @@
 //! need it.
 
 mod checkpoint;
+mod error;
 /// CPU Transformer inference primitives shared with `thai-word-segmenter`.
 pub mod inference;
 mod lattice;

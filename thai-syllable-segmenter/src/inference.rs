@@ -8,3 +8,6 @@ mod encoder_layer;
 mod numerics;
 mod packed_matrix;
 mod weights;
+
+pub use checkpoint::{Checkpoint, CheckpointError, F16_LAYOUT_KEY, F16_PLANES};
+pub use packed_matrix::{BlockPool, InputBlocks, PackedMatrix, ShapeError, multiply_add};
