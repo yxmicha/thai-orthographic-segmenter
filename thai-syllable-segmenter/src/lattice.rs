@@ -1,4 +1,5 @@
 use std::ops::Range;
+use thai_syllable_rules::{Part, RuleAnalysis, SyllablePattern, split};
 
 /// Source treatment, independent of the model's confidence.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -16,4 +17,14 @@ pub(crate) struct Candidate {
     pub(crate) scalars: Range<usize>,
     pub(crate) kind: CandidateKind,
     pub(crate) prior: f32,
+}
+
+/// Relaxed lattice over one Thai run; only source cell boundaries are hard.
+#[derive(Clone, Debug)]
+pub(crate) struct RelaxedLattice<'a> {
+    source: &'a str,
+    pub(crate) offsets: Vec<usize>,
+    pub(crate) candidates: Vec<Candidate>,
+    pub(crate) ending_at: Vec<Vec<usize>>,
+    pub(crate) parts: Vec<Part>,
 }
