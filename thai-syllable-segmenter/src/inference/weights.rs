@@ -3,6 +3,7 @@
 //! Trained weights arrive as row-major `f32` vectors. These types validate their shapes once, so
 //! the engine can trust them, and own no framework types: any trainer can fill them.
 
+use super::packed_matrix::{PackedMatrix, ShapeError};
 
 /// A row-major `[inputs, outputs]` weight matrix and its bias, before packing.
 ///
@@ -32,6 +33,45 @@ impl std::fmt::Debug for WeightMatrix {
             .field("inputs", &self.inputs)
             .field("outputs", &self.outputs)
             .finish_non_exhaustive()
+    }
+}
+
+impl WeightMatrix {
+    /// Wraps row-major `values` of shape `[inputs, outputs]` and one `bias` per output.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ShapeError`] when a dimension is zero, `values` is not `inputs * outputs` long,
+    /// or `bias` is not `outputs` long.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::{ShapeError, WeightMatrix};
+    ///
+    /// assert!(WeightMatrix::new(vec![0.0; 6], 3, 2, vec![0.0; 2]).is_ok());
+    /// // Five values cannot form a 3x2 matrix.
+    /// assert_eq!(WeightMatrix::new(vec![0.0; 5], 3, 2, vec![0.0; 2]).unwrap_err(), ShapeError);
+    /// ```
+    pub fn new(
+        values: Vec<f32>,
+        inputs: usize,
+        outputs: usize,
+        bias: Vec<f32>,
+    ) -> Result<Self, ShapeError> {
+        if inputs == 0
+            || outputs == 0
+            || inputs.checked_mul(outputs) != Some(values.len())
+            || bias.len() != outputs
+        {
+            return Err(ShapeError);
+        }
+        Ok(Self {
+            values,
+            inputs,
+            outputs,
+            bias,
+        })
     }
 }
 
