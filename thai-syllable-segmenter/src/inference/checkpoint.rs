@@ -125,3 +125,24 @@ impl std::fmt::Debug for Checkpoint {
             .finish_non_exhaustive()
     }
 }
+
+impl Checkpoint {
+
+    fn take(&mut self, name: &str, expected: &[usize]) -> Result<Vec<f32>, CheckpointError> {
+        let (found, _) = self
+            .tensors
+            .get(name)
+            .ok_or_else(|| CheckpointError::Missing(name.to_owned()))?;
+        if found != expected {
+            return Err(CheckpointError::Shape {
+                name: name.to_owned(),
+                found: found.clone(),
+                expected: expected.to_vec(),
+            });
+        }
+        self.tensors
+            .remove(name)
+            .map(|(_, values)| values)
+            .ok_or_else(|| CheckpointError::Missing(name.to_owned()))
+    }
+}
