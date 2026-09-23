@@ -116,3 +116,12 @@ pub enum CheckpointError {
 pub struct Checkpoint {
     tensors: BTreeMap<String, (Vec<usize>, Vec<f32>)>,
 }
+
+impl std::fmt::Debug for Checkpoint {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("Checkpoint")
+            .field("tensors", &self.tensors.len())
+            .finish_non_exhaustive()
+    }
+}
