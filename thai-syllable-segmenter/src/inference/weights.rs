@@ -73,6 +73,48 @@ impl WeightMatrix {
             bias,
         })
     }
+
+    /// Joins matrices that share one input into a single wider matrix.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ShapeError`] when `parts` is empty or the parts have different input counts.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::WeightMatrix;
+    ///
+    /// let query = WeightMatrix::new(vec![0.0; 6], 3, 2, vec![0.0; 2])?;
+    /// let key = WeightMatrix::new(vec![0.0; 6], 3, 2, vec![0.0; 2])?;
+    /// // Two products that share one input become one product with twice the outputs.
+    /// let fused = WeightMatrix::concatenate_outputs(&[query, key])?;
+    /// assert_eq!((fused.inputs(), fused.outputs()), (3, 4));
+    /// # Ok::<(), thai_syllable_segmenter::inference::ShapeError>(())
+    /// ```
+    pub fn concatenate_outputs(parts: &[Self]) -> Result<Self, ShapeError> {
+        let first = parts.first().ok_or(ShapeError)?;
+        let inputs = first.inputs;
+        if parts.iter().any(|part| part.inputs != inputs) {
+            return Err(ShapeError);
+        }
+        let outputs = parts.iter().map(|part| part.outputs).sum();
+        let mut values = Vec::with_capacity(inputs * outputs);
+        let mut rows = parts
+            .iter()
+            .map(|part| part.values.chunks_exact(part.outputs))
+            .collect::<Vec<_>>();
+        for _ in 0..inputs {
+            for row in &mut rows {
+                values.extend(row.next().into_iter().flatten());
+            }
+        }
+        let bias = parts
+            .iter()
+            .flat_map(|part| part.bias.iter().copied())
+            .collect();
+        Self::new(values, inputs, outputs, bias)
+    }
 }
 
 /// A row-major embedding table, `[rows, width]`.
