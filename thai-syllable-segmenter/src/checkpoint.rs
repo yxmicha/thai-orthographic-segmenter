@@ -16,3 +16,9 @@ const LATTICE: LatticeConfig = LatticeConfig {
     extra_nucleus_cost: 4.0,
     anchor_cut_cost: 0.5,
 };
+
+/// The bundled model and the lattice settings it was trained with.
+pub(crate) struct BundledModel {
+    pub(crate) model: ContextualModel,
+    pub(crate) lattice: LatticeConfig,
+}
