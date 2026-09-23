@@ -14,6 +14,10 @@ use crate::{
     vocabulary::CharacterVocabulary,
 };
 
+/// Concatenated embeddings per scalar: five character offsets, three offsets for each of the
+/// bigram and trigram features, and the rule-part kind, start, end, and position embeddings.
+const INPUT_PIECES: usize = 5 + 2 * 3 + 4;
+
 /// Thai-run Transformer scoring over the relaxed candidate space, run on the shared CPU engine.
 /// Combines local n-gram embeddings and rule features with run-wide attention.
 pub(crate) struct ContextualModel {
