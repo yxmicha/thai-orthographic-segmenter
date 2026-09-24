@@ -145,4 +145,36 @@ impl Checkpoint {
             .map(|(_, values)| values)
             .ok_or_else(|| CheckpointError::Missing(name.to_owned()))
     }
+
+    /// Takes the embedding table `{name}.weight` of `rows` rows of `width` values.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CheckpointError::Missing`] or [`CheckpointError::Shape`] when the tensor is
+    /// absent or differs from `[rows, width]`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::{Checkpoint, CheckpointError};
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let bytes = std::fs::read(concat!(env!("CARGO_MANIFEST_DIR"), "/model/weights.safetensors"))?;
+    /// let mut checkpoint = Checkpoint::from_bytes(&bytes)?;
+    /// // Asking for the wrong shape is an error, and the tensor stays unread.
+    /// assert!(matches!(checkpoint.embedding("kinds", 3, 16), Err(CheckpointError::Shape { .. })));
+    /// assert_eq!(checkpoint.embedding("kinds", 2, 16)?.values().len(), 32);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn embedding(
+        &mut self,
+        name: &str,
+        rows: usize,
+        width: usize,
+    ) -> Result<EmbeddingTable, CheckpointError> {
+        Ok(EmbeddingTable::from(
+            self.take(&format!("{name}.weight"), &[rows, width])?,
+        ))
+    }
 }
