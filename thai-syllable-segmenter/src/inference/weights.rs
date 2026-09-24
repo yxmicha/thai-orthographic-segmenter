@@ -131,6 +131,15 @@ impl WeightMatrix {
 #[derive(Clone)]
 pub struct EmbeddingTable(Vec<f32>);
 
+impl std::fmt::Debug for EmbeddingTable {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("EmbeddingTable")
+            .field("values", &self.0.len())
+            .finish_non_exhaustive()
+    }
+}
+
 /// Layer-normalization scale and shift, one value of each per feature.
 ///
 /// # Examples
