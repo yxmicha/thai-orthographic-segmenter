@@ -177,4 +177,35 @@ impl Checkpoint {
             self.take(&format!("{name}.weight"), &[rows, width])?,
         ))
     }
+
+    /// Takes the linear layer `{name}.weight`, shaped `[inputs, outputs]`, with `{name}.bias`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CheckpointError::Missing`] or [`CheckpointError::Shape`] when a tensor is
+    /// absent or has the wrong shape.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::Checkpoint;
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let bytes = std::fs::read(concat!(env!("CARGO_MANIFEST_DIR"), "/model/weights.safetensors"))?;
+    /// let mut checkpoint = Checkpoint::from_bytes(&bytes)?;
+    /// let projection = checkpoint.linear("projection", 240, 64)?;
+    /// assert_eq!((projection.inputs(), projection.outputs()), (240, 64));
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn linear(
+        &mut self,
+        name: &str,
+        inputs: usize,
+        outputs: usize,
+    ) -> Result<WeightMatrix, CheckpointError> {
+        let weight = self.take(&format!("{name}.weight"), &[inputs, outputs])?;
+        let bias = self.take(&format!("{name}.bias"), &[outputs])?;
+        Ok(WeightMatrix::new(weight, inputs, outputs, bias)?)
+    }
 }
