@@ -168,6 +168,10 @@ impl LayerNormWeights {
     pub(crate) fn gamma(&self) -> &[f32] {
         &self.gamma
     }
+
+    pub(crate) fn beta(&self) -> &[f32] {
+        &self.beta
+    }
 }
 
 /// The weights of the self-attention half of a pre-norm encoder layer.
