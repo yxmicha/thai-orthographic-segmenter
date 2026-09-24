@@ -72,3 +72,12 @@ pub struct EncoderLayer {
     heads: usize,
     model_dimension: usize,
 }
+
+impl Norm {
+    fn new(weights: &LayerNormWeights) -> Self {
+        Self {
+            gamma: weights.gamma().to_vec(),
+            beta: weights.beta().to_vec(),
+        }
+    }
+}
