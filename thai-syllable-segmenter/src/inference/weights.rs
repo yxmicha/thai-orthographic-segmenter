@@ -140,6 +140,12 @@ impl std::fmt::Debug for EmbeddingTable {
     }
 }
 
+impl From<Vec<f32>> for EmbeddingTable {
+    fn from(values: Vec<f32>) -> Self {
+        Self(values)
+    }
+}
+
 /// Layer-normalization scale and shift, one value of each per feature.
 ///
 /// # Examples
