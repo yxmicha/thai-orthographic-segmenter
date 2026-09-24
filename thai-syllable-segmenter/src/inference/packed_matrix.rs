@@ -59,6 +59,29 @@ pub struct InputBlocks(Vec<f32>);
 #[derive(Default)]
 pub struct BlockPool(Mutex<Vec<InputBlocks>>);
 
+impl BlockPool {
+    /// Hands out storage left by an earlier pass, or empty storage when none is idle.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::BlockPool;
+    ///
+    /// let pool = BlockPool::default();
+    /// let blocks = pool.take(); // empty: no earlier pass left storage
+    /// pool.give_back(blocks);
+    /// let reused = pool.take(); // the storage given back
+    /// # drop(reused);
+    /// ```
+    pub fn take(&self) -> InputBlocks {
+        self.0
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .pop()
+            .unwrap_or_default()
+    }
+}
+
 /// A `[inputs, outputs]` weight matrix with a bias vector, packed for [`Self::multiply`] and [`Self::multiply_into`].
 ///
 /// # Examples
