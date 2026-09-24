@@ -218,3 +218,10 @@ pub struct FeedForwardWeights {
     inner: WeightMatrix,
     outer: WeightMatrix,
 }
+
+impl FeedForwardWeights {
+
+    pub(crate) fn into_parts(self) -> (LayerNormWeights, WeightMatrix, WeightMatrix) {
+        (self.norm, self.inner, self.outer)
+    }
+}
