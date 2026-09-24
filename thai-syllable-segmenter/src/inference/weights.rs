@@ -163,6 +163,13 @@ pub struct LayerNormWeights {
     beta: Vec<f32>,
 }
 
+impl LayerNormWeights {
+
+    pub(crate) fn gamma(&self) -> &[f32] {
+        &self.gamma
+    }
+}
+
 /// The weights of the self-attention half of a pre-norm encoder layer.
 ///
 /// # Examples
