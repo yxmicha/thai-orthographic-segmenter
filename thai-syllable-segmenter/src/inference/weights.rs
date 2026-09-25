@@ -228,6 +228,51 @@ pub struct AttentionWeights {
 }
 
 impl AttentionWeights {
+    /// Wraps the layer norm applied before attention, the query, key, value and output
+    /// projections, and the number of attention `heads`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ShapeError`] unless the four projections are square with the norm's width, and
+    /// `heads` is positive and divides that width.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::{AttentionWeights, LayerNormWeights, WeightMatrix};
+    ///
+    /// let square = || WeightMatrix::new(vec![0.0; 64], 8, 8, vec![0.0; 8]);
+    /// let norm = || LayerNormWeights::new(vec![1.0; 8], vec![0.0; 8]);
+    /// assert!(AttentionWeights::new(norm()?, square()?, square()?, square()?, square()?, 2).is_ok());
+    /// // Three heads do not divide a width of eight.
+    /// assert!(AttentionWeights::new(norm()?, square()?, square()?, square()?, square()?, 3).is_err());
+    /// # Ok::<(), thai_syllable_segmenter::inference::ShapeError>(())
+    /// ```
+    pub fn new(
+        norm: LayerNormWeights,
+        query: WeightMatrix,
+        key: WeightMatrix,
+        value: WeightMatrix,
+        output: WeightMatrix,
+        heads: usize,
+    ) -> Result<Self, ShapeError> {
+        let width = norm.width();
+        let square = |matrix: &WeightMatrix| matrix.inputs == width && matrix.outputs == width;
+        if heads == 0
+            || !width.is_multiple_of(heads)
+            || ![&query, &key, &value, &output].into_iter().all(square)
+        {
+            return Err(ShapeError);
+        }
+        Ok(Self {
+            norm,
+            query,
+            key,
+            value,
+            output,
+            heads,
+        })
+    }
 
     pub(crate) fn into_parts(self) -> (LayerNormWeights, [WeightMatrix; 3], WeightMatrix, usize) {
         (
