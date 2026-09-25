@@ -81,3 +81,48 @@ impl Norm {
         }
     }
 }
+
+impl EncoderLayer {
+    /// Builds a layer from its attention and feed-forward weights, fusing the query, key and
+    /// value projections into one product.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ShapeError`] when the two halves disagree on the model width.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use thai_syllable_segmenter::inference::{AttentionWeights, FeedForwardWeights, LayerNormWeights, WeightMatrix};
+    /// use thai_syllable_segmenter::inference::EncoderLayer;
+    ///
+    /// # let matrix = |inputs: usize, outputs: usize| WeightMatrix::new(vec![0.0; inputs * outputs], inputs, outputs, vec![0.0; outputs]);
+    /// # let norm = || LayerNormWeights::new(vec![1.0; 8], vec![0.0; 8]);
+    /// # let attention = AttentionWeights::new(norm()?, matrix(8, 8)?, matrix(8, 8)?, matrix(8, 8)?, matrix(8, 8)?, 2)?;
+    /// # let feed_forward = FeedForwardWeights::new(norm()?, matrix(8, 16)?, matrix(16, 8)?)?;
+    /// let layer = EncoderLayer::new(attention, feed_forward)?;
+    /// assert_eq!(layer.feed_forward_dimension(), 16);
+    /// # Ok::<(), thai_syllable_segmenter::inference::ShapeError>(())
+    /// ```
+    pub fn new(
+        attention: AttentionWeights,
+        feed_forward: FeedForwardWeights,
+    ) -> Result<Self, ShapeError> {
+        let (attention_norm, projections, output, heads) = attention.into_parts();
+        let (feed_forward_norm, inner, outer) = feed_forward.into_parts();
+        let model_dimension = attention_norm.width();
+        if feed_forward_norm.width() != model_dimension {
+            return Err(ShapeError);
+        }
+        Ok(Self {
+            attention_norm: Norm::new(&attention_norm),
+            qkv: WeightMatrix::concatenate_outputs(&projections)?.try_into()?,
+            output: output.try_into()?,
+            feed_forward_norm: Norm::new(&feed_forward_norm),
+            inner: inner.try_into()?,
+            outer: outer.try_into()?,
+            heads,
+            model_dimension,
+        })
+    }
+}
