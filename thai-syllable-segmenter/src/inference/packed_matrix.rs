@@ -126,3 +126,13 @@ pub fn multiply_add<const FMA: bool>(left: f32, right: f32, sum: f32) -> f32 {
         left * right + sum
     }
 }
+
+impl std::fmt::Debug for PackedMatrix {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("PackedMatrix")
+            .field("inputs", &self.inputs)
+            .field("outputs", &self.outputs)
+            .finish_non_exhaustive()
+    }
+}
