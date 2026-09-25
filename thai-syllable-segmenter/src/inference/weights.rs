@@ -306,6 +306,39 @@ pub struct FeedForwardWeights {
 }
 
 impl FeedForwardWeights {
+    /// Wraps the layer norm applied before the feed-forward network and its inner (widening)
+    /// and outer (narrowing) projections.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ShapeError`] unless `inner` maps the norm's width to some hidden width and
+    /// `outer` maps that hidden width back.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::{FeedForwardWeights, LayerNormWeights, WeightMatrix};
+    ///
+    /// let norm = LayerNormWeights::new(vec![1.0; 8], vec![0.0; 8])?;
+    /// let inner = WeightMatrix::new(vec![0.0; 128], 8, 16, vec![0.0; 16])?;
+    /// // The outer projection must read the inner one's 16 outputs.
+    /// let wrong = WeightMatrix::new(vec![0.0; 64], 8, 8, vec![0.0; 8])?;
+    /// assert!(FeedForwardWeights::new(norm, inner, wrong).is_err());
+    /// # Ok::<(), thai_syllable_segmenter::inference::ShapeError>(())
+    /// ```
+    pub fn new(
+        norm: LayerNormWeights,
+        inner: WeightMatrix,
+        outer: WeightMatrix,
+    ) -> Result<Self, ShapeError> {
+        if inner.inputs != norm.width()
+            || outer.inputs != inner.outputs
+            || outer.outputs != norm.width()
+        {
+            return Err(ShapeError);
+        }
+        Ok(Self { norm, inner, outer })
+    }
 
     pub(crate) fn into_parts(self) -> (LayerNormWeights, WeightMatrix, WeightMatrix) {
         (self.norm, self.inner, self.outer)
