@@ -213,6 +213,18 @@ pub struct AttentionWeights {
     heads: usize,
 }
 
+impl AttentionWeights {
+
+    pub(crate) fn into_parts(self) -> (LayerNormWeights, [WeightMatrix; 3], WeightMatrix, usize) {
+        (
+            self.norm,
+            [self.query, self.key, self.value],
+            self.output,
+            self.heads,
+        )
+    }
+}
+
 /// The weights of the feed-forward half of a pre-norm encoder layer.
 ///
 /// # Examples
