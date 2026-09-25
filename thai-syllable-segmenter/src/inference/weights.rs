@@ -165,6 +165,21 @@ pub struct LayerNormWeights {
 
 impl LayerNormWeights {
 
+    /// Number of features normalized.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::LayerNormWeights;
+    ///
+    /// assert_eq!(LayerNormWeights::new(vec![1.0; 4], vec![0.0; 4])?.width(), 4);
+    /// # Ok::<(), thai_syllable_segmenter::inference::ShapeError>(())
+    /// ```
+    #[must_use]
+    pub fn width(&self) -> usize {
+        self.gamma.len()
+    }
+
     pub(crate) fn gamma(&self) -> &[f32] {
         &self.gamma
     }
