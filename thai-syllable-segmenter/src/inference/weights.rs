@@ -117,6 +117,20 @@ impl WeightMatrix {
     }
 }
 
+impl TryFrom<WeightMatrix> for PackedMatrix {
+    type Error = ShapeError;
+
+    /// Packs the matrix for repeated multiplication.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ShapeError`] when the matrix dimensions do not match its values or bias, which
+    /// a [`WeightMatrix`] built with [`WeightMatrix::new`] never has.
+    fn try_from(matrix: WeightMatrix) -> Result<Self, ShapeError> {
+        Self::new(&matrix.values, matrix.inputs, matrix.outputs, matrix.bias)
+    }
+}
+
 /// A row-major embedding table, `[rows, width]`.
 ///
 /// # Examples
