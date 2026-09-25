@@ -139,3 +139,53 @@ impl std::fmt::Debug for PackedMatrix {
             .finish_non_exhaustive()
     }
 }
+
+impl PackedMatrix {
+    /// Packs a row-major `[inputs, outputs]` weight matrix. Returns [`ShapeError`] unless
+    /// `weight` holds `inputs * outputs` values, `bias` one value per output, and both
+    /// dimensions are positive.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ShapeError`] when a dimension is zero, or `weight` or `bias` has the wrong
+    /// length.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::PackedMatrix;
+    ///
+    /// let matrix = PackedMatrix::new(&[1.0, 2.0, 3.0, 4.0, 5.0, 6.0], 2, 3, vec![0.0; 3])?;
+    /// assert_eq!((matrix.inputs(), matrix.outputs()), (2, 3));
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn new(
+        weight: &[f32],
+        inputs: usize,
+        outputs: usize,
+        bias: Vec<f32>,
+    ) -> Result<Self, ShapeError> {
+        if inputs == 0 || outputs == 0 || weight.len() != inputs * outputs || bias.len() != outputs
+        {
+            return Err(ShapeError);
+        }
+        let panel_count = outputs.div_ceil(PANEL_WIDTH);
+        let mut panels = vec![0.0; panel_count * inputs * PANEL_WIDTH];
+        for (input, row) in weight.chunks_exact(outputs).enumerate() {
+            for (panel, columns) in row.chunks(PANEL_WIDTH).enumerate() {
+                let start = (panel * inputs + input) * PANEL_WIDTH;
+                if let Some(target) = panels.get_mut(start..start + columns.len()) {
+                    target.copy_from_slice(columns);
+                }
+            }
+        }
+        let mut bias = bias;
+        bias.resize(panel_count * PANEL_WIDTH, 0.0);
+        Ok(Self {
+            inputs,
+            outputs,
+            panels,
+            bias,
+        })
+    }
+}
