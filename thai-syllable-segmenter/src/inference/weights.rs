@@ -160,6 +160,23 @@ impl From<Vec<f32>> for EmbeddingTable {
     }
 }
 
+impl EmbeddingTable {
+
+    /// Takes the table values out.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::EmbeddingTable;
+    ///
+    /// assert_eq!(EmbeddingTable::from(vec![1.0, 2.0]).into_values(), [1.0, 2.0]);
+    /// ```
+    #[must_use]
+    pub fn into_values(self) -> Vec<f32> {
+        self.0
+    }
+}
+
 /// Layer-normalization scale and shift, one value of each per feature.
 ///
 /// # Examples
