@@ -208,4 +208,34 @@ impl Checkpoint {
         let bias = self.take(&format!("{name}.bias"), &[outputs])?;
         Ok(WeightMatrix::new(weight, inputs, outputs, bias)?)
     }
+
+    /// Takes the layer norm `{name}.gamma` and `{name}.beta` of `width` features.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CheckpointError::Missing`] or [`CheckpointError::Shape`] when a tensor is
+    /// absent or is not `[width]`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::Checkpoint;
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let bytes = std::fs::read(concat!(env!("CARGO_MANIFEST_DIR"), "/model/weights.safetensors"))?;
+    /// let mut checkpoint = Checkpoint::from_bytes(&bytes)?;
+    /// let norm = checkpoint.layer_norm("encoder.layers.0.norm_1", 64)?;
+    /// assert_eq!(norm.width(), 64);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn layer_norm(
+        &mut self,
+        name: &str,
+        width: usize,
+    ) -> Result<LayerNormWeights, CheckpointError> {
+        let gamma = self.take(&format!("{name}.gamma"), &[width])?;
+        let beta = self.take(&format!("{name}.beta"), &[width])?;
+        Ok(LayerNormWeights::new(gamma, beta)?)
+    }
 }
