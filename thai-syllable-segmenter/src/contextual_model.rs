@@ -36,3 +36,68 @@ pub(crate) struct ContextualModel {
     vocabulary: CharacterVocabulary,
     blocks: BlockPool,
 }
+
+impl ContextualModel {
+    /// Reads the weights of a network trained on `vocabulary` from `checkpoint`.
+    pub(crate) fn new(
+        checkpoint: &mut Checkpoint,
+        config: &ModelConfig,
+        vocabulary: CharacterVocabulary,
+    ) -> Result<Self, Error> {
+        config.validate()?;
+        if config.character_vocabulary_size != vocabulary.character_rows()
+            || config.vocabulary_fingerprint != vocabulary.fingerprint()
+        {
+            return Err(Error::Invariant(
+                "model and sentence vocabulary do not match",
+            ));
+        }
+        let dimension = config.embedding_dimension;
+        let heads = WeightMatrix::concatenate_outputs(&[
+            checkpoint.linear("start_head", config.model_dimension, 2)?,
+            checkpoint.linear("end_head", config.model_dimension, 2)?,
+        ])?;
+        let characters = checkpoint
+            .embedding("characters", vocabulary.character_rows(), dimension)?
+            .into_values();
+        let ngrams = checkpoint
+            .embedding("ngrams", vocabulary.ngrams.len() + 1, dimension)?
+            .into_values();
+        let kinds = checkpoint.embedding("kinds", 2, dimension)?.into_values();
+        let starts = checkpoint.embedding("starts", 2, dimension)?.into_values();
+        let ends = checkpoint.embedding("ends", 2, dimension)?.into_values();
+        let positions = checkpoint
+            .embedding("positions", config.position_vocabulary_size, dimension)?
+            .into_values();
+        let projection = checkpoint.linear(
+            "projection",
+            dimension * INPUT_PIECES,
+            config.model_dimension,
+        )?;
+        let layers = (0..config.transformer_layers)
+            .map(|index| {
+                checkpoint.encoder_layer(
+                    &format!("encoder.layers.{index}"),
+                    config.model_dimension,
+                    config.feed_forward_dimension,
+                    config.attention_heads,
+                )
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self {
+            characters,
+            ngrams,
+            kinds,
+            starts,
+            ends,
+            positions,
+            embedding_dimension: dimension,
+            position_capacity: config.position_vocabulary_size,
+            projection: projection.try_into()?,
+            layers,
+            heads: heads.try_into()?,
+            blocks: BlockPool::default(),
+            vocabulary,
+        })
+    }
+}
