@@ -17,4 +17,9 @@ impl CharacterVocabulary {
     pub(crate) fn character_rows(&self) -> usize {
         self.characters.len() + 1
     }
+
+    /// Stable hash of the exact character and n-gram row mapping.
+    pub(crate) fn fingerprint(&self) -> u64 {
+        self.fingerprint
+    }
 }
