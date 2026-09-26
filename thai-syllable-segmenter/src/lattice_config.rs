@@ -1,5 +1,7 @@
 /// Largest Thai run the position embeddings and lattice search are sized for.
 pub(crate) const INPUT_SCALAR_LIMIT: usize = 4096;
+/// Largest Thai candidate span the lattice may consider.
+const SPAN_SCALAR_LIMIT: usize = 128;
 
 /// Search bounds and soft evidence weights of the trained model.
 #[derive(Clone, Debug)]
