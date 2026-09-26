@@ -126,6 +126,26 @@ impl std::fmt::Debug for Checkpoint {
     }
 }
 
+/// Widens an IEEE 754 binary16 value, exactly.
+fn half_to_single(bits: u16) -> f32 {
+    let sign = u32::from(bits >> 15) << 31;
+    let exponent = u32::from((bits >> 10) & 0x1f);
+    let mantissa = u32::from(bits & 0x3ff);
+    let widened = match (exponent, mantissa) {
+        (0, 0) => sign,
+        // A subnormal half is a normal single: shift the mantissa up to its leading one.
+        (0, _) => {
+            let shift = mantissa.leading_zeros() - 21;
+            let mantissa = (mantissa << shift) & 0x3ff;
+            sign | ((113 - shift) << 23) | (mantissa << 13)
+        }
+        (0x1f, 0) => sign | 0x7f80_0000,
+        (0x1f, _) => sign | 0x7fc0_0000 | (mantissa << 13),
+        _ => sign | ((exponent + 112) << 23) | (mantissa << 13),
+    };
+    f32::from_bits(widened)
+}
+
 impl Checkpoint {
 
     fn take(&mut self, name: &str, expected: &[usize]) -> Result<Vec<f32>, CheckpointError> {
