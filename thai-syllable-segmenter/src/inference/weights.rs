@@ -178,6 +178,26 @@ pub struct LayerNormWeights {
 }
 
 impl LayerNormWeights {
+    /// Wraps the scale `gamma` and shift `beta`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ShapeError`] when either is empty or their lengths differ.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::{LayerNormWeights, ShapeError};
+    ///
+    /// assert!(LayerNormWeights::new(vec![1.0; 4], vec![0.0; 4]).is_ok());
+    /// assert_eq!(LayerNormWeights::new(vec![1.0; 4], vec![0.0; 3]).unwrap_err(), ShapeError);
+    /// ```
+    pub fn new(gamma: Vec<f32>, beta: Vec<f32>) -> Result<Self, ShapeError> {
+        if gamma.is_empty() || gamma.len() != beta.len() {
+            return Err(ShapeError);
+        }
+        Ok(Self { gamma, beta })
+    }
 
     /// Number of features normalized.
     ///
