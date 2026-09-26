@@ -238,4 +238,58 @@ impl Checkpoint {
         let beta = self.take(&format!("{name}.beta"), &[width])?;
         Ok(LayerNormWeights::new(gamma, beta)?)
     }
+
+    /// Takes one pre-norm encoder layer stored under `name`: `mha.{query,key,value,output}`,
+    /// `norm_2` before attention, `norm_1` before the feed-forward network, and
+    /// `pwff.linear_inner` and `pwff.linear_outer`.
+    ///
+    /// # Errors
+    ///
+    /// Returns the errors of [`Self::linear`] and [`Self::layer_norm`] for the layer's tensors,
+    /// or [`CheckpointError::Layer`] when `heads` does not divide `model_dimension`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::Checkpoint;
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let bytes = std::fs::read(concat!(env!("CARGO_MANIFEST_DIR"), "/model/weights.safetensors"))?;
+    /// let mut checkpoint = Checkpoint::from_bytes(&bytes)?;
+    /// let layer = checkpoint.encoder_layer("encoder.layers.0", 64, 128, 4)?;
+    /// assert_eq!(layer.feed_forward_dimension(), 128);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn encoder_layer(
+        &mut self,
+        name: &str,
+        model_dimension: usize,
+        feed_forward_dimension: usize,
+        heads: usize,
+    ) -> Result<EncoderLayer, CheckpointError> {
+        let width = model_dimension;
+        let attention = AttentionWeights::new(
+            self.layer_norm(&format!("{name}.norm_2"), width)?,
+            self.linear(&format!("{name}.mha.query"), width, width)?,
+            self.linear(&format!("{name}.mha.key"), width, width)?,
+            self.linear(&format!("{name}.mha.value"), width, width)?,
+            self.linear(&format!("{name}.mha.output"), width, width)?,
+            heads,
+        )?;
+        let feed_forward = FeedForwardWeights::new(
+            self.layer_norm(&format!("{name}.norm_1"), width)?,
+            self.linear(
+                &format!("{name}.pwff.linear_inner"),
+                width,
+                feed_forward_dimension,
+            )?,
+            self.linear(
+                &format!("{name}.pwff.linear_outer"),
+                feed_forward_dimension,
+                width,
+            )?,
+        )?;
+        Ok(EncoderLayer::new(attention, feed_forward)?)
+    }
 }
