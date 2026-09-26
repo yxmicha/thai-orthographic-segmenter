@@ -10,3 +10,11 @@ pub(crate) struct CharacterVocabulary {
     bigrams: Vec<(u64, usize)>,
     trigrams: Vec<(u64, usize)>,
 }
+
+impl CharacterVocabulary {
+
+    /// Character embedding rows, including the unknown row.
+    pub(crate) fn character_rows(&self) -> usize {
+        self.characters.len() + 1
+    }
+}
