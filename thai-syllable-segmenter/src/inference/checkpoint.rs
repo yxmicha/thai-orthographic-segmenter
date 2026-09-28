@@ -195,6 +195,70 @@ fn read_error(error: impl std::error::Error + Send + Sync + 'static) -> Checkpoi
 }
 
 impl Checkpoint {
+    /// Reads every tensor of a safetensors file, widening 16-bit floats to 32 bits.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CheckpointError::Read`] when `bytes` are not a valid safetensors file, or
+    /// [`CheckpointError::UnsupportedType`] when a tensor is neither a 32-bit float, a 16-bit
+    /// float, nor a byte-plane pair of the file's [`F16_PLANES`] layout.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::Checkpoint;
+    ///
+    /// assert!(Checkpoint::from_bytes(b"").is_err());
+    /// ```
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, CheckpointError> {
+        let (_, header) = SafeTensors::read_metadata(bytes).map_err(read_error)?;
+        let planes = header
+            .metadata()
+            .as_ref()
+            .and_then(|metadata| metadata.get(F16_LAYOUT_KEY))
+            .is_some_and(|layout| layout == F16_PLANES);
+        let file = SafeTensors::deserialize(bytes).map_err(read_error)?;
+        let all = file.tensors().into_iter().collect::<BTreeMap<_, _>>();
+        let mut tensors = BTreeMap::new();
+        for (name, tensor) in &all {
+            let data = tensor.data();
+            let mut shape = tensor.shape().to_vec();
+            let values = match tensor.dtype() {
+                Dtype::F32 => {
+                    if let Some(base) = name.strip_suffix(".scale")
+                        && all.get(base).is_some_and(|base| base.dtype() == Dtype::I8)
+                    {
+                        continue; // consumed by the quantized tensor it scales
+                    }
+                    data.as_chunks::<4>()
+                        .0
+                        .iter()
+                        .map(|chunk| f32::from_le_bytes(*chunk))
+                        .collect()
+                }
+                Dtype::F16 => data
+                    .as_chunks::<2>()
+                    .0
+                    .iter()
+                    .map(|chunk| half_to_single(u16::from_le_bytes(*chunk)))
+                    .collect(),
+                Dtype::U8 if planes && shape.first() == Some(&2) && shape.len() > 1 => {
+                    shape.remove(0);
+                    let (high, low) = data.split_at(data.len() / 2);
+                    high.iter()
+                        .zip(low)
+                        .map(|(high, low)| half_to_single(u16::from_be_bytes([*high, *low])))
+                        .collect()
+                }
+                Dtype::I8 => dequantize(name, &shape, data, all.get(&format!("{name}.scale")))?,
+                _ => {
+                    return Err(CheckpointError::UnsupportedType { name: name.clone() });
+                }
+            };
+            tensors.insert(name.clone(), (shape, values));
+        }
+        Ok(Self { tensors })
+    }
 
     fn take(&mut self, name: &str, expected: &[usize]) -> Result<Vec<f32>, CheckpointError> {
         let (found, _) = self
