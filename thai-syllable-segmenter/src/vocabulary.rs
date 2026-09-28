@@ -1,4 +1,5 @@
 const BUNDLED_CHARACTERS: &str = include_str!("../model/characters.txt");
+const BUNDLED_NGRAMS: &str = include_str!("../model/ngrams.txt");
 
 /// Character and n-gram vocabulary with a stable unknown row and fingerprint.
 ///
