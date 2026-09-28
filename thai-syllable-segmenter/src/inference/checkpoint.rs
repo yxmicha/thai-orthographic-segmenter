@@ -190,6 +190,10 @@ fn dequantize(
         .collect())
 }
 
+fn read_error(error: impl std::error::Error + Send + Sync + 'static) -> CheckpointError {
+    CheckpointError::Read(Box::new(error))
+}
+
 impl Checkpoint {
 
     fn take(&mut self, name: &str, expected: &[usize]) -> Result<Vec<f32>, CheckpointError> {
