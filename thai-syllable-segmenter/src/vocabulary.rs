@@ -18,6 +18,13 @@ pub(crate) struct CharacterVocabulary {
 
 impl CharacterVocabulary {
 
+    /// Packs up to three characters, 21 bits each, so equal windows have equal keys.
+    fn pack(window: &[char]) -> u64 {
+        window.iter().fold(0, |key, character| {
+            (key << 21) | u64::from(u32::from(*character))
+        })
+    }
+
     /// Character embedding rows, including the unknown row.
     pub(crate) fn character_rows(&self) -> usize {
         self.characters.len() + 1
