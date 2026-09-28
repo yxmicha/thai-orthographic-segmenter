@@ -1,3 +1,5 @@
+const BUNDLED_CHARACTERS: &str = include_str!("../model/characters.txt");
+
 /// Character and n-gram vocabulary with a stable unknown row and fingerprint.
 ///
 /// Row zero is the unknown entry; entry order fixes every other embedding row.
