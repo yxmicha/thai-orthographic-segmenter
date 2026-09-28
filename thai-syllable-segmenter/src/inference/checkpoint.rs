@@ -18,6 +18,8 @@
 
 use std::collections::BTreeMap;
 
+use safetensors::{Dtype, SafeTensors};
+
 use super::{
     encoder_layer::EncoderLayer,
     packed_matrix::ShapeError,
@@ -144,6 +146,48 @@ fn half_to_single(bits: u16) -> f32 {
         _ => sign | ((exponent + 112) << 23) | (mantissa << 13),
     };
     f32::from_bits(widened)
+}
+
+/// Multiplies each 8-bit value of a `[rows, columns]` matrix by its column's or row's scale.
+fn dequantize(
+    name: &str,
+    shape: &[usize],
+    data: &[u8],
+    scale: Option<&safetensors::tensor::TensorView<'_>>,
+) -> Result<Vec<f32>, CheckpointError> {
+    let invalid = || CheckpointError::Scale {
+        name: name.to_owned(),
+    };
+    let [rows, columns] = *shape else {
+        return Err(invalid());
+    };
+    let scale = scale
+        .filter(|scale| scale.dtype() == Dtype::F32)
+        .ok_or_else(invalid)?;
+    let scales = scale
+        .data()
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .map(|chunk| f32::from_le_bytes(*chunk))
+        .collect::<Vec<_>>();
+    let per_column = match scale.shape() {
+        [1, count] if *count == columns => true,
+        [count, 1] if *count == rows => false,
+        _ => return Err(invalid()),
+    };
+    Ok(data
+        .iter()
+        .enumerate()
+        .map(|(index, value)| {
+            let scale = if per_column {
+                scales[index % columns]
+            } else {
+                scales[index / columns]
+            };
+            f32::from(i8::from_le_bytes([*value])) * scale
+        })
+        .collect())
 }
 
 impl Checkpoint {
