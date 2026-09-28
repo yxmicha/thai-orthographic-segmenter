@@ -1,5 +1,6 @@
 const BUNDLED_CHARACTERS: &str = include_str!("../model/characters.txt");
 const BUNDLED_NGRAMS: &str = include_str!("../model/ngrams.txt");
+const FNV_OFFSET_BASIS: u64 = 0xcbf2_9ce4_8422_2325;
 
 /// Character and n-gram vocabulary with a stable unknown row and fingerprint.
 ///
