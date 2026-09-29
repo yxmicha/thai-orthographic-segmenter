@@ -17,6 +17,8 @@ use crate::{
 /// Embedding row of a scalar inside a rule syllable, and of any other scalar.
 const SYLLABLE_KIND: usize = 0;
 const OTHER_KIND: usize = 1;
+/// Embedding rows of a rule-part boundary flag that is unset and set.
+const UNMARKED: usize = 0;
 
 /// Concatenated embeddings per scalar: five character offsets, three offsets for each of the
 /// bigram and trigram features, and the rule-part kind, start, end, and position embeddings.
