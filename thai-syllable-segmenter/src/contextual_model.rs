@@ -20,6 +20,8 @@ const OTHER_KIND: usize = 1;
 /// Embedding rows of a rule-part boundary flag that is unset and set.
 const UNMARKED: usize = 0;
 const MARKED: usize = 1;
+/// Logit columns of the fused heads: each head emits a `[not boundary, boundary]` pair.
+const START_BOUNDARY_COLUMN: usize = 1;
 
 /// Concatenated embeddings per scalar: five character offsets, three offsets for each of the
 /// bigram and trigram features, and the rule-part kind, start, end, and position embeddings.
