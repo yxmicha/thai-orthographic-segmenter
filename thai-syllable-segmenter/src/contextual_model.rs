@@ -23,6 +23,8 @@ const MARKED: usize = 1;
 /// Logit columns of the fused heads: each head emits a `[not boundary, boundary]` pair.
 const START_BOUNDARY_COLUMN: usize = 1;
 const END_BOUNDARY_COLUMN: usize = 3;
+/// Logits emitted per scalar by the fused heads.
+const LOGITS_PER_SCALAR: usize = 4;
 
 /// Concatenated embeddings per scalar: five character offsets, three offsets for each of the
 /// bigram and trigram features, and the rule-part kind, start, end, and position embeddings.
