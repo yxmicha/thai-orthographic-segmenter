@@ -14,6 +14,9 @@ use crate::{
     vocabulary::CharacterVocabulary,
 };
 
+/// Embedding row of a scalar inside a rule syllable, and of any other scalar.
+const SYLLABLE_KIND: usize = 0;
+
 /// Concatenated embeddings per scalar: five character offsets, three offsets for each of the
 /// bigram and trigram features, and the rule-part kind, start, end, and position embeddings.
 const INPUT_PIECES: usize = 5 + 2 * 3 + 4;
