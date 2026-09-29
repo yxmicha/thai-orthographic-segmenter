@@ -424,4 +424,32 @@ impl Checkpoint {
         )?;
         Ok(EncoderLayer::new(attention, feed_forward)?)
     }
+
+    /// Ends loading.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CheckpointError::Unused`] with the names of the tensors nobody took, which
+    /// means the checkpoint belongs to a different network than the loader expected.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::{Checkpoint, CheckpointError};
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let bytes = std::fs::read(concat!(env!("CARGO_MANIFEST_DIR"), "/model/weights.safetensors"))?;
+    /// // Nothing has been taken yet, so every tensor is reported as unused.
+    /// let checkpoint = Checkpoint::from_bytes(&bytes)?;
+    /// assert!(matches!(checkpoint.finish(), Err(CheckpointError::Unused(names)) if names.len() > 10));
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn finish(self) -> Result<(), CheckpointError> {
+        if self.tensors.is_empty() {
+            Ok(())
+        } else {
+            Err(CheckpointError::Unused(self.tensors.into_keys().collect()))
+        }
+    }
 }
