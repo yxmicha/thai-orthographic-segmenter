@@ -87,6 +87,18 @@ impl CharacterVocabulary {
         })
     }
 
+    /// Embedding row of each scalar in `characters`; zero when unknown.
+    pub(crate) fn character_ids(&self, characters: &[char]) -> Vec<usize> {
+        characters
+            .iter()
+            .map(|character| {
+                self.characters
+                    .binary_search(character)
+                    .map_or(0, |index| index + 1)
+            })
+            .collect()
+    }
+
     /// Character embedding rows, including the unknown row.
     pub(crate) fn character_rows(&self) -> usize {
         self.characters.len() + 1
