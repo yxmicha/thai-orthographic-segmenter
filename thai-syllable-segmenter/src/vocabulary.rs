@@ -108,4 +108,24 @@ impl CharacterVocabulary {
     pub(crate) fn fingerprint(&self) -> u64 {
         self.fingerprint
     }
+
+    /// N-gram row for the `length`-character window (2 or 3) starting at each scalar; zero when
+    /// unknown or when the window runs past the end of `characters`.
+    pub(crate) fn ngram_ids(&self, characters: &[char], length: usize) -> Vec<usize> {
+        let index = if length == 2 {
+            &self.bigrams
+        } else {
+            &self.trigrams
+        };
+        (0..characters.len())
+            .map(|start| {
+                characters.get(start..start + length).map_or(0, |window| {
+                    let key = Self::pack(window);
+                    index
+                        .binary_search_by_key(&key, |(packed, _)| *packed)
+                        .map_or(0, |position| index[position].1)
+                })
+            })
+            .collect()
+    }
 }
