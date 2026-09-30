@@ -56,6 +56,16 @@ pub(crate) struct ContextualModel {
     blocks: BlockPool,
 }
 
+/// Per-scalar embedding rows of one Thai run.
+struct Features {
+    characters: Vec<usize>,
+    bigrams: Vec<usize>,
+    trigrams: Vec<usize>,
+    kinds: Vec<usize>,
+    starts: Vec<usize>,
+    ends: Vec<usize>,
+}
+
 impl ContextualModel {
     /// Reads the weights of a network trained on `vocabulary` from `checkpoint`.
     pub(crate) fn new(
