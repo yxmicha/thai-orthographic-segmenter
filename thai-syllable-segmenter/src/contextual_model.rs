@@ -30,6 +30,8 @@ const LOGITS_PER_SCALAR: usize = 4;
 
 /// Neighbouring characters embedded around each scalar.
 const CHARACTER_OFFSETS: RangeInclusive<i8> = -2..=2;
+/// Neighbouring bigrams and trigrams embedded around each scalar.
+const NGRAM_OFFSETS: RangeInclusive<i8> = -1..=1;
 
 /// Concatenated embeddings per scalar: five character offsets, three offsets for each of the
 /// bigram and trigram features, and the rule-part kind, start, end, and position embeddings.
