@@ -28,3 +28,11 @@ pub(crate) struct RelaxedLattice<'a> {
     pub(crate) ending_at: Vec<Vec<usize>>,
     pub(crate) parts: Vec<Part>,
 }
+
+impl<'a> RelaxedLattice<'a> {
+
+    /// Exact unchanged Thai run.
+    pub(crate) fn source(&self) -> &'a str {
+        self.source
+    }
+}
