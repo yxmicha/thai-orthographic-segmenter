@@ -3,6 +3,8 @@
     reason = "runtime CPU-feature dispatch only works when every callee is inlined into the `#[target_feature]` function"
 )]
 
+use std::ops::RangeInclusive;
+
 use crate::{
     Error,
     inference::{
@@ -25,6 +27,9 @@ const START_BOUNDARY_COLUMN: usize = 1;
 const END_BOUNDARY_COLUMN: usize = 3;
 /// Logits emitted per scalar by the fused heads.
 const LOGITS_PER_SCALAR: usize = 4;
+
+/// Neighbouring characters embedded around each scalar.
+const CHARACTER_OFFSETS: RangeInclusive<i8> = -2..=2;
 
 /// Concatenated embeddings per scalar: five character offsets, three offsets for each of the
 /// bigram and trigram features, and the rule-part kind, start, end, and position embeddings.
