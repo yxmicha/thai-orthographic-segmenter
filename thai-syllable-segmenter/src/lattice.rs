@@ -35,4 +35,9 @@ impl<'a> RelaxedLattice<'a> {
     pub(crate) fn source(&self) -> &'a str {
         self.source
     }
+
+    /// Number of Unicode scalars in the Thai run.
+    pub(crate) fn scalar_count(&self) -> usize {
+        self.offsets.len() - 1
+    }
 }
