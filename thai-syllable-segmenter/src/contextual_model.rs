@@ -173,4 +173,13 @@ impl ContextualModel {
             ends,
         })
     }
+
+    /// Row of `ids` at `offset` from `scalar`; zero (unknown) past either end of the run.
+    fn neighbour(ids: &[usize], scalar: usize, offset: i8) -> usize {
+        scalar
+            .checked_add_signed(isize::from(offset))
+            .and_then(|index| ids.get(index))
+            .copied()
+            .unwrap_or(0)
+    }
 }
