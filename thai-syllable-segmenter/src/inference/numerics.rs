@@ -50,3 +50,27 @@ pub struct Activations<'a>(pub(crate) &'a mut [f32]);
 /// ```
 #[derive(Debug)]
 pub struct AttentionRow<'a>(pub(crate) &'a mut [f32]);
+
+impl Values<'_> {
+    /// Sum over `LANES` interleaved accumulators.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::Values;
+    ///
+    /// assert_eq!(Values::new(&[1.0, 2.0, 3.0, 4.0]).sum(), 10.0);
+    /// ```
+    #[inline(always)]
+    #[must_use]
+    pub fn sum(&self) -> f32 {
+        let mut lanes = [0.0_f32; LANES];
+        let (chunks, remainder) = self.0.as_chunks::<LANES>();
+        for chunk in chunks {
+            for (lane, value) in lanes.iter_mut().zip(chunk) {
+                *lane += value;
+            }
+        }
+        lanes.iter().sum::<f32>() + remainder.iter().sum::<f32>()
+    }
+}
