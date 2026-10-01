@@ -5,6 +5,8 @@
 
 use std::ops::RangeInclusive;
 
+use thai_syllable_rules::Part;
+
 use crate::{
     Error,
     inference::{
@@ -127,6 +129,48 @@ impl ContextualModel {
             heads: heads.try_into()?,
             blocks: BlockPool::default(),
             vocabulary,
+        })
+    }
+
+    /// Characters, n-grams, and rule-part features of one lattice.
+    fn features(&self, lattice: &RelaxedLattice) -> Result<Features, Error> {
+        let length = lattice.scalar_count();
+        let characters = lattice.source().chars().collect::<Vec<_>>();
+        let mut kinds = vec![OTHER_KIND; length];
+        let mut starts = vec![UNMARKED; length];
+        let mut ends = vec![UNMARKED; length];
+        for part in &lattice.parts {
+            let bytes = part.byte_range();
+            let start = lattice
+                .offsets
+                .binary_search(&bytes.start)
+                .map_err(|_| Error::Invariant("misaligned rule start"))?;
+            let end = lattice
+                .offsets
+                .binary_search(&bytes.end)
+                .map_err(|_| Error::Invariant("misaligned rule end"))?;
+            let kind = match part {
+                Part::Syllable(_) => SYLLABLE_KIND,
+                Part::Undecided(_) | Part::Invalid(_) | Part::Dot(_) | Part::Text(_) => OTHER_KIND,
+            };
+            let (Some(kind_span), Some(start_flag), Some(end_flag)) = (
+                kinds.get_mut(start..end),
+                starts.get_mut(start),
+                end.checked_sub(1).and_then(|last| ends.get_mut(last)),
+            ) else {
+                return Err(Error::Invariant("rule part outside the Thai run"));
+            };
+            kind_span.fill(kind);
+            *start_flag = MARKED;
+            *end_flag = MARKED;
+        }
+        Ok(Features {
+            characters: self.vocabulary.character_ids(&characters),
+            bigrams: self.vocabulary.ngram_ids(&characters, 2),
+            trigrams: self.vocabulary.ngram_ids(&characters, 3),
+            kinds,
+            starts,
+            ends,
         })
     }
 }
