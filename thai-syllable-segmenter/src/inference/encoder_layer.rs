@@ -82,6 +82,46 @@ impl Norm {
     }
 }
 
+impl Scratch {
+
+    /// Buffers for `rows` stacked positions in windows of at most `window` positions.
+    ///
+    /// # Panics
+    ///
+    /// Aborts on allocation failure, and panics when `rows` times a dimension overflows `usize`,
+    /// which only absurd sizes reach.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::{InputBlocks, Scratch};
+    ///
+    /// let scratch = Scratch::new(3, 8, 16, 3, InputBlocks::default());
+    /// # drop(scratch);
+    /// ```
+    #[must_use]
+    pub fn new(
+        rows: usize,
+        model_dimension: usize,
+        feed_forward_dimension: usize,
+        window: usize,
+        blocks: InputBlocks,
+    ) -> Self {
+        Self {
+            blocks,
+            rows,
+            window_capacity: window,
+            normalized: vec![0.0; rows * model_dimension],
+            qkv: vec![0.0; rows * 3 * model_dimension],
+            context: vec![0.0; rows * model_dimension],
+            projected: vec![0.0; rows * model_dimension],
+            hidden: vec![0.0; rows * feed_forward_dimension],
+            scores: vec![0.0; window.next_multiple_of(LANES)],
+            keys: vec![0.0; model_dimension * window.next_multiple_of(LANES)],
+        }
+    }
+}
+
 impl EncoderLayer {
     /// Builds a layer from its attention and feed-forward weights, fusing the query, key and
     /// value projections into one product.
