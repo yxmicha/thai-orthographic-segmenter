@@ -73,4 +73,31 @@ impl Values<'_> {
         }
         lanes.iter().sum::<f32>() + remainder.iter().sum::<f32>()
     }
+
+    /// Sum of squared differences from `mean` over `LANES` interleaved accumulators.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::Values;
+    ///
+    /// let values = Values::new(&[1.0, 3.0]);
+    /// assert_eq!(values.squared_deviations(2.0), 2.0);
+    /// ```
+    #[inline(always)]
+    #[must_use]
+    pub fn squared_deviations(&self, mean: f32) -> f32 {
+        let mut lanes = [0.0_f32; LANES];
+        let (chunks, remainder) = self.0.as_chunks::<LANES>();
+        for chunk in chunks {
+            for (lane, value) in lanes.iter_mut().zip(chunk) {
+                *lane += (value - mean) * (value - mean);
+            }
+        }
+        lanes.iter().sum::<f32>()
+            + remainder
+                .iter()
+                .map(|value| (value - mean) * (value - mean))
+                .sum::<f32>()
+    }
 }
