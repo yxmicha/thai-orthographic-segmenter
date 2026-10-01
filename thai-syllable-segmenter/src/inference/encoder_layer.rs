@@ -165,4 +165,23 @@ impl EncoderLayer {
             model_dimension,
         })
     }
+
+    /// Width of the feed-forward hidden layer.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use thai_syllable_segmenter::inference::{AttentionWeights, EncoderLayer, FeedForwardWeights, InputBlocks, LayerNormWeights, Scratch, WeightMatrix};
+    /// # let matrix = |inputs: usize, outputs: usize| WeightMatrix::new(vec![0.0; inputs * outputs], inputs, outputs, vec![0.0; outputs]);
+    /// # let norm = || LayerNormWeights::new(vec![1.0; 8], vec![0.0; 8]);
+    /// # let attention = AttentionWeights::new(norm()?, matrix(8, 8)?, matrix(8, 8)?, matrix(8, 8)?, matrix(8, 8)?, 2)?;
+    /// # let feed_forward = FeedForwardWeights::new(norm()?, matrix(8, 16)?, matrix(16, 8)?)?;
+    /// # let layer = EncoderLayer::new(attention, feed_forward)?;
+    /// assert_eq!(layer.feed_forward_dimension(), 16);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    #[must_use]
+    pub fn feed_forward_dimension(&self) -> usize {
+        self.inner.outputs()
+    }
 }
