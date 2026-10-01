@@ -10,6 +10,9 @@ use super::{
     weights::{AttentionWeights, FeedForwardWeights, LayerNormWeights, WeightMatrix},
 };
 
+/// Layer-normalization epsilon of the Burn transformer the weights were trained with.
+const LAYER_NORM_EPSILON: f32 = 1e-5;
+
 #[derive(Clone)]
 struct Norm {
     gamma: Vec<f32>,
