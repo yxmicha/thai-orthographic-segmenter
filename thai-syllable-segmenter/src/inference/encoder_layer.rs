@@ -118,6 +118,17 @@ impl std::fmt::Debug for Scratch {
     }
 }
 
+impl std::fmt::Debug for EncoderLayer {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("EncoderLayer")
+            .field("model_dimension", &self.model_dimension)
+            .field("heads", &self.heads)
+            .field("feed_forward_dimension", &self.inner.outputs())
+            .finish_non_exhaustive()
+    }
+}
+
 impl Scratch {
 
     /// Buffers for `rows` stacked positions in windows of at most `window` positions.
