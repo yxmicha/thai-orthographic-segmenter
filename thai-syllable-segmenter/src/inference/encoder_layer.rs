@@ -301,4 +301,33 @@ impl HeadLayout {
             keys[dimension * padded + window.len()..(dimension + 1) * padded].fill(0.0);
         }
     }
+
+    /// Writes `query · key` for every padded key position into `weights`.
+    #[inline(always)]
+    fn score_query<const FMA: bool>(&self, query: &[f32], keys: &[f32], weights: &mut [f32]) {
+        let padded = self.padded;
+        weights.fill(0.0);
+        let (dimensions, leftover) = query.as_chunks::<VALUE_GROUP>();
+        for (group, [first, second, third, fourth]) in dimensions.iter().enumerate() {
+            let base = group * VALUE_GROUP;
+            let key = |offset: usize| &keys[(base + offset) * padded..][..padded];
+            for ((((weight, first_key), second_key), third_key), fourth_key) in weights
+                .iter_mut()
+                .zip(key(0))
+                .zip(key(1))
+                .zip(key(2))
+                .zip(key(3))
+            {
+                let low = multiply_add::<FMA>(*second, *second_key, first * first_key);
+                let high = multiply_add::<FMA>(*fourth, *fourth_key, third * third_key);
+                *weight += low + high;
+            }
+        }
+        for (offset, factor) in leftover.iter().enumerate() {
+            let key = &keys[(dimensions.len() * VALUE_GROUP + offset) * padded..][..padded];
+            for (weight, key) in weights.iter_mut().zip(key) {
+                *weight = multiply_add::<FMA>(*factor, *key, *weight);
+            }
+        }
+    }
 }
