@@ -282,3 +282,21 @@ struct HeadLayout {
     /// Window length rounded up to whole [`LANES`] vectors.
     padded: usize,
 }
+
+impl HeadLayout {
+    /// Lays the head's keys of `window` out dimension by dimension, zero-padded to `padded`.
+    #[inline(always)]
+    fn transpose_keys(&self, qkv: &[f32], window: &Range<usize>, keys: &mut [f32]) {
+        let padded = self.padded;
+        for (position, row) in window.clone().enumerate() {
+            let key = &qkv[row * self.stride + self.model_dimension + self.column..]
+                [..self.head_dimension];
+            for (dimension, value) in key.iter().enumerate() {
+                keys[dimension * padded + position] = *value;
+            }
+        }
+        for dimension in 0..self.head_dimension {
+            keys[dimension * padded + window.len()..(dimension + 1) * padded].fill(0.0);
+        }
+    }
+}
