@@ -131,6 +131,22 @@ impl std::fmt::Debug for EncoderLayer {
 
 impl Scratch {
 
+    /// Gives back the input storage so a later pass can reuse it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::{BlockPool, InputBlocks, Scratch};
+    ///
+    /// let pool = BlockPool::default();
+    /// let scratch = Scratch::new(1, 2, 4, 1, pool.take());
+    /// pool.give_back(scratch.into_blocks());
+    /// ```
+    #[must_use]
+    pub fn into_blocks(self) -> InputBlocks {
+        self.blocks
+    }
+
     /// Buffers for `rows` stacked positions in windows of at most `window` positions.
     ///
     /// # Panics
