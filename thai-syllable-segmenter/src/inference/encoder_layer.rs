@@ -83,6 +83,29 @@ impl Norm {
             beta: weights.beta().to_vec(),
         }
     }
+
+    #[inline(always)]
+    fn forward(&self, input: &[f32], output: &mut [f32]) {
+        let width = self.gamma.len();
+        #[allow(clippy::cast_precision_loss, reason = "the width is far below 2^24")]
+        let reciprocal = width as f32;
+        for (source, target) in input
+            .chunks_exact(width)
+            .zip(output.chunks_exact_mut(width))
+        {
+            let mean = Values(source).sum() / reciprocal;
+            let variance = Values(source).squared_deviations(mean) / reciprocal;
+            let denominator = (variance + LAYER_NORM_EPSILON).sqrt();
+            for (((out, value), gamma), beta) in target
+                .iter_mut()
+                .zip(source)
+                .zip(&self.gamma)
+                .zip(&self.beta)
+            {
+                *out = (value - mean) / denominator * gamma + beta;
+            }
+        }
+    }
 }
 
 impl Scratch {
