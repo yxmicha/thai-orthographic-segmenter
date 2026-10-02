@@ -4,6 +4,8 @@
     reason = "runtime CPU-feature dispatch only works when every callee is inlined into the `#[target_feature]` function"
 )]
 
+use std::ops::Range;
+
 use super::{
     numerics::{Activations, AttentionRow, LANES, Values},
     packed_matrix::{InputBlocks, PackedMatrix, ShapeError, multiply_add},
@@ -145,6 +147,25 @@ impl Scratch {
     #[must_use]
     pub fn into_blocks(self) -> InputBlocks {
         self.blocks
+    }
+
+    /// Rejects operands that do not fit what this scratch was sized for: `state` must hold
+    /// `model_dimension` values per row, and every window must lie within the rows and be no
+    /// longer than the window capacity.
+    fn check(
+        &self,
+        state_len: usize,
+        model_dimension: usize,
+        windows: &[Range<usize>],
+    ) -> Result<(), ShapeError> {
+        if state_len != self.rows * model_dimension
+            || windows
+                .iter()
+                .any(|window| window.end > self.rows || window.len() > self.window_capacity)
+        {
+            return Err(ShapeError);
+        }
+        Ok(())
     }
 
     /// Buffers for `rows` stacked positions in windows of at most `window` positions.
