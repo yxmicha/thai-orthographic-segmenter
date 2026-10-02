@@ -14,6 +14,8 @@ use super::{
 
 /// Layer-normalization epsilon of the Burn transformer the weights were trained with.
 const LAYER_NORM_EPSILON: f32 = 1e-5;
+/// Query dimensions and value rows accumulated together; the code unrolls exactly four.
+const VALUE_GROUP: usize = 4;
 
 #[derive(Clone)]
 struct Norm {
