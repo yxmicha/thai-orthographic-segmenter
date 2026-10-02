@@ -269,3 +269,16 @@ impl EncoderLayer {
         self.inner.outputs()
     }
 }
+
+/// Where one attention head's slices sit in the fused query, key and value rows.
+#[derive(Clone, Copy)]
+struct HeadLayout {
+    /// Values per row of the fused projection.
+    stride: usize,
+    model_dimension: usize,
+    /// First column of the head within each of the query, key and value thirds.
+    column: usize,
+    head_dimension: usize,
+    /// Window length rounded up to whole [`LANES`] vectors.
+    padded: usize,
+}
