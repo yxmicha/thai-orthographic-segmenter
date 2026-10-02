@@ -108,6 +108,16 @@ impl Norm {
     }
 }
 
+impl std::fmt::Debug for Scratch {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("Scratch")
+            .field("rows", &self.rows)
+            .field("window_capacity", &self.window_capacity)
+            .finish_non_exhaustive()
+    }
+}
+
 impl Scratch {
 
     /// Buffers for `rows` stacked positions in windows of at most `window` positions.
