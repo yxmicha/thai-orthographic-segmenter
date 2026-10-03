@@ -208,4 +208,34 @@ impl PackedMatrix {
     pub fn outputs(&self) -> usize {
         self.outputs
     }
+
+    /// Asks the CPU to start loading `panel` into the second-level cache while the current
+    /// panel is being multiplied, hiding the latency of streaming weights on small inputs. The
+    /// lines are spread over the `blocks` row blocks that use the current panel, `block` being
+    /// the index of the one running now, so no block issues them all at once.
+    #[inline(always)]
+    fn prefetch(panel: Option<&[f32]>, block: usize, blocks: usize) {
+        #[cfg(target_arch = "x86_64")]
+        if let Some(panel) = panel {
+            let total = PREFETCH_LINES.min(panel.len().div_ceil(PANEL_WIDTH));
+            let per_block = total.div_ceil(blocks);
+            let first = block * per_block;
+            let Some(rest) = panel.get(first * PANEL_WIDTH..) else {
+                return;
+            };
+            for line in rest
+                .chunks(PANEL_WIDTH)
+                .take(per_block.min(total.saturating_sub(first)))
+            {
+                // SAFETY: SSE is part of the x86-64 baseline, and a prefetch of a valid address
+                // has no architectural effect.
+                #[allow(unsafe_code, reason = "a prefetch hint cannot fault")]
+                unsafe {
+                    std::arch::x86_64::_mm_prefetch::<{ std::arch::x86_64::_MM_HINT_T1 }>(
+                        line.as_ptr().cast::<i8>(),
+                    );
+                }
+            }
+        }
+    }
 }
