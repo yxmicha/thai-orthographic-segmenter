@@ -330,4 +330,47 @@ impl HeadLayout {
             }
         }
     }
+
+    /// Writes the probability-weighted sum of the window's value rows into `target`; `weights`
+    /// holds one probability per row of the window starting at `window_start`.
+    #[inline(always)]
+    fn mix_values<const FMA: bool>(
+        &self,
+        weights: &[f32],
+        qkv: &[f32],
+        window_start: usize,
+        target: &mut [f32],
+    ) {
+        let length = weights.len();
+        target.fill(0.0);
+        let value_row = |other: usize| {
+            &qkv[other * self.stride + 2 * self.model_dimension + self.column..]
+                [..self.head_dimension]
+        };
+        let (groups, remainder) = weights[..length].as_chunks::<VALUE_GROUP>();
+        for (group, probabilities) in groups.iter().enumerate() {
+            let first = window_start + group * VALUE_GROUP;
+            let values: [&[f32]; VALUE_GROUP] =
+                std::array::from_fn(|index| value_row(first + index));
+            let [first_row, second_row, third_row, fourth_row] = values;
+            let [first_weight, second_weight, third_weight, fourth_weight] = *probabilities;
+            for ((((out, first), second), third), fourth) in target
+                .iter_mut()
+                .zip(first_row)
+                .zip(second_row)
+                .zip(third_row)
+                .zip(fourth_row)
+            {
+                let low = multiply_add::<FMA>(second_weight, *second, first_weight * first);
+                let high = multiply_add::<FMA>(fourth_weight, *fourth, third_weight * third);
+                *out += low + high;
+            }
+        }
+        let first = window_start + length - remainder.len();
+        for (index, probability) in remainder.iter().enumerate() {
+            for (out, value) in target.iter_mut().zip(value_row(first + index)) {
+                *out = multiply_add::<FMA>(*probability, *value, *out);
+            }
+        }
+    }
 }
