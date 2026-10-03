@@ -135,3 +135,34 @@ impl AttentionRow<'_> {
             .fold(f32::NEG_INFINITY, |largest, value| largest.max(*value))
     }
 }
+
+/// `exp` for non-positive arguments (softmax after subtracting the maximum) with relative
+/// error near 1e-7; arguments below -87 underflow to zero-like values.
+#[inline(always)]
+fn exp_not_above_zero(value: f32) -> f32 {
+    const ROUNDING: f32 = 12_582_912.0;
+    const COEFFICIENTS: [f32; 8] = [
+        1.0,
+        1.0,
+        0.5,
+        1.0 / 6.0,
+        1.0 / 24.0,
+        1.0 / 120.0,
+        1.0 / 720.0,
+        1.0 / 5040.0,
+    ];
+    let clamped = value.clamp(-87.0, 0.0);
+    let shifted = clamped * std::f32::consts::LOG2_E + ROUNDING;
+    let exponent = shifted - ROUNDING;
+    let remainder = clamped - exponent * 0.693_359_4 + exponent * 2.121_944_4e-4;
+    let polynomial = COEFFICIENTS
+        .iter()
+        .rev()
+        .fold(0.0, |sum, term| sum * remainder + term);
+    let power_of_two = shifted
+        .to_bits()
+        .wrapping_sub(0x4B40_0000)
+        .wrapping_add(127)
+        << 23;
+    polynomial * f32::from_bits(power_of_two)
+}
