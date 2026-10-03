@@ -102,6 +102,51 @@ impl Values<'_> {
     }
 }
 
+impl Activations<'_> {
+    /// Exact-form GELU, `x * (1 + erf(x / sqrt 2)) / 2`, applied in place. The error function is
+    /// a rational approximation with absolute error below 5e-8.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::Activations;
+    ///
+    /// let mut values = [-8.0, 0.0, 8.0];
+    /// Activations::new(&mut values).gelu();
+    /// assert!(values[0].abs() < 1e-5);
+    /// assert_eq!(values[1], 0.0);
+    /// assert!((values[2] - 8.0).abs() < 1e-5);
+    /// ```
+    #[inline(always)]
+    pub fn gelu(self) {
+        const NUMERATOR: [f32; 7] = [
+            1.128_378_8,
+            0.204_227_24,
+            0.051_149_22,
+            0.003_896_387_6,
+            0.000_147_478_09,
+            -1.996_948_5e-6,
+            2.011_880_7e-8,
+        ];
+        const DENOMINATOR: [f32; 5] =
+            [1.0, 0.514_320_7, 0.116_786_49, 0.014_730_7, 0.001_006_631_6];
+        for value in self.0 {
+            let clamped = (*value / std::f32::consts::SQRT_2).clamp(-3.9, 3.9);
+            let square = clamped * clamped;
+            let numerator = NUMERATOR
+                .iter()
+                .rev()
+                .fold(0.0, |sum, term| sum * square + term);
+            let denominator = DENOMINATOR
+                .iter()
+                .rev()
+                .fold(0.0, |sum, term| sum * square + term);
+            let error_function = clamped * numerator / denominator;
+            *value = *value * (1.0 + error_function) / 2.0;
+        }
+    }
+}
+
 impl AttentionRow<'_> {
     /// Divides every score by `scale` and returns the largest, over `LANES` interleaved
     /// accumulators; negative infinity when the row is empty.
