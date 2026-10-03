@@ -12,6 +12,8 @@ use std::sync::{Mutex, PoisonError};
 
 /// Output columns held by one packed panel and one micro-kernel accumulator row.
 const PANEL_WIDTH: usize = 16;
+/// Input rows multiplied against a panel by one micro-kernel invocation.
+const BLOCK_ROWS: usize = 6;
 
 /// Operands of a matrix operation whose lengths do not match the matrix shape.
 ///
