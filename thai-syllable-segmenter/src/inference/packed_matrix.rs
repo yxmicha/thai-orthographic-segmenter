@@ -12,6 +12,8 @@ use std::sync::{Mutex, PoisonError};
 
 /// Output columns held by one packed panel and one micro-kernel accumulator row.
 const PANEL_WIDTH: usize = 16;
+/// Cache lines of the next panel requested ahead of use.
+const PREFETCH_LINES: usize = 1024;
 /// Input rows multiplied against a panel by one micro-kernel invocation.
 const BLOCK_ROWS: usize = 6;
 
