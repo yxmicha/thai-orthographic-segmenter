@@ -101,3 +101,37 @@ impl Values<'_> {
                 .sum::<f32>()
     }
 }
+
+impl AttentionRow<'_> {
+    /// Divides every score by `scale` and returns the largest, over `LANES` interleaved
+    /// accumulators; negative infinity when the row is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::AttentionRow;
+    ///
+    /// let mut scores = [2.0, 6.0, 4.0];
+    /// let maximum = AttentionRow::new(&mut scores).scale_and_maximum(2.0);
+    /// assert_eq!(maximum, 3.0);
+    /// assert_eq!(scores, [1.0, 3.0, 2.0]);
+    /// ```
+    #[inline(always)]
+    pub fn scale_and_maximum(&mut self, scale: f32) -> f32 {
+        let mut lanes = [f32::NEG_INFINITY; LANES];
+        let (chunks, remainder) = self.0.as_chunks_mut::<LANES>();
+        for chunk in chunks {
+            for (lane, value) in lanes.iter_mut().zip(chunk) {
+                *value /= scale;
+                *lane = lane.max(*value);
+            }
+        }
+        for value in remainder.iter_mut() {
+            *value /= scale;
+        }
+        remainder
+            .iter()
+            .chain(&lanes)
+            .fold(f32::NEG_INFINITY, |largest, value| largest.max(*value))
+    }
+}
