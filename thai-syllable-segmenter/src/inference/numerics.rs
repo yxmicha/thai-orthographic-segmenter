@@ -134,6 +134,36 @@ impl AttentionRow<'_> {
             .chain(&lanes)
             .fold(f32::NEG_INFINITY, |largest, value| largest.max(*value))
     }
+
+    /// Replaces every score `v` with `exp(v - maximum)` and returns their sum, over `LANES`
+    /// interleaved accumulators.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::AttentionRow;
+    ///
+    /// let mut scores = [0.0, 0.0];
+    /// let total = AttentionRow::new(&mut scores).exponentiate(0.0);
+    /// assert!((total - 2.0).abs() < 1e-5);
+    /// ```
+    #[inline(always)]
+    pub fn exponentiate(&mut self, maximum: f32) -> f32 {
+        let mut lanes = [0.0_f32; LANES];
+        let (chunks, remainder) = self.0.as_chunks_mut::<LANES>();
+        for chunk in chunks {
+            for (lane, value) in lanes.iter_mut().zip(chunk) {
+                *value = exp_not_above_zero(*value - maximum);
+                *lane += *value;
+            }
+        }
+        let mut tail = 0.0;
+        for value in remainder.iter_mut() {
+            *value = exp_not_above_zero(*value - maximum);
+            tail += *value;
+        }
+        lanes.iter().sum::<f32>() + tail
+    }
 }
 
 /// `exp` for non-positive arguments (softmax after subtracting the maximum) with relative
