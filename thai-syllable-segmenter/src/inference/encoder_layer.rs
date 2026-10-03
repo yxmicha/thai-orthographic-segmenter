@@ -270,6 +270,65 @@ impl EncoderLayer {
     pub fn feed_forward_dimension(&self) -> usize {
         self.inner.outputs()
     }
+
+    /// Softmax attention within each window; windows never attend to each other. With `wanted`,
+    /// only the flagged rows act as queries.
+    #[inline(always)]
+    fn attend<const FMA: bool>(
+        &self,
+        windows: &[Range<usize>],
+        wanted: Option<&[bool]>,
+        scratch: &mut Scratch,
+    ) {
+        let Scratch {
+            qkv,
+            context,
+            scores,
+            keys,
+            ..
+        } = scratch;
+        let model_dimension = self.model_dimension;
+        let head_dimension = model_dimension / self.heads;
+        #[allow(
+            clippy::cast_precision_loss,
+            reason = "the head width is far below 2^24"
+        )]
+        let scale = (head_dimension as f32).sqrt();
+        for window in windows {
+            let length = window.len();
+            // Scores are computed over whole vectors of keys; padding keys are zero and their
+            // scores are masked before the softmax.
+            let padded = length.next_multiple_of(LANES);
+            for head in 0..self.heads {
+                let layout = HeadLayout {
+                    stride: 3 * model_dimension,
+                    model_dimension,
+                    column: head * head_dimension,
+                    head_dimension,
+                    padded,
+                };
+                layout.transpose_keys(qkv, window, keys);
+                for row in window.clone() {
+                    if wanted.is_some_and(|wanted| !wanted[row]) {
+                        continue;
+                    }
+                    let query = &qkv[row * layout.stride + layout.column..][..head_dimension];
+                    let weights = &mut scores[..padded];
+                    layout.score_query::<FMA>(query, keys, weights);
+                    weights[length..].fill(f32::NEG_INFINITY);
+                    let mut row_scores = AttentionRow(&mut weights[..]);
+                    let maximum = row_scores.scale_and_maximum(scale);
+                    let total = row_scores.exponentiate(maximum);
+                    let target =
+                        &mut context[row * model_dimension + layout.column..][..head_dimension];
+                    layout.mix_values::<FMA>(&weights[..length], qkv, window.start, target);
+                    for out in target.iter_mut() {
+                        *out /= total;
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// Where one attention head's slices sit in the fused query, key and value rows.
