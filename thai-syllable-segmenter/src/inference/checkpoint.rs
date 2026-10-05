@@ -260,6 +260,51 @@ impl Checkpoint {
         Ok(Self { tensors })
     }
 
+    /// Builds a checkpoint from named 32-bit tensors held in memory, each given as its name,
+    /// shape and row-major values. Use it for weights that did not come from a safetensors file.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`CheckpointError::Length`] when a tensor's value count differs from the product
+    /// of its shape.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::{Checkpoint, CheckpointError};
+    ///
+    /// # fn main() -> Result<(), CheckpointError> {
+    /// let mut checkpoint = Checkpoint::from_tensors([
+    ///     ("t.weight".to_owned(), vec![2, 2], vec![1.0, 2.0, 3.0, 4.0]),
+    /// ])?;
+    /// assert_eq!(checkpoint.embedding("t", 2, 2)?.values(), [1.0, 2.0, 3.0, 4.0]);
+    ///
+    /// // Three values cannot fill a 2 x 2 tensor.
+    /// let wrong = Checkpoint::from_tensors([("t.weight".to_owned(), vec![2, 2], vec![0.0; 3])]);
+    /// assert!(matches!(wrong, Err(CheckpointError::Length { .. })));
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn from_tensors(
+        tensors: impl IntoIterator<Item = (String, Vec<usize>, Vec<f32>)>,
+    ) -> Result<Self, CheckpointError> {
+        let mut checked = BTreeMap::new();
+        for (name, shape, values) in tensors {
+            let expected = shape
+                .iter()
+                .try_fold(1_usize, |count, dimension| count.checked_mul(*dimension));
+            if expected != Some(values.len()) {
+                return Err(CheckpointError::Length {
+                    name,
+                    found: values.len(),
+                    shape,
+                });
+            }
+            checked.insert(name, (shape, values));
+        }
+        Ok(Self { tensors: checked })
+    }
+
     fn take(&mut self, name: &str, expected: &[usize]) -> Result<Vec<f32>, CheckpointError> {
         let (found, _) = self
             .tensors
