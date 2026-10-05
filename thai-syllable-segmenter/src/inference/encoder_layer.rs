@@ -134,6 +134,23 @@ impl std::fmt::Debug for EncoderLayer {
 }
 
 impl Scratch {
+    /// The input storage shared by every matrix product of the pass.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::{InputBlocks, PackedMatrix, Scratch};
+    ///
+    /// let mut scratch = Scratch::new(1, 2, 4, 1, InputBlocks::default());
+    /// let matrix = PackedMatrix::new(&[1.0, 0.0, 0.0, 1.0], 2, 2, vec![0.0; 2])?;
+    /// let mut output = [0.0; 2];
+    /// matrix.multiply_into::<false>(&[1.0, 2.0], scratch.blocks_mut(), &mut output)?;
+    /// assert_eq!(output, [1.0, 2.0]);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn blocks_mut(&mut self) -> &mut InputBlocks {
+        &mut self.blocks
+    }
 
     /// Gives back the input storage so a later pass can reuse it.
     ///
