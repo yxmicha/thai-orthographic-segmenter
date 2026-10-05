@@ -238,4 +238,47 @@ impl PackedMatrix {
             }
         }
     }
+
+    /// Multiplies one packed block of `ROWS` input rows by one weight panel.
+    #[inline(always)]
+    fn block<const FMA: bool, const ROWS: usize>(
+        &self,
+        panel: &[f32],
+        block: &[f32],
+        output: &mut [f32],
+        first_row: usize,
+        column: usize,
+    ) {
+        let mut sums = [[0.0_f32; PANEL_WIDTH]; ROWS];
+        for (values, weights) in block
+            .as_chunks::<ROWS>()
+            .0
+            .iter()
+            .zip(panel.as_chunks::<PANEL_WIDTH>().0)
+        {
+            for (value, sum) in values.iter().zip(sums.iter_mut()) {
+                for (total, weight) in sum.iter_mut().zip(weights) {
+                    *total = multiply_add::<FMA>(*value, *weight, *total);
+                }
+            }
+        }
+        let width = PANEL_WIDTH.min(self.outputs - column);
+        let bias = self
+            .bias
+            .get(column..)
+            .and_then(|rest| rest.first_chunk::<PANEL_WIDTH>())
+            .copied()
+            .unwrap_or([0.0; PANEL_WIDTH]);
+        for (row, sum) in sums.iter().enumerate() {
+            let finished: [f32; PANEL_WIDTH] =
+                std::array::from_fn(|index| sum[index] + bias[index]);
+            let Some(target) = output.get_mut((first_row + row) * self.outputs + column..) else {
+                return;
+            };
+            match target.first_chunk_mut::<PANEL_WIDTH>() {
+                Some(full) if width == PANEL_WIDTH => *full = finished,
+                _ => target[..width].copy_from_slice(&finished[..width]),
+            }
+        }
+    }
 }
