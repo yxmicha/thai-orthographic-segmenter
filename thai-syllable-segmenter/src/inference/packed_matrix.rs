@@ -87,6 +87,24 @@ impl BlockPool {
             .pop()
             .unwrap_or_default()
     }
+
+    /// Returns storage for later passes, possibly on other threads.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::BlockPool;
+    ///
+    /// let pool = BlockPool::default();
+    /// pool.give_back(pool.take());
+    /// assert!(format!("{pool:?}").contains("idle: 1"));
+    /// ```
+    pub fn give_back(&self, blocks: InputBlocks) {
+        self.0
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .push(blocks);
+    }
 }
 
 /// A `[inputs, outputs]` weight matrix with a bias vector, packed for [`Self::multiply`] and [`Self::multiply_into`].
