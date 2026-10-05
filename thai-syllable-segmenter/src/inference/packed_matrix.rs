@@ -209,6 +209,86 @@ impl PackedMatrix {
         self.outputs
     }
 
+    /// Writes `input · weight + bias` for row-major `input` with `inputs` columns, into `output`
+    /// with `outputs` columns.
+    ///
+    /// The input rows are first copied into `blocks` in groups of up to `BLOCK_ROWS` rows with
+    /// the values of one column adjacent, so the micro-kernel reads both operands sequentially.
+    /// Returns [`ShapeError`] unless `input` holds a whole number of rows and `output` holds one
+    /// output row for each of them.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ShapeError`] when `input` is not a whole number of rows or `output` does not
+    /// hold one output row per input row.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::{InputBlocks, PackedMatrix};
+    ///
+    /// // Two input rows of two values, multiplied by a 2x1 matrix that adds them.
+    /// let matrix = PackedMatrix::new(&[1.0, 1.0], 2, 1, vec![0.0])?;
+    /// let mut output = [0.0; 2];
+    /// matrix.multiply_into::<false>(&[1.0, 2.0, 3.0, 4.0], &mut InputBlocks::default(), &mut output)?;
+    /// assert_eq!(output, [3.0, 7.0]);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    #[inline(always)]
+    pub fn multiply_into<const FMA: bool>(
+        &self,
+        input: &[f32],
+        blocks: &mut InputBlocks,
+        output: &mut [f32],
+    ) -> Result<(), ShapeError> {
+        if self.inputs == 0 || !input.len().is_multiple_of(self.inputs) {
+            return Err(ShapeError);
+        }
+        let rows = input.len() / self.inputs;
+        if output.len() != rows * self.outputs {
+            return Err(ShapeError);
+        }
+        let mut packed = std::mem::take(&mut blocks.0);
+        packed.clear();
+        packed.reserve(input.len());
+        let mut row = 0;
+        while row < rows {
+            let take = (rows - row).min(BLOCK_ROWS);
+            let block = &input[row * self.inputs..][..take * self.inputs];
+            let start = packed.len();
+            packed.resize(start + block.len(), 0.0);
+            let target = &mut packed[start..];
+            for (offset, source) in block.chunks_exact(self.inputs).enumerate() {
+                for (column, value) in source.iter().enumerate() {
+                    target[column * take + offset] = *value;
+                }
+            }
+            row += take;
+        }
+        let panel_floats = self.inputs * PANEL_WIDTH;
+        for (panel_index, panel) in self.panels.chunks_exact(panel_floats).enumerate() {
+            let next_panel = self.panels.get((panel_index + 1) * panel_floats..);
+            let column = panel_index * PANEL_WIDTH;
+            let mut row = 0;
+            while row < rows {
+                let take = (rows - row).min(BLOCK_ROWS);
+                Self::prefetch(next_panel, row / BLOCK_ROWS, rows.div_ceil(BLOCK_ROWS));
+                let block = &packed[row * self.inputs..][..take * self.inputs];
+                match take {
+                    6 => self.block::<FMA, 6>(panel, block, output, row, column),
+                    5 => self.block::<FMA, 5>(panel, block, output, row, column),
+                    4 => self.block::<FMA, 4>(panel, block, output, row, column),
+                    3 => self.block::<FMA, 3>(panel, block, output, row, column),
+                    2 => self.block::<FMA, 2>(panel, block, output, row, column),
+                    _ => self.block::<FMA, 1>(panel, block, output, row, column),
+                }
+                row += take;
+            }
+        }
+        blocks.0 = packed;
+        Ok(())
+    }
+
     /// Asks the CPU to start loading `panel` into the second-level cache while the current
     /// panel is being multiplied, hiding the latency of streaming weights on small inputs. The
     /// lines are spread over the `blocks` row blocks that use the current panel, `block` being
