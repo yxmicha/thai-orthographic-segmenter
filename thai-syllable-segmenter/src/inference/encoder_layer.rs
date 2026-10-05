@@ -271,6 +271,73 @@ impl EncoderLayer {
         self.inner.outputs()
     }
 
+    /// Updates the stacked hidden states `[rows, model_dimension]` in place. Returns [`ShapeError`]
+    /// unless `state` and every window fit the rows `scratch` was sized for.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ShapeError`] when `state` or a window does not fit the rows `scratch` was sized
+    /// for.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use thai_syllable_segmenter::inference::{AttentionWeights, EncoderLayer, FeedForwardWeights, InputBlocks, LayerNormWeights, Scratch, WeightMatrix};
+    /// # let matrix = |inputs: usize, outputs: usize| WeightMatrix::new(vec![0.0; inputs * outputs], inputs, outputs, vec![0.0; outputs]);
+    /// # let norm = || LayerNormWeights::new(vec![1.0; 8], vec![0.0; 8]);
+    /// # let attention = AttentionWeights::new(norm()?, matrix(8, 8)?, matrix(8, 8)?, matrix(8, 8)?, matrix(8, 8)?, 2)?;
+    /// # let feed_forward = FeedForwardWeights::new(norm()?, matrix(8, 16)?, matrix(16, 8)?)?;
+    /// # let layer = EncoderLayer::new(attention, feed_forward)?;
+    /// let rows = 3;
+    /// let mut state = vec![0.1_f32; rows * 8];
+    /// let mut scratch = Scratch::new(rows, 8, layer.feed_forward_dimension(), rows, InputBlocks::default());
+    /// layer.forward::<false>(&mut state, &[0..rows], &mut scratch)?;
+    /// // A state that does not hold whole rows is rejected.
+    /// assert!(layer.forward::<false>(&mut state[..5], &[0..rows], &mut scratch).is_err());
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    #[inline(always)]
+    pub fn forward<const FMA: bool>(
+        &self,
+        state: &mut [f32],
+        windows: &[Range<usize>],
+        scratch: &mut Scratch,
+    ) -> Result<(), ShapeError> {
+        scratch.check(state.len(), self.model_dimension, windows)?;
+        self.attention_norm.forward(state, &mut scratch.normalized);
+        self.qkv.multiply_into::<FMA>(
+            &scratch.normalized,
+            &mut scratch.blocks,
+            &mut scratch.qkv,
+        )?;
+        self.attend::<FMA>(windows, None, scratch);
+        self.output.multiply_into::<FMA>(
+            &scratch.context,
+            &mut scratch.blocks,
+            &mut scratch.projected,
+        )?;
+        for (value, update) in state.iter_mut().zip(&scratch.projected) {
+            *value += update;
+        }
+        self.feed_forward_norm
+            .forward(state, &mut scratch.normalized);
+        self.inner.multiply_into::<FMA>(
+            &scratch.normalized,
+            &mut scratch.blocks,
+            &mut scratch.hidden,
+        )?;
+        Activations(&mut scratch.hidden).gelu();
+        self.outer.multiply_into::<FMA>(
+            &scratch.hidden,
+            &mut scratch.blocks,
+            &mut scratch.projected,
+        )?;
+        for (value, update) in state.iter_mut().zip(&scratch.projected) {
+            *value += update;
+        }
+        Ok(())
+    }
+
     /// Softmax attention within each window; windows never attend to each other. With `wanted`,
     /// only the flagged rows act as queries.
     #[inline(always)]
