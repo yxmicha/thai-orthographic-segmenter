@@ -132,6 +132,52 @@ impl ContextualModel {
         })
     }
 
+    /// Scores all spans with one run-wide forward pass plus rule priors.
+    pub(crate) fn score(&self, lattice: &RelaxedLattice) -> Result<Vec<f32>, Error> {
+        let length = lattice.scalar_count();
+        if length == 0 {
+            return Ok(Vec::new());
+        }
+        if length > self.position_capacity {
+            return Err(Error::Invariant(
+                "sentence exceeds trained position capacity",
+            ));
+        }
+        let features = self.features(lattice)?;
+        let logits = run_on_cpu(
+            #[inline(always)]
+            || self.forward::<true>(&features),
+            #[inline(always)]
+            || self.forward::<false>(&features),
+        )?;
+        let boundary_logit = |column: usize, scalar: usize| {
+            logits
+                .get(scalar * LOGITS_PER_SCALAR + column)
+                .copied()
+                .ok_or(Error::Invariant(
+                    "contextual scores are shorter than the Thai run",
+                ))
+        };
+        let scores = lattice
+            .candidates
+            .iter()
+            .map(|candidate| match candidate.kind {
+                CandidateKind::Thai => Ok(boundary_logit(
+                    START_BOUNDARY_COLUMN,
+                    candidate.scalars.start,
+                )? + boundary_logit(
+                    END_BOUNDARY_COLUMN,
+                    candidate.scalars.end.saturating_sub(1),
+                )? + candidate.prior),
+                CandidateKind::Unparsed => Ok(0.0),
+            })
+            .collect::<Result<Vec<_>, Error>>()?;
+        if scores.iter().any(|value| !value.is_finite()) {
+            return Err(Error::Invariant("model emitted non-finite scores"));
+        }
+        Ok(scores)
+    }
+
     /// Characters, n-grams, and rule-part features of one lattice.
     fn features(&self, lattice: &RelaxedLattice) -> Result<Features, Error> {
         let length = lattice.scalar_count();
