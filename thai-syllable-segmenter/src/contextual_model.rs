@@ -182,4 +182,65 @@ impl ContextualModel {
             .copied()
             .unwrap_or(0)
     }
+
+    /// Start and end logits, four per scalar.
+    #[inline(always)]
+    fn forward<const FMA: bool>(&self, features: &Features) -> Result<Vec<f32>, ShapeError> {
+        let length = features.characters.len();
+        let dimension = self.embedding_dimension;
+        let width = dimension * INPUT_PIECES;
+        let mut input = Vec::with_capacity(length * width);
+        let mut piece = |table: &[f32], row: usize| -> Result<(), ShapeError> {
+            input.extend_from_slice(
+                table
+                    .get(row * dimension..(row + 1) * dimension)
+                    .ok_or(ShapeError)?,
+            );
+            Ok(())
+        };
+        let rule_features = features
+            .kinds
+            .iter()
+            .zip(&features.starts)
+            .zip(&features.ends);
+        for (scalar, ((kind, start), end)) in rule_features.enumerate() {
+            for offset in CHARACTER_OFFSETS {
+                piece(
+                    &self.characters,
+                    Self::neighbour(&features.characters, scalar, offset),
+                )?;
+            }
+            for ids in [&features.bigrams, &features.trigrams] {
+                for offset in NGRAM_OFFSETS {
+                    piece(&self.ngrams, Self::neighbour(ids, scalar, offset))?;
+                }
+            }
+            piece(&self.kinds, *kind)?;
+            piece(&self.starts, *start)?;
+            piece(&self.ends, *end)?;
+            piece(&self.positions, scalar)?;
+        }
+        let mut scratch = Scratch::new(
+            length,
+            self.projection.outputs(),
+            self.layers
+                .first()
+                .map_or(0, EncoderLayer::feed_forward_dimension),
+            length,
+            self.blocks.take(),
+        );
+        let mut hidden = vec![0.0; length * self.projection.outputs()];
+        self.projection
+            .multiply_into::<FMA>(&input, &mut scratch.blocks, &mut hidden)?;
+        Activations(&mut hidden).gelu();
+        let window = 0..length;
+        for layer in &self.layers {
+            layer.forward::<FMA>(&mut hidden, std::slice::from_ref(&window), &mut scratch)?;
+        }
+        let mut logits = vec![0.0; length * LOGITS_PER_SCALAR];
+        self.heads
+            .multiply_into::<FMA>(&hidden, &mut scratch.blocks, &mut logits)?;
+        self.blocks.give_back(scratch.into_blocks());
+        Ok(logits)
+    }
 }
