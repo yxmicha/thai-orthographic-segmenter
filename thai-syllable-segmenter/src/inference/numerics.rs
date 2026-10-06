@@ -85,6 +85,23 @@ impl<'a> Activations<'a> {
     }
 }
 
+impl<'a> AttentionRow<'a> {
+    /// Views `scores` as one attention row.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::AttentionRow;
+    ///
+    /// let mut scores = [0.5];
+    /// assert_eq!(AttentionRow::new(&mut scores).scale_and_maximum(0.5), 1.0);
+    /// ```
+    #[must_use]
+    pub const fn new(scores: &'a mut [f32]) -> Self {
+        Self(scores)
+    }
+}
+
 impl Values<'_> {
     /// Sum over `LANES` interleaved accumulators.
     ///
