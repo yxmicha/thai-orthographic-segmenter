@@ -355,6 +355,93 @@ impl EncoderLayer {
         Ok(())
     }
 
+    /// Computes the layer output only for the `selected` rows (global row indices, ascending),
+    /// for the final layer when only some rows are read. Every row still supplies keys and
+    /// values, but attention queries, the output projection and the feed-forward network run on
+    /// the selected rows alone. Returns their new states, `[selected.len(), model_dimension]`.
+    /// `wanted[row]` must be true exactly for the selected rows; otherwise, or when `state` or a
+    /// window does not fit what `scratch` was sized for, returns [`ShapeError`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ShapeError`] when `wanted` does not flag exactly the `selected` rows, or when
+    /// `state` or a window does not fit the rows `scratch` was sized for.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use thai_syllable_segmenter::inference::{AttentionWeights, EncoderLayer, FeedForwardWeights, InputBlocks, LayerNormWeights, Scratch, WeightMatrix};
+    /// # let matrix = |inputs: usize, outputs: usize| WeightMatrix::new(vec![0.0; inputs * outputs], inputs, outputs, vec![0.0; outputs]);
+    /// # let norm = || LayerNormWeights::new(vec![1.0; 8], vec![0.0; 8]);
+    /// # let attention = AttentionWeights::new(norm()?, matrix(8, 8)?, matrix(8, 8)?, matrix(8, 8)?, matrix(8, 8)?, 2)?;
+    /// # let feed_forward = FeedForwardWeights::new(norm()?, matrix(8, 16)?, matrix(16, 8)?)?;
+    /// # let layer = EncoderLayer::new(attention, feed_forward)?;
+    /// let rows = 3;
+    /// let state = vec![0.1_f32; rows * 8];
+    /// let mut scratch = Scratch::new(rows, 8, layer.feed_forward_dimension(), rows, InputBlocks::default());
+    /// // Only the middle row is read, so only its output is computed.
+    /// let wanted = [false, true, false];
+    /// let compact = layer.forward_selected::<false>(&state, &[0..rows], &[1], &wanted, &mut scratch)?;
+    /// assert_eq!(compact.len(), 8);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    #[inline(always)]
+    pub fn forward_selected<const FMA: bool>(
+        &self,
+        state: &[f32],
+        windows: &[Range<usize>],
+        selected: &[usize],
+        wanted: &[bool],
+        scratch: &mut Scratch,
+    ) -> Result<Vec<f32>, ShapeError> {
+        scratch.check(state.len(), self.model_dimension, windows)?;
+        if wanted.len() != scratch.rows
+            || wanted.iter().filter(|flag| **flag).count() != selected.len()
+            || selected
+                .iter()
+                .any(|row| !wanted.get(*row).copied().unwrap_or(false))
+        {
+            return Err(ShapeError);
+        }
+        let (width, hidden_width) = (self.model_dimension, self.inner.outputs());
+        let count = selected.len();
+        self.attention_norm.forward(state, &mut scratch.normalized);
+        self.qkv.multiply_into::<FMA>(
+            &scratch.normalized,
+            &mut scratch.blocks,
+            &mut scratch.qkv,
+        )?;
+        self.attend::<FMA>(windows, Some(wanted), scratch);
+        let mut compact = Vec::with_capacity(count * width);
+        for row in selected {
+            compact.extend_from_slice(&scratch.context[row * width..][..width]);
+        }
+        let projected = &mut scratch.projected[..count * width];
+        self.output
+            .multiply_into::<FMA>(&compact, &mut scratch.blocks, projected)?;
+        compact.clear();
+        for (row, update) in selected.iter().zip(projected.chunks_exact(width)) {
+            compact.extend(
+                state[row * width..][..width]
+                    .iter()
+                    .zip(update)
+                    .map(|(value, update)| value + update),
+            );
+        }
+        let normalized = &mut scratch.normalized[..count * width];
+        self.feed_forward_norm.forward(&compact, normalized);
+        let hidden = &mut scratch.hidden[..count * hidden_width];
+        self.inner
+            .multiply_into::<FMA>(normalized, &mut scratch.blocks, hidden)?;
+        Activations(hidden).gelu();
+        self.outer
+            .multiply_into::<FMA>(hidden, &mut scratch.blocks, projected)?;
+        for (value, update) in compact.iter_mut().zip(projected.iter()) {
+            *value += update;
+        }
+        Ok(compact)
+    }
+
     /// Softmax attention within each window; windows never attend to each other. With `wanted`,
     /// only the flagged rows act as queries.
     #[inline(always)]
