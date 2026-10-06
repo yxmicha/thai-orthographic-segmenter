@@ -67,6 +67,24 @@ impl<'a> Values<'a> {
     }
 }
 
+impl<'a> Activations<'a> {
+    /// Views `values` for an in-place activation.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::Activations;
+    ///
+    /// let mut values = [0.0];
+    /// Activations::new(&mut values).gelu();
+    /// assert_eq!(values, [0.0]);
+    /// ```
+    #[must_use]
+    pub const fn new(values: &'a mut [f32]) -> Self {
+        Self(values)
+    }
+}
+
 impl Values<'_> {
     /// Sum over `LANES` interleaved accumulators.
     ///
