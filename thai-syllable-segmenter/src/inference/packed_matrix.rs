@@ -262,6 +262,35 @@ impl PackedMatrix {
         self.outputs
     }
 
+    /// Returns `input · weight + bias` for row-major `input` with `inputs` columns, as row-major
+    /// rows of `outputs` columns.
+    ///
+    /// This allocates the result and the scratch storage. In a loop, use
+    /// [`Self::multiply_into`], which reuses buffers you own.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ShapeError`] when `input` is not a whole number of rows.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::PackedMatrix;
+    ///
+    /// // Two input rows of two values, multiplied by a 2x1 matrix that adds them.
+    /// let matrix = PackedMatrix::new(&[1.0, 1.0], 2, 1, vec![0.5])?;
+    /// assert_eq!(matrix.multiply::<false>(&[1.0, 2.0, 3.0, 4.0])?, [3.5, 7.5]);
+    /// # Ok::<(), thai_syllable_segmenter::inference::ShapeError>(())
+    /// ```
+    pub fn multiply<const FMA: bool>(&self, input: &[f32]) -> Result<Vec<f32>, ShapeError> {
+        if self.inputs == 0 || !input.len().is_multiple_of(self.inputs) {
+            return Err(ShapeError);
+        }
+        let mut output = vec![0.0; input.len() / self.inputs * self.outputs];
+        self.multiply_into::<FMA>(input, &mut InputBlocks::default(), &mut output)?;
+        Ok(output)
+    }
+
     /// Writes `input · weight + bias` for row-major `input` with `inputs` columns, into `output`
     /// with `outputs` columns.
     ///
