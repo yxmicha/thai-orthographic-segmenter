@@ -75,6 +75,16 @@ impl std::fmt::Debug for InputBlocks {
 #[derive(Default)]
 pub struct BlockPool(Mutex<Vec<InputBlocks>>);
 
+impl std::fmt::Debug for BlockPool {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let idle = self.0.lock().unwrap_or_else(PoisonError::into_inner).len();
+        formatter
+            .debug_struct("BlockPool")
+            .field("idle", &idle)
+            .finish()
+    }
+}
+
 impl BlockPool {
     /// Hands out storage left by an earlier pass, or empty storage when none is idle.
     ///
