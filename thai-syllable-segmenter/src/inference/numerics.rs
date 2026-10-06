@@ -51,6 +51,22 @@ pub struct Activations<'a>(pub(crate) &'a mut [f32]);
 #[derive(Debug)]
 pub struct AttentionRow<'a>(pub(crate) &'a mut [f32]);
 
+impl<'a> Values<'a> {
+    /// Views `values` for reduction.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::Values;
+    ///
+    /// assert_eq!(Values::new(&[2.0]).sum(), 2.0);
+    /// ```
+    #[must_use]
+    pub const fn new(values: &'a [f32]) -> Self {
+        Self(values)
+    }
+}
+
 impl Values<'_> {
     /// Sum over `LANES` interleaved accumulators.
     ///
