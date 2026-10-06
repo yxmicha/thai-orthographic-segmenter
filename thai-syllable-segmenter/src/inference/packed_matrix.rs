@@ -51,6 +51,15 @@ pub struct ShapeError;
 #[derive(Default)]
 pub struct InputBlocks(Vec<f32>);
 
+impl std::fmt::Debug for InputBlocks {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("InputBlocks")
+            .field("capacity", &self.0.capacity())
+            .finish()
+    }
+}
+
 /// Input-row storage shared by the forward passes of one model, so each pass starts from buffers
 /// that earlier passes already grew instead of allocating and faulting in fresh memory.
 ///
