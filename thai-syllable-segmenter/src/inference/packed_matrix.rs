@@ -230,6 +230,22 @@ impl PackedMatrix {
         })
     }
 
+    /// Number of input columns.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::PackedMatrix;
+    ///
+    /// let matrix = PackedMatrix::new(&[1.0; 6], 2, 3, vec![0.0; 3])?;
+    /// assert_eq!(matrix.inputs(), 2);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    #[must_use]
+    pub fn inputs(&self) -> usize {
+        self.inputs
+    }
+
     /// Number of output columns.
     ///
     /// # Examples
