@@ -74,6 +74,22 @@ impl WeightMatrix {
         })
     }
 
+    /// Row-major weights, `inputs() * outputs()` long.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::WeightMatrix;
+    ///
+    /// let matrix = WeightMatrix::new(vec![1.0, 2.0], 1, 2, vec![0.0; 2])?;
+    /// assert_eq!(matrix.values(), [1.0, 2.0]);
+    /// # Ok::<(), thai_syllable_segmenter::inference::ShapeError>(())
+    /// ```
+    #[must_use]
+    pub fn values(&self) -> &[f32] {
+        &self.values
+    }
+
     /// Joins matrices that share one input into a single wider matrix.
     ///
     /// # Errors
