@@ -1,5 +1,7 @@
 use std::ops::Range;
 use thai_syllable_rules::{Part, RuleAnalysis, SyllablePattern, split};
+
+use crate::{Error, lattice_config::LatticeConfig};
 use thai_syllable_rules::ThaiScalar;
 
 /// Source treatment, independent of the model's confidence.
@@ -80,6 +82,50 @@ impl<'a> RelaxedLattice<'a> {
             start = end;
         }
         cells
+    }
+
+    /// Prior score of a Thai candidate: the syllable cost, less the costs of unsupported shapes,
+    /// extra nuclei and a cut through a rule syllable that no reading alternative recovers.
+    fn thai_prior(
+        text: &str,
+        bytes: &Range<usize>,
+        analysis: &RuleAnalysis,
+        parts: &[Part],
+        config: &LatticeConfig,
+    ) -> Result<f32, Error> {
+        let pattern = SyllablePattern::inspect(text);
+        let recognized = pattern.is_some_and(|pattern| pattern.is_candidate(text))
+            || analysis.permits_weak_initial(bytes);
+        let recovered_boundary = analysis
+            .reading_alternatives()
+            .iter()
+            .any(|alternative| alternative.boundary() == bytes.end);
+        let nuclei = pattern.map_or(0, |pattern| pattern.vowel_pattern_count());
+        let cuts_anchor = parts.iter().any(|part| match part {
+            Part::Syllable(range) => range.start < bytes.end && bytes.end < range.end,
+            Part::Undecided(_) | Part::Invalid(_) | Part::Dot(_) | Part::Text(_) => false,
+        });
+        let extra = f32::from(
+            u16::try_from(nuclei.saturating_sub(1))
+                .map_err(|_| Error::Invariant("too many nuclei"))?,
+        );
+        let prior = 0.0_f32
+            - config.syllable_cost
+            - if recognized {
+                0.0
+            } else {
+                config.unsupported_cost
+            }
+            - extra * config.extra_nucleus_cost
+            - if cuts_anchor && !recovered_boundary {
+                config.anchor_cut_cost
+            } else {
+                0.0
+            };
+        if !prior.is_finite() {
+            return Err(Error::Invariant("evidence score overflow"));
+        }
+        Ok(prior)
     }
 
     /// Exact unchanged Thai run.
