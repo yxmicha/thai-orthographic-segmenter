@@ -106,6 +106,22 @@ impl WeightMatrix {
         self.inputs
     }
 
+    /// Output columns.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::WeightMatrix;
+    ///
+    /// let matrix = WeightMatrix::new(vec![0.0; 6], 3, 2, vec![0.0; 2])?;
+    /// assert_eq!(matrix.outputs(), 2);
+    /// # Ok::<(), thai_syllable_segmenter::inference::ShapeError>(())
+    /// ```
+    #[must_use]
+    pub const fn outputs(&self) -> usize {
+        self.outputs
+    }
+
     /// Joins matrices that share one input into a single wider matrix.
     ///
     /// # Errors
