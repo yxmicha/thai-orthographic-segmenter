@@ -128,6 +128,32 @@ impl<'a> RelaxedLattice<'a> {
         Ok(prior)
     }
 
+    /// Fails unless some chain of candidates covers the whole run.
+    fn ensure_complete_path(&self, config: &LatticeConfig) -> Result<(), Error> {
+        let mut reachable = vec![false; self.offsets.len()];
+        if let Some(first) = reachable.first_mut() {
+            *first = true;
+        }
+        for (end, candidate_ids) in self.ending_at.iter().enumerate().skip(1) {
+            let reaches_end = candidate_ids.iter().any(|id| {
+                self.candidates
+                    .get(*id)
+                    .and_then(|candidate| reachable.get(candidate.scalars.start))
+                    .copied()
+                    .unwrap_or(false)
+            });
+            if let Some(slot) = reachable.get_mut(end) {
+                *slot = reaches_end;
+            }
+        }
+        if !reachable.last().copied().unwrap_or(false) {
+            return Err(Error::CellTooLong {
+                limit: config.max_span_scalars,
+            });
+        }
+        Ok(())
+    }
+
     /// Exact unchanged Thai run.
     pub(crate) fn source(&self) -> &'a str {
         self.source
