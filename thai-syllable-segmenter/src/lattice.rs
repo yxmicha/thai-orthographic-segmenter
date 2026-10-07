@@ -1,5 +1,6 @@
 use std::ops::Range;
 use thai_syllable_rules::{Part, RuleAnalysis, SyllablePattern, split};
+use thai_syllable_rules::ThaiScalar;
 
 /// Source treatment, independent of the model's confidence.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -46,6 +47,40 @@ pub(crate) struct RelaxedLattice<'a> {
 }
 
 impl<'a> RelaxedLattice<'a> {
+
+    /// Groups a Thai run's scalars into cells; candidate boundaries fall only between cells.
+    fn cells(characters: &[char]) -> Vec<Cell> {
+        let mut cells = Vec::new();
+        let mut start = 0;
+        while start < characters.len() {
+            let first = characters[start];
+            let mut end = start + 1;
+            if ThaiScalar::new(first).is_leading_vowel()
+                && characters
+                    .get(end)
+                    .is_some_and(|value| ThaiScalar::new(*value).is_base())
+            {
+                end += 1;
+            }
+            while end < characters.len() && ThaiScalar::new(characters[end]).is_dependent() {
+                end += 1;
+            }
+            let kind = if ThaiScalar::new(first).is_base()
+                || ThaiScalar::new(first).is_independent_vowel()
+                || ThaiScalar::new(first).is_leading_vowel()
+            {
+                CandidateKind::Thai
+            } else {
+                CandidateKind::Unparsed
+            };
+            cells.push(Cell {
+                scalars: start..end,
+                kind,
+            });
+            start = end;
+        }
+        cells
+    }
 
     /// Exact unchanged Thai run.
     pub(crate) fn source(&self) -> &'a str {
