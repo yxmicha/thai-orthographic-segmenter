@@ -19,6 +19,12 @@ pub(crate) struct Candidate {
     pub(crate) prior: f32,
 }
 
+/// A written base with its dependent marks, or a leading vowel with the following base and marks.
+struct Cell {
+    scalars: Range<usize>,
+    kind: CandidateKind,
+}
+
 /// Relaxed lattice over one Thai run; only source cell boundaries are hard.
 #[derive(Clone, Debug)]
 pub(crate) struct RelaxedLattice<'a> {
