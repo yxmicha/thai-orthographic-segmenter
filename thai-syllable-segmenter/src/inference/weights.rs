@@ -241,6 +241,19 @@ impl From<Vec<f32>> for EmbeddingTable {
 }
 
 impl EmbeddingTable {
+    /// The row-major table values.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::EmbeddingTable;
+    ///
+    /// assert_eq!(EmbeddingTable::from(vec![1.0, 2.0]).values(), [1.0, 2.0]);
+    /// ```
+    #[must_use]
+    pub fn values(&self) -> &[f32] {
+        &self.0
+    }
 
     /// Takes the table values out.
     ///
