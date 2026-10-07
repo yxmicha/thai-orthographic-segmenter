@@ -25,6 +25,16 @@ struct Cell {
     kind: CandidateKind,
 }
 
+/// The best partial path found so far to one lattice position.
+#[derive(Clone, Copy)]
+struct PathEnd {
+    score: f64,
+    /// Scalar position where the path's last candidate starts.
+    start: usize,
+    /// Index of the path's last candidate.
+    candidate: usize,
+}
+
 /// Relaxed lattice over one Thai run; only source cell boundaries are hard.
 #[derive(Clone, Debug)]
 pub(crate) struct RelaxedLattice<'a> {
