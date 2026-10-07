@@ -122,6 +122,22 @@ impl WeightMatrix {
         self.outputs
     }
 
+    /// One bias per output.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::inference::WeightMatrix;
+    ///
+    /// let matrix = WeightMatrix::new(vec![0.0; 2], 1, 2, vec![0.5, 1.5])?;
+    /// assert_eq!(matrix.bias(), [0.5, 1.5]);
+    /// # Ok::<(), thai_syllable_segmenter::inference::ShapeError>(())
+    /// ```
+    #[must_use]
+    pub fn bias(&self) -> &[f32] {
+        &self.bias
+    }
+
     /// Joins matrices that share one input into a single wider matrix.
     ///
     /// # Errors
