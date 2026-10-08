@@ -60,4 +60,21 @@ mod lattice_config;
 mod model_config;
 mod vocabulary;
 
+use checkpoint::BundledModel;
+
 pub use error::Error;
+
+/// A reusable rules-aware syllable segmenter with its trained model loaded.
+///
+/// # Examples
+///
+/// ```
+/// use thai_syllable_segmenter::SyllableSegmenter;
+///
+/// let segmenter = SyllableSegmenter::new()?;
+/// assert_eq!(segmenter.split("พระวาทะ")?, ["พระ", "วา", "ทะ"]);
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+pub struct SyllableSegmenter {
+    checkpoint: BundledModel,
+}
