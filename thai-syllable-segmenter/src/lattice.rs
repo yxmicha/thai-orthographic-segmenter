@@ -220,4 +220,19 @@ impl<'a> RelaxedLattice<'a> {
     pub(crate) fn scalar_count(&self) -> usize {
         self.offsets.len() - 1
     }
+
+    /// Candidate indices from the start of the run to `end`, following the recorded path ends.
+    fn path_to(ends: &[Option<PathEnd>], end: PathEnd) -> Vec<usize> {
+        let mut path = vec![end.candidate];
+        let mut position = end.start;
+        while position > 0 {
+            let Some(Some(previous)) = ends.get(position) else {
+                break;
+            };
+            path.push(previous.candidate);
+            position = previous.start;
+        }
+        path.reverse();
+        path
+    }
 }
