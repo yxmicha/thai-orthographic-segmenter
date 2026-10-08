@@ -221,6 +221,63 @@ impl<'a> RelaxedLattice<'a> {
         self.offsets.len() - 1
     }
 
+    /// Candidate indices of the highest-scoring complete path for `scores`, one per candidate;
+    /// equal scores prefer the path whose candidate indices sort first. Fixed source edges
+    /// must score zero, which [`crate::contextual_model::ContextualModel::score`] guarantees.
+    pub(crate) fn best_path(&self, scores: &[f32]) -> Result<Vec<usize>, Error> {
+        if scores.len() != self.candidates.len() || scores.iter().any(|score| !score.is_finite()) {
+            return Err(Error::Invariant(
+                "one finite score is required for every candidate",
+            ));
+        }
+        let mut ends: Vec<Option<PathEnd>> = vec![None; self.offsets.len()];
+        if let Some(first) = ends.first_mut() {
+            *first = Some(PathEnd {
+                score: 0.0,
+                start: 0,
+                candidate: 0,
+            });
+        }
+        for (end, candidate_ids) in self.ending_at.iter().enumerate().skip(1) {
+            let mut best: Option<PathEnd> = None;
+            for id in candidate_ids {
+                let (Some(candidate), Some(score)) = (self.candidates.get(*id), scores.get(*id))
+                else {
+                    return Err(Error::Invariant("candidate outside the lattice"));
+                };
+                let start = candidate.scalars.start;
+                let Some(Some(previous)) = ends.get(start) else {
+                    continue;
+                };
+                let reached = PathEnd {
+                    score: previous.score + f64::from(*score),
+                    start,
+                    candidate: *id,
+                };
+                let better = match best {
+                    None => true,
+                    Some(current) => match reached.score.total_cmp(&current.score) {
+                        std::cmp::Ordering::Greater => true,
+                        std::cmp::Ordering::Less => false,
+                        std::cmp::Ordering::Equal => {
+                            Self::path_to(&ends, reached) < Self::path_to(&ends, current)
+                        }
+                    },
+                };
+                if better {
+                    best = Some(reached);
+                }
+            }
+            if let Some(slot) = ends.get_mut(end) {
+                *slot = best;
+            }
+        }
+        let Some(Some(last)) = ends.last().copied() else {
+            return Err(Error::Invariant("no finite complete path"));
+        };
+        Ok(Self::path_to(&ends, last))
+    }
+
     /// Candidate indices from the start of the run to `end`, following the recorded path ends.
     fn path_to(ends: &[Option<PathEnd>], end: PathEnd) -> Vec<usize> {
         let mut path = vec![end.candidate];
