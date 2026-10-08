@@ -61,8 +61,10 @@ mod model_config;
 mod vocabulary;
 
 use checkpoint::BundledModel;
+use lattice::RelaxedLattice;
 
 pub use error::Error;
+use thai_syllable_rules::ThaiScalar;
 
 /// A reusable rules-aware syllable segmenter with its trained model loaded.
 ///
@@ -109,5 +111,64 @@ impl SyllableSegmenter {
         Ok(Self {
             checkpoint: BundledModel::load()?,
         })
+    }
+
+    /// Splits text into ordered slices that concatenate back to the original input.
+    ///
+    /// Non-Thai text is returned untouched. Each Thai run is segmented independently;
+    /// a Thai run exceeding 4,096 scalars returns [`Error::ThaiRunTooLong`] instead of being
+    /// truncated.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::ThaiRunTooLong`] for a Thai run over 4,096 scalars,
+    /// [`Error::CellTooLong`] for a written cell longer than the candidate span limit, or another
+    /// [`Error`] when the model cannot score the run.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::SyllableSegmenter;
+    ///
+    /// let segmenter = SyllableSegmenter::new()?;
+    /// let text = "พระวาทะ abc";
+    /// let syllables = segmenter.split(text)?;
+    /// assert_eq!(syllables.concat(), text);
+    /// assert_eq!(syllables[..3], ["พระ", "วา", "ทะ"]);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn split<'a>(&self, text: &'a str) -> Result<Vec<&'a str>, Error> {
+        let mut output = Vec::new();
+        let mut characters = text.char_indices().peekable();
+        while let Some((start, character)) = characters.next() {
+            let thai = ThaiScalar::new(character).is_accepted();
+            while characters
+                .peek()
+                .is_some_and(|(_, next)| ThaiScalar::new(*next).is_accepted() == thai)
+            {
+                characters.next();
+            }
+            let end = characters.peek().map_or(text.len(), |(offset, _)| *offset);
+            let run = &text[start..end];
+            if thai {
+                let lattice = RelaxedLattice::new(run, &self.checkpoint.lattice)?;
+                let scores = self.checkpoint.model.score(&lattice)?;
+                for id in lattice.best_path(&scores)? {
+                    let range = lattice
+                        .candidates
+                        .get(id)
+                        .ok_or(Error::Invariant("model produced an invalid candidate"))?
+                        .bytes
+                        .clone();
+                    output.push(
+                        run.get(range)
+                            .ok_or(Error::Invariant("model produced an invalid source range"))?,
+                    );
+                }
+            } else {
+                output.push(run);
+            }
+        }
+        Ok(output)
     }
 }
