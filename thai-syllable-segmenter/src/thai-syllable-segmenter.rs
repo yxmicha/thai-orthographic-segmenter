@@ -86,3 +86,28 @@ impl std::fmt::Debug for SyllableSegmenter {
             .finish_non_exhaustive()
     }
 }
+
+impl SyllableSegmenter {
+    /// Loads the bundled distilled student model and its rule settings.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Weights`] when the bundled weights cannot be decoded, or another
+    /// [`Error`] when the bundled vocabulary or settings are inconsistent.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::SyllableSegmenter;
+    ///
+    /// // Building a segmenter takes a few milliseconds; build one and reuse it.
+    /// let segmenter = SyllableSegmenter::new()?;
+    /// # drop(segmenter);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn new() -> Result<Self, Error> {
+        Ok(Self {
+            checkpoint: BundledModel::load()?,
+        })
+    }
+}
