@@ -49,6 +49,63 @@ pub(crate) struct RelaxedLattice<'a> {
 }
 
 impl<'a> RelaxedLattice<'a> {
+    /// Builds alternatives inside anchors and across rule-part boundaries.
+    /// Returns an error for resource limits rather than truncating the sentence.
+    pub(crate) fn new(source: &'a str, config: &LatticeConfig) -> Result<Self, Error> {
+        let characters = source.chars().collect::<Vec<_>>();
+        if characters.len() > config.max_input_scalars {
+            return Err(Error::ThaiRunTooLong {
+                scalars: characters.len(),
+                limit: config.max_input_scalars,
+            });
+        }
+        let mut offsets = source
+            .char_indices()
+            .map(|(offset, _)| offset)
+            .collect::<Vec<_>>();
+        offsets.push(source.len());
+        let parts = split(source);
+        let analysis = RuleAnalysis::new(source);
+        let cells = Self::cells(&characters);
+        let mut candidates = Vec::new();
+        let mut ending_at = vec![Vec::new(); characters.len() + 1];
+        for (start_index, start) in cells.iter().enumerate() {
+            for end in &cells[start_index..] {
+                let scalars = start.scalars.start..end.scalars.end;
+                if start.kind != CandidateKind::Thai && scalars != start.scalars {
+                    break;
+                }
+                if end.kind != start.kind {
+                    break;
+                }
+                if start.kind == CandidateKind::Thai && scalars.len() > config.max_span_scalars {
+                    break;
+                }
+                let bytes = offsets[scalars.start]..offsets[scalars.end];
+                let prior = if start.kind == CandidateKind::Thai {
+                    Self::thai_prior(&source[bytes.clone()], &bytes, &analysis, &parts, config)?
+                } else {
+                    0.0
+                };
+                ending_at[scalars.end].push(candidates.len());
+                candidates.push(Candidate {
+                    bytes,
+                    scalars,
+                    kind: start.kind,
+                    prior,
+                });
+            }
+        }
+        let lattice = Self {
+            source,
+            offsets,
+            candidates,
+            ending_at,
+            parts,
+        };
+        lattice.ensure_complete_path(config)?;
+        Ok(lattice)
+    }
 
     /// Groups a Thai run's scalars into cells; candidate boundaries fall only between cells.
     fn cells(characters: &[char]) -> Vec<Cell> {
