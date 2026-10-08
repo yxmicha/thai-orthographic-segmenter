@@ -78,3 +78,11 @@ pub use error::Error;
 pub struct SyllableSegmenter {
     checkpoint: BundledModel,
 }
+
+impl std::fmt::Debug for SyllableSegmenter {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("SyllableSegmenter")
+            .finish_non_exhaustive()
+    }
+}
