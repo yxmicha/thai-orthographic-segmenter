@@ -60,6 +60,8 @@ mod lattice_config;
 mod model_config;
 mod vocabulary;
 
+use std::ops::Range;
+
 use checkpoint::BundledModel;
 use lattice::RelaxedLattice;
 
@@ -170,5 +172,35 @@ impl SyllableSegmenter {
             }
         }
         Ok(output)
+    }
+
+    /// Returns the UTF-8 byte ranges of the slices [`Self::split`] returns, in order.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same errors as [`Self::split`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_syllable_segmenter::SyllableSegmenter;
+    ///
+    /// let segmenter = SyllableSegmenter::new()?;
+    /// let text = "พระวาทะ";
+    /// let ranges = segmenter.ranges(text)?;
+    /// assert_eq!(&text[ranges[0].clone()], "พระ");
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn ranges(&self, text: &str) -> Result<Vec<Range<usize>>, Error> {
+        let mut end = 0;
+        Ok(self
+            .split(text)?
+            .into_iter()
+            .map(|piece| {
+                let start = end;
+                end += piece.len();
+                start..end
+            })
+            .collect())
     }
 }
