@@ -30,3 +30,18 @@ const HALVES: [(u16, f32); 6] = [
     (0x7bff, 65_504.0),
     (0x7c00, f32::INFINITY),
 ];
+
+fn half_tensor(planes: bool) -> Stored<'static> {
+    let values = HALVES.iter().map(|(bits, _)| *bits).collect::<Vec<_>>();
+    if planes {
+        let mut bytes = values
+            .iter()
+            .map(|bits| (bits >> 8) as u8)
+            .collect::<Vec<_>>();
+        bytes.extend(values.iter().map(|bits| (bits & 0xff) as u8));
+        ("t.weight", Dtype::U8, vec![2, 3, 2], bytes)
+    } else {
+        let bytes = values.iter().flat_map(|bits| bits.to_le_bytes()).collect();
+        ("t.weight", Dtype::F16, vec![3, 2], bytes)
+    }
+}
