@@ -19,3 +19,14 @@ fn pack(tensors: &[Stored<'_>], planes: bool) -> Vec<u8> {
         planes.then(|| HashMap::from([(F16_LAYOUT_KEY.to_owned(), F16_PLANES.to_owned())]));
     safetensors::serialize(views, metadata).expect("a valid file")
 }
+
+/// binary16 bit patterns and the single-precision values they denote: zero, one, minus 2.5, the
+/// smallest subnormal, the largest finite value, and positive infinity.
+const HALVES: [(u16, f32); 6] = [
+    (0x0000, 0.0),
+    (0x3c00, 1.0),
+    (0xc100, -2.5),
+    (0x0001, 5.960_464_5e-8),
+    (0x7bff, 65_504.0),
+    (0x7c00, f32::INFINITY),
+];
