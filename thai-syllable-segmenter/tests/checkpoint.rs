@@ -45,3 +45,11 @@ fn half_tensor(planes: bool) -> Stored<'static> {
         ("t.weight", Dtype::F16, vec![3, 2], bytes)
     }
 }
+
+fn single_tensor(values: &[f32]) -> Stored<'static> {
+    let bytes = values
+        .iter()
+        .flat_map(|value| value.to_le_bytes())
+        .collect();
+    ("t.weight", Dtype::F32, vec![2, 2], bytes)
+}
