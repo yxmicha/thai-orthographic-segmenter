@@ -34,3 +34,16 @@ fn debug_output_is_never_empty() -> Result<(), Error> {
     assert_ne!(format!("{:?}", BlockPool::default()), "");
     Ok(())
 }
+
+#[test]
+fn syllable_ranges_match_the_syllables() -> Result<(), Error> {
+    let segmenter = SyllableSegmenter::new()?;
+    let text = "พระวาทะ abc";
+    let ranges = segmenter.ranges(text)?;
+    let pieces = segmenter.split(text)?;
+    assert_eq!(ranges.len(), pieces.len());
+    for (range, piece) in ranges.into_iter().zip(pieces) {
+        assert_eq!(&text[range], piece);
+    }
+    Ok(())
+}
