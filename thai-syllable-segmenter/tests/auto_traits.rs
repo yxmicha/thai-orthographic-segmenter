@@ -26,3 +26,11 @@ fn public_types_are_thread_safe_and_inspectable() {
     assert_send_sync_debug::<WeightMatrix>();
     assert_send_sync_debug::<EmbeddingTable>();
 }
+
+#[test]
+fn debug_output_is_never_empty() -> Result<(), Error> {
+    assert_ne!(format!("{:?}", SyllableSegmenter::new()?), "");
+    assert_ne!(format!("{:?}", InputBlocks::default()), "");
+    assert_ne!(format!("{:?}", BlockPool::default()), "");
+    Ok(())
+}
