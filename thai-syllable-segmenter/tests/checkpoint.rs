@@ -86,3 +86,12 @@ fn byte_planes_need_the_layout_metadata() {
         Err(CheckpointError::UnsupportedType { name }) if name == "t.weight"
     ));
 }
+
+#[test]
+fn not_a_number_halves_stay_not_a_number() -> Result<(), CheckpointError> {
+    let bytes = 0x7e00_u16.to_le_bytes().to_vec();
+    let tensor = ("t.weight", Dtype::F16, vec![1, 1], bytes);
+    let mut checkpoint = Checkpoint::from_bytes(&pack(&[tensor], false))?;
+    assert!(checkpoint.embedding("t", 1, 1)?.values()[0].is_nan());
+    Ok(())
+}
