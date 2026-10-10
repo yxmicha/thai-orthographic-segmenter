@@ -95,3 +95,12 @@ fn not_a_number_halves_stay_not_a_number() -> Result<(), CheckpointError> {
     assert!(checkpoint.embedding("t", 1, 1)?.values()[0].is_nan());
     Ok(())
 }
+
+#[test]
+fn other_element_types_are_rejected() {
+    let tensor = ("t.weight", Dtype::I64, vec![1], vec![0; 8]);
+    assert!(matches!(
+        Checkpoint::from_bytes(&pack(&[tensor], false)),
+        Err(CheckpointError::UnsupportedType { name }) if name == "t.weight"
+    ));
+}
