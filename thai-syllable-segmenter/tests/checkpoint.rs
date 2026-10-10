@@ -104,3 +104,21 @@ fn other_element_types_are_rejected() {
         Err(CheckpointError::UnsupportedType { name }) if name == "t.weight"
     ));
 }
+
+#[test]
+fn missing_mismatched_and_unused_tensors_are_reported() -> Result<(), CheckpointError> {
+    let tensor = single_tensor(&[0.0; 4]);
+    let mut checkpoint = Checkpoint::from_bytes(&pack(&[tensor], false))?;
+    assert!(matches!(
+        checkpoint.embedding("absent", 2, 2),
+        Err(CheckpointError::Missing(_))
+    ));
+    assert!(matches!(
+        checkpoint.embedding("t", 4, 1),
+        Err(CheckpointError::Shape { .. })
+    ));
+    assert!(
+        matches!(checkpoint.finish(), Err(CheckpointError::Unused(names)) if names == ["t.weight"])
+    );
+    Ok(())
+}
