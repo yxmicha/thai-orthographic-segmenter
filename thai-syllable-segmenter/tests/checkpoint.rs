@@ -64,3 +64,17 @@ fn single_precision_tensors_are_read_unchanged() -> Result<(), CheckpointError> 
     );
     checkpoint.finish()
 }
+
+#[test]
+fn plain_and_byte_plane_half_tensors_widen_exactly() -> Result<(), CheckpointError> {
+    let expected = HALVES.iter().map(|(_, value)| *value).collect::<Vec<_>>();
+    for planes in [false, true] {
+        let mut checkpoint = Checkpoint::from_bytes(&pack(&[half_tensor(planes)], planes))?;
+        assert_eq!(
+            checkpoint.embedding("t", 3, 2)?.values(),
+            expected,
+            "planes: {planes}"
+        );
+    }
+    Ok(())
+}
