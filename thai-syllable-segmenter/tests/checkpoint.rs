@@ -122,3 +122,27 @@ fn missing_mismatched_and_unused_tensors_are_reported() -> Result<(), Checkpoint
     );
     Ok(())
 }
+
+/// An 8-bit matrix of two rows and three columns with the given scale tensor.
+fn int8_file(scale_shape: &[usize], scales: &[f32]) -> Vec<u8> {
+    let integers = [10_i8, -20, 30, 127, -127, 0]
+        .iter()
+        .map(|value| value.to_le_bytes()[0])
+        .collect::<Vec<_>>();
+    let scale_bytes = scales
+        .iter()
+        .flat_map(|scale| scale.to_le_bytes())
+        .collect::<Vec<_>>();
+    pack(
+        &[
+            ("t.weight", Dtype::I8, vec![2, 3], integers),
+            (
+                "t.weight.scale",
+                Dtype::F32,
+                scale_shape.to_vec(),
+                scale_bytes,
+            ),
+        ],
+        false,
+    )
+}
