@@ -146,3 +146,20 @@ fn int8_file(scale_shape: &[usize], scales: &[f32]) -> Vec<u8> {
         false,
     )
 }
+
+#[test]
+fn int8_matrices_are_scaled_per_column_or_per_row() -> Result<(), CheckpointError> {
+    let mut per_column = Checkpoint::from_bytes(&int8_file(&[1, 3], &[0.5, 1.0, 2.0]))?;
+    assert_eq!(
+        per_column.embedding("t", 2, 3)?.values(),
+        [5.0, -20.0, 60.0, 63.5, -127.0, 0.0]
+    );
+    // The scale tensor belongs to the matrix: nothing is left over.
+    per_column.finish()?;
+    let mut per_row = Checkpoint::from_bytes(&int8_file(&[2, 1], &[0.5, 2.0]))?;
+    assert_eq!(
+        per_row.embedding("t", 2, 3)?.values(),
+        [5.0, -10.0, 15.0, 254.0, -254.0, 0.0]
+    );
+    per_row.finish()
+}
