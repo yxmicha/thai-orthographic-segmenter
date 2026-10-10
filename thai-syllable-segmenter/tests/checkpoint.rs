@@ -78,3 +78,11 @@ fn plain_and_byte_plane_half_tensors_widen_exactly() -> Result<(), CheckpointErr
     }
     Ok(())
 }
+
+#[test]
+fn byte_planes_need_the_layout_metadata() {
+    assert!(matches!(
+        Checkpoint::from_bytes(&pack(&[half_tensor(true)], false)),
+        Err(CheckpointError::UnsupportedType { name }) if name == "t.weight"
+    ));
+}
