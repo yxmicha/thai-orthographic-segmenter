@@ -163,3 +163,25 @@ fn int8_matrices_are_scaled_per_column_or_per_row() -> Result<(), CheckpointErro
     );
     per_row.finish()
 }
+
+#[test]
+fn int8_matrices_need_a_scale_that_fits_their_shape() {
+    for (shape, scales) in [
+        (vec![1, 2], vec![1.0, 1.0]),
+        (vec![3], vec![1.0; 3]),
+        (vec![3, 1], vec![1.0; 3]),
+    ] {
+        assert!(
+            matches!(
+                Checkpoint::from_bytes(&int8_file(&shape, &scales)),
+                Err(CheckpointError::Scale { name }) if name == "t.weight"
+            ),
+            "scale shape {shape:?}"
+        );
+    }
+    let alone = pack(&[("t.weight", Dtype::I8, vec![2, 3], vec![0; 6])], false);
+    assert!(matches!(
+        Checkpoint::from_bytes(&alone),
+        Err(CheckpointError::Scale { .. })
+    ));
+}
