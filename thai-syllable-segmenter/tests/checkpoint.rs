@@ -53,3 +53,14 @@ fn single_tensor(values: &[f32]) -> Stored<'static> {
         .collect();
     ("t.weight", Dtype::F32, vec![2, 2], bytes)
 }
+
+#[test]
+fn single_precision_tensors_are_read_unchanged() -> Result<(), CheckpointError> {
+    let tensor = single_tensor(&[1.5, -2.0, 0.25, 8.0]);
+    let mut checkpoint = Checkpoint::from_bytes(&pack(&[tensor], false))?;
+    assert_eq!(
+        checkpoint.embedding("t", 2, 2)?.values(),
+        [1.5, -2.0, 0.25, 8.0]
+    );
+    checkpoint.finish()
+}
