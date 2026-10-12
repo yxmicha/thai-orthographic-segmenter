@@ -133,3 +133,11 @@ fn multiplication_rejects_operands_that_do_not_fit_the_matrix() -> Result<(), Sh
     );
     Ok(())
 }
+
+#[test]
+fn matrices_reject_weights_that_do_not_match_their_shape() {
+    assert!(PackedMatrix::new(&[1.0; 5], 3, 2, vec![0.0; 2]).is_err());
+    assert!(PackedMatrix::new(&[1.0; 6], 3, 2, vec![0.0; 3]).is_err());
+    assert!(PackedMatrix::new(&[], 0, 2, vec![0.0; 2]).is_err());
+    assert!(PackedMatrix::new(&[], 3, 0, vec![]).is_err());
+}
