@@ -6,6 +6,11 @@ use std::{
 };
 
 #[derive(serde::Deserialize)]
+struct Metadata {
+    packages: Vec<Package>,
+}
+
+#[derive(serde::Deserialize)]
 struct Package {
     name: String,
     manifest_path: PathBuf,
