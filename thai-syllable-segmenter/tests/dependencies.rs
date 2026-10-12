@@ -6,6 +6,13 @@ use std::{
 };
 
 #[derive(serde::Deserialize)]
+struct Package {
+    name: String,
+    manifest_path: PathBuf,
+    dependencies: Vec<Dependency>,
+}
+
+#[derive(serde::Deserialize)]
 struct Dependency {
     name: String,
     path: Option<PathBuf>,
