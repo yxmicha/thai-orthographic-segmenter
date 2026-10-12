@@ -22,3 +22,55 @@ struct Dependency {
     name: String,
     path: Option<PathBuf>,
 }
+
+#[test]
+fn orthographic_segmenter_crates_depend_only_on_each_other()
+-> Result<(), Box<dyn std::error::Error>> {
+    let crate_directory = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let segmenter_directory = crate_directory
+        .parent()
+        .ok_or("crate directory has no parent")?
+        .canonicalize()?;
+    let output = Command::new(env!("CARGO"))
+        .current_dir(crate_directory)
+        .args([
+            "metadata",
+            "--format-version",
+            "1",
+            "--no-deps",
+            "--offline",
+        ])
+        .output()?;
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let metadata: Metadata = serde_json::from_slice(&output.stdout)?;
+    let members = metadata
+        .packages
+        .iter()
+        .filter(|package| package.manifest_path.starts_with(&segmenter_directory))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        members.len(),
+        5,
+        "expected the four segmenter crates and the Python bindings"
+    );
+    let mut outside = Vec::new();
+    for package in members {
+        for dependency in &package.dependencies {
+            if let Some(path) = &dependency.path
+                && !path.starts_with(&segmenter_directory)
+            {
+                outside.push(format!(
+                    "{package} -> {dependency}",
+                    package = package.name,
+                    dependency = dependency.name
+                ));
+            }
+        }
+    }
+    assert!(outside.is_empty(), "repository dependencies: {outside:?}");
+    Ok(())
+}
