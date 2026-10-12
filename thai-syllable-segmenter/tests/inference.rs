@@ -81,3 +81,32 @@ fn packed_multiplication_matches_a_naive_product_for_every_shape() -> Result<(),
     }
     Ok(())
 }
+
+#[test]
+fn gelu_matches_the_exact_error_function_form() {
+    // erf by its Maclaurin series, accurate in f64 for the range checked here.
+    let erf = |value: f64| {
+        let mut term = value;
+        let mut sum = value;
+        for n in 1..80 {
+            term *= -value * value / f64::from(n);
+            sum += term / f64::from(2 * n + 1);
+        }
+        sum * 2.0 / std::f64::consts::PI.sqrt()
+    };
+    for step in -500_i16..=500 {
+        let x = f32::from(step) / 100.0;
+        let expected = f64::from(x) * 0.5 * (1.0 + erf(f64::from(x) / std::f64::consts::SQRT_2));
+        let mut value = [x];
+        Activations::new(&mut value).gelu();
+        assert!(
+            (f64::from(value[0]) - expected).abs() < 1.0e-6,
+            "gelu({x}) = {} but expected {expected}",
+            value[0]
+        );
+    }
+    let mut tails = [-8.0, 8.0];
+    Activations::new(&mut tails).gelu();
+    assert!(tails[0].abs() < 1.0e-6);
+    assert!((tails[1] - 8.0).abs() < 1.0e-5);
+}
