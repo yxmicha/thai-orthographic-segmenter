@@ -110,3 +110,26 @@ fn gelu_matches_the_exact_error_function_form() {
     assert!(tails[0].abs() < 1.0e-6);
     assert!((tails[1] - 8.0).abs() < 1.0e-5);
 }
+
+#[test]
+fn multiplication_rejects_operands_that_do_not_fit_the_matrix() -> Result<(), ShapeError> {
+    let matrix = PackedMatrix::new(&[1.0; 6], 3, 2, vec![0.0; 2])?;
+    let mut blocks = InputBlocks::default();
+    let mut output = [0.0; 4];
+    // Four inputs are not a whole number of three-column rows.
+    assert!(matches!(
+        matrix.multiply_into::<false>(&[0.0; 4], &mut blocks, &mut output),
+        Err(ShapeError)
+    ));
+    // Two rows need four outputs, not three.
+    assert!(matches!(
+        matrix.multiply_into::<false>(&[0.0; 6], &mut blocks, &mut output[..3]),
+        Err(ShapeError)
+    ));
+    assert!(
+        matrix
+            .multiply_into::<false>(&[0.0; 6], &mut blocks, &mut output)
+            .is_ok()
+    );
+    Ok(())
+}
