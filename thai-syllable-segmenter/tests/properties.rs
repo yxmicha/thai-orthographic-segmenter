@@ -42,3 +42,11 @@ proptest! {
         prop_assert_eq!(end, source.len());
     }
 }
+
+#[test]
+fn an_over_long_thai_run_is_an_error_not_a_panic() {
+    assert!(matches!(
+        SEGMENTER.split(&"ก".repeat(5000)),
+        Err(Error::ThaiRunTooLong { .. })
+    ));
+}
