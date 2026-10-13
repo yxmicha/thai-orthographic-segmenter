@@ -20,3 +20,25 @@ fn text() -> impl Strategy<Value = String> {
     )
     .prop_map(|characters| characters.into_iter().collect())
 }
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(128))]
+
+    #[test]
+    fn syllables_concatenate_to_the_input(source in text()) {
+        let syllables = SEGMENTER.split(&source)?;
+        prop_assert_eq!(syllables.concat(), source);
+    }
+
+    #[test]
+    fn ranges_partition_the_input_on_character_boundaries(source in text()) {
+        let ranges = SEGMENTER.ranges(&source)?;
+        let mut end = 0;
+        for range in ranges {
+            prop_assert_eq!(range.start, end);
+            prop_assert!(source.is_char_boundary(range.start) && source.is_char_boundary(range.end));
+            end = range.end;
+        }
+        prop_assert_eq!(end, source.len());
+    }
+}
