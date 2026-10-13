@@ -1,4 +1,5 @@
 use thai_syllable_rules::ThaiScalar;
+use thai_syllable_segmenter::{Error, SyllableSegmenter};
 
 #[test]
 fn bundled_vocabulary_contains_only_thai_and_dot() {
@@ -15,4 +16,28 @@ fn bundled_vocabulary_contains_only_thai_and_dot() {
             "unexpected vocabulary entry: {entry:?}"
         );
     }
+}
+
+#[test]
+fn bundled_student_splits_thai_and_preserves_other_text() -> Result<(), Error> {
+    let segmenter = SyllableSegmenter::new()?;
+    assert_eq!(
+        segmenter.split("ฉันกินข้าว สวัสดี!")?,
+        ["ฉัน", "กิน", "ข้าว", " ", "สวัส", "ดี", "!"]
+    );
+    assert_eq!(segmenter.split("")?, [] as [&str; 0]);
+    for source in ["  English 🙂 ", "่", "ไทย🙂text", "เกี๊ยว\n"] {
+        let pieces = segmenter.split(source)?;
+        assert!(!pieces.iter().any(|piece| piece.is_empty()), "{source:?}");
+        assert_eq!(pieces.concat(), source);
+    }
+    let over_limit = "ก".repeat(4097);
+    assert!(matches!(
+        segmenter.split(&over_limit),
+        Err(Error::ThaiRunTooLong {
+            scalars: 4097,
+            limit: 4096
+        })
+    ));
+    Ok(())
 }
