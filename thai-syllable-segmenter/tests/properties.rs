@@ -61,3 +61,24 @@ proptest! {
         let _ = Checkpoint::from_bytes(&bytes);
     }
 }
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(24))]
+
+    #[test]
+    fn corrupted_checkpoints_are_errors_or_loads_never_panics(
+        edits in proptest::collection::vec((any::<proptest::sample::Index>(), any::<u8>()), 1..8),
+        cut in proptest::option::of(any::<proptest::sample::Index>()),
+    ) {
+        let mut bytes = std::fs::read(concat!(env!("CARGO_MANIFEST_DIR"), "/model/weights.safetensors"))
+            .expect("the bundled weights exist");
+        for (index, value) in edits {
+            let at = index.index(bytes.len());
+            bytes[at] = value;
+        }
+        if let Some(cut) = cut {
+            bytes.truncate(cut.index(bytes.len()));
+        }
+        let _ = Checkpoint::from_bytes(&bytes);
+    }
+}
