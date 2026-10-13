@@ -67,3 +67,24 @@ fn non_thai_spans_are_preserved_and_do_not_limit_or_contextualize_thai_runs() ->
     assert_eq!(segmenter.split("!!!พี่มดคะ  ")?, ["!!!", "พี่มด", "คะ", "  "]);
     Ok(())
 }
+
+#[test]
+fn one_segmenter_gives_identical_results_on_every_thread() -> Result<(), Error> {
+    let segmenter = SyllableSegmenter::new()?;
+    let texts = ["ฉันกินข้าว สวัสดี!", "ในปฐมกาลพระวาทะทรงดำรงอยู่", "ไทย🙂text"];
+    let split_all = || {
+        texts
+            .iter()
+            .map(|text| segmenter.split(text).ok())
+            .collect::<Vec<_>>()
+    };
+    let expected = split_all();
+    assert!(expected.iter().all(Option::is_some));
+    std::thread::scope(|scope| {
+        let workers = (0..4).map(|_| scope.spawn(split_all)).collect::<Vec<_>>();
+        for worker in workers {
+            assert_eq!(worker.join().expect("worker thread panicked"), expected);
+        }
+    });
+    Ok(())
+}
