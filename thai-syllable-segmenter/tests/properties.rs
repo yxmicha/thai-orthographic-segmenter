@@ -50,3 +50,14 @@ fn an_over_long_thai_run_is_an_error_not_a_panic() {
         Err(Error::ThaiRunTooLong { .. })
     ));
 }
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(256))]
+
+    #[test]
+    fn arbitrary_bytes_are_never_a_panic_in_the_checkpoint_reader(
+        bytes in proptest::collection::vec(any::<u8>(), 0..512)
+    ) {
+        let _ = Checkpoint::from_bytes(&bytes);
+    }
+}
