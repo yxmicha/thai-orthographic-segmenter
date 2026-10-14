@@ -106,3 +106,12 @@ The model is trained on a reviewed lexical-cluster dataset, on a GPU only.
 These scores measure agreement with model-reviewed labels, not independently reviewed
 correctness on natural sentences.
 
+## Example evaluation
+
+`cargo run -p thai-word-segmenter --example compare_bible -- <chapter.json>` compares
+segmentation with the zero-width-space word marks of a THA-TCV Bible chapter. It judges only
+gaps between two Thai letters. On John 1 (51 verses) it reports precision 97.95%, recall
+83.28% and F1 90.02%, with 17 false-positive and 163 false-negative breaks, and 2 verses
+matching exactly. The model breaks less often than the reference marks. This is one chapter
+under a different word convention, not a benchmark.
+
