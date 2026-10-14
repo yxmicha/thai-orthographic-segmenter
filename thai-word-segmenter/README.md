@@ -79,3 +79,30 @@ comparison, 16-bit floats changed none, which would make the crate 9.5 MiB, and 
 32-bit burnpack checkpoint to either form (`--int8` for this one); check your own text before
 shipping a rounded model.
 
+## Training
+
+The model is trained on a reviewed lexical-cluster dataset, on a GPU only.
+
+- **Granularity**: it is trained to under-segment on purpose. Splitting everyday reading
+  material into too many pieces hurts readability, so the model keeps collocations and
+  compounds together and cuts only where it is confident.
+- **Input**: windows of up to 128 syllables. Each syllable gets 48 ordered character slots
+  (long forms keep both ends) and one of 16,383 hashed syllable buckets (row zero is padding).
+  A syllable is about 3.2 Thai characters on average (3.15 on John 1).
+- **Network**: 6 layers, 8 heads, width 256, feed-forward 1,024, about 5.5 million
+  parameters. It scores the gap after every syllable.
+- **Labels**: cleaned dictionary matches supply weak lexical supervision. The word markers in
+  source corpora are not used as labels. Corpora supply occurrence weights and observed
+  context.
+- **Objective**: two-class (KEEP/BREAK) softmax cross-entropy, weighted per gap by frequency and
+  evidence weights and by square-root class balancing. Unknown or disputed gaps and the final
+  syllable have zero weight.
+- **Training set**: 9,586,683 training and 934,893 validation examples.
+- **Checkpoint choice**: epoch 6 had the best selection score, the mean of raw balanced
+  accuracy on validation gaps and on held-out complete dictionary forms (0.839). At epoch 6
+  raw validation balanced accuracy is 93.0%, or 93.3% with dictionary protection. When last
+  checked (epochs 7 to 18), later epochs lowered the training loss without beating it.
+
+These scores measure agreement with model-reviewed labels, not independently reviewed
+correctness on natural sentences.
+
