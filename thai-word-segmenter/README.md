@@ -65,3 +65,17 @@ segments as byte ranges.
   to attached punctuation join it. A non-Thai span that begins with closing punctuation
   (`. … ’ ” ) ] }`) is split after it, so `ปฐก.28:12` gives `ปฐก.` and `28:12`.
 
+## Bundled model size
+
+The bundled `model/model.safetensors` stores its large matrices as 8-bit integers with one scale
+per column or row (whichever reconstructs the matrix more exactly), which shrinks the training
+run's 22 MB of 32-bit weights to 5.7 MB and keeps the packaged crate at 5.4 MiB, well under the
+10 MiB crates.io limit.
+
+Rounding costs a little accuracy. On 6,638 lines (30,695 word boundaries) the 8-bit model places
+the same boundaries as the 32-bit model except for 23 (0.075%), each on a different line. For
+comparison, 16-bit floats changed none, which would make the crate 9.5 MiB, and bfloat16 changed
+5. `cargo run --release --example convert-checkpoint` in `thai-syllable-segmenter` converts a
+32-bit burnpack checkpoint to either form (`--int8` for this one); check your own text before
+shipping a rounded model.
+
