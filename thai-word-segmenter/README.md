@@ -115,3 +115,56 @@ gaps between two Thai letters. On John 1 (51 verses) it reports precision 97.95%
 matching exactly. The model breaks less often than the reference marks. This is one chapter
 under a different word convention, not a benchmark.
 
+## Comparison with other word segmenters
+
+This model produces lexical clusters (words, compounds, names, productive bound forms) for line
+breaking, not words in the annotation convention of a Thai benchmark. It is trained to under-segment
+on purpose, so against benchmarks that annotate fine-grained words it matches a dictionary
+baseline and trails the trained word segmenters.
+
+The table below scores seven systems on three gold sets with the Thai-span definition from the
+[syllable benchmark](https://crates.io/crates/thai-syllable-segmenter) (section "Results on the
+Han-solo test set"). A span is a maximal run of Thai characters that no token boundary or
+non-Thai character interrupts, and precision, recall and F1 count identical start and end
+offsets. Tokens are whitespace-trimmed and every system is aligned to the same text.
+
+| System | LST20 test (news) | VISTEC test (social media) | Wisesight-1000 (social media) | CPU-time speed, 1 thread |
+| --- | ---: | ---: | ---: | ---: |
+| **`thai-word-segmenter` (this crate)** | 70.50 | 75.63 | 75.03 | about 12,500 chars/s |
+| PyThaiNLP `newmm` (dictionary) | 71.04 | 77.49 | 76.27 | 798,000 chars/s |
+| PyThaiNLP `longest` (dictionary) | 70.41 | 76.99 | 73.27 | 60,600 chars/s |
+| TLTK 1.11 | 75.65 | 79.63 | 76.90 | 420 chars/s |
+| AttaCut 1.0.6 `attacut-sc` | 85.27 | 81.96 | 85.89 | 60,400 chars/s |
+| AttaCut 1.0.6 `attacut-c` | 84.28 | 79.98 | 84.64 | 80,600 chars/s |
+| DeepCut 0.7.0.0 | 85.17 | 81.14 | 86.04 | 1,700 chars/s |
+| OSKut 1.3 `ws` | 67.50 | 73.80 | 93.02 † | 960 chars/s |
+| OSKut 1.3 `lst20` | 94.52 † | 81.90 | 86.71 | not measured |
+| OSKut 1.3 `scads` | 76.57 | 92.89 † | 85.85 | not measured |
+
+Thai-span F1 in percent. The 95% bootstrap intervals over sentences are about ±0.3 on LST20, ±0.4 on VISTEC and
+±0.9 on Wisesight. † marks an OSKut engine scoring 93 to 95% on exactly one set and 67 to 87% on the others, which
+indicates it was trained for that set's data. The package does not document its engines' training data, so this
+pairing is inferred; treat those three cells as in-domain results, not as comparable scores.
+
+Why the score is low: by design the model under-segments instead of cutting wrongly. Counting only boundaries between two
+Thai characters, its precision is the highest of the systems not trained for the set, but its recall is the lowest:
+
+| Boundary precision / recall (%) | LST20 | VISTEC | Wisesight |
+| --- | --- | --- | --- |
+| this crate | 93.4 / 77.5 | 93.1 / 82.7 | 95.3 / 80.2 |
+| `newmm` | 90.5 / 81.4 | 88.7 / 89.9 | 90.9 / 85.9 |
+| TLTK | 91.3 / 84.4 | 89.8 / 88.8 | 90.9 / 83.1 |
+| `attacut-sc` | 92.5 / 92.7 | 87.5 / 96.0 | 93.2 / 93.3 |
+| DeepCut | 92.8 / 92.3 | 86.9 / 95.9 | 93.4 / 93.4 |
+
+On LST20, 30.3% of gold spans are merged into a longer predicted span (`newmm` 26.8%, `attacut-sc` 9.3%) and only
+2.8% are split. The merged sequences are lexical clusters that LST20 annotates as separate tokens, for example
+`ที่|จะ`, `วัน|นี้`, `ขณะ|ที่`, `คณะ|กรรมการ`, `นายก|รัฐมนตรี` and `ผู้|อำนวยการ`. The all-token F1 is lower still
+(67.6, 71.7 and 70.4) because the model attaches punctuation to its neighbouring word and these sets tokenize it
+separately.
+
+Speed is CPU time of one process on 300 VISTEC sentences (about 83,500 characters; 40 to 60 sentences for the
+TensorFlow systems and TLTK), measured on a loaded shared machine, so treat it as indicative. The speed of this crate was
+measured later, with one text per call on one core of a quiet machine; the other rows were not
+re-measured. It is about 5 to 7 times slower than AttaCut, and `split_many` and `split_many_on`
+raise its throughput further.
