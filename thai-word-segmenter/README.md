@@ -48,3 +48,20 @@ segments as byte ranges.
 | --- | --- |
 | `burn` | Adds the `network` module (the Burn network that trains the model), `encoding::EncodedBatch` and `InferenceModel::new`. Their signatures use Burn types, so they follow Burn's stability, not this crate's. The segmenters themselves read safetensors checkpoints directly and need no Burn. |
 
+## Behaviour
+
+- **Windows**: syllables are scored in windows of 96 owned syllables with 16 syllables of
+  context on each side (the model's 128-syllable capacity). Longer runs are processed window
+  by window.
+- **Decision**: the model scores each gap between syllables as KEEP or BREAK. A gap breaks
+  when the BREAK probability is at least 0.5 and the gap is not inside a dictionary match.
+- **Dictionary**: 43,276 entries, every one of 2 or 3 syllables (34,382 and 8,894). Matching is
+  leftmost-longest and non-overlapping: gaps inside a selected match never break, and
+  overlapping entries do not chain into a larger cluster. Everything else is left to the
+  model.
+- **Punctuation**: closing quotes, brackets and `, . ! ? : ; % ๆ ฯ …` attach to the preceding
+  cluster. Opening quotes and brackets attach to the following one. Straight quotes are paired
+  in order, and an apostrophe between letters or digits is not a quote. Horizontal spaces next
+  to attached punctuation join it. A non-Thai span that begins with closing punctuation
+  (`. … ’ ” ) ] }`) is split after it, so `ปฐก.28:12` gives `ปฐก.` and `28:12`.
+
