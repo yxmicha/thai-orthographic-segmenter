@@ -42,3 +42,9 @@ segments as byte ranges.
 - Failures are `thai_word_segmenter::Error`. A Thai run over 4,096 scalars fails with
   `Error::Syllables(ThaiRunTooLong)` because the syllable segmenter rejects it.
 
+## Cargo features
+
+| Feature | Effect |
+| --- | --- |
+| `burn` | Adds the `network` module (the Burn network that trains the model), `encoding::EncodedBatch` and `InferenceModel::new`. Their signatures use Burn types, so they follow Burn's stability, not this crate's. The segmenters themselves read safetensors checkpoints directly and need no Burn. |
+
