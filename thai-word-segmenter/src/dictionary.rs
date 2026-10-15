@@ -20,6 +20,14 @@ pub struct ClusterDictionary {
     entries: usize,
 }
 
+impl std::fmt::Debug for ClusterDictionary {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("ClusterDictionary")
+            .finish_non_exhaustive()
+    }
+}
+
 #[derive(Default)]
 struct Node {
     children: BTreeMap<char, usize>,
