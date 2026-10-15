@@ -69,6 +69,26 @@ impl ClusterDictionary {
         }
         matches
     }
+
+    /// Marks syllable gaps that belong inside selected accepted clusters.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::dictionary::ClusterDictionary;
+    ///
+    /// let dictionary = ClusterDictionary::read("ปฐมกาล\n".as_bytes())?;
+    /// // Gap `i` follows syllable `i`; only the gap inside the match is protected.
+    /// assert_eq!(dictionary.protected_gaps(&["ใน", "ปฐม", "กาล"]), [false, true, false]);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn protected_gaps<S: AsRef<str>>(&self, syllables: &[S]) -> Vec<bool> {
+        let mut protected = vec![false; syllables.len()];
+        for span in self.longest_matches(syllables) {
+            protected[span.start..span.end.saturating_sub(1)].fill(true);
+        }
+        protected
+    }
 }
 
 #[derive(Default)]
