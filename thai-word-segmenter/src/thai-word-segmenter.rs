@@ -61,3 +61,5 @@
 
 /// Boundary decoding and punctuation attachment.
 pub mod decoding;
+/// Dictionary protection for known lexical clusters.
+pub mod dictionary;
