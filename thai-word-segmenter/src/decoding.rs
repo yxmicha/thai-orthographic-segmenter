@@ -20,3 +20,24 @@ pub struct BoundaryScores<'a> {
     probabilities: &'a [f32],
     threshold: f32,
 }
+
+impl<'a> BoundaryScores<'a> {
+    /// Pairs the BREAK `probabilities` after each syllable with the `threshold` a probability
+    /// must reach to allow a break. Nothing is validated until [`Self::select_breaks`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::decoding::BoundaryScores;
+    ///
+    /// let scores = BoundaryScores::new(&[0.2, 0.8], 0.5);
+    /// # drop(scores);
+    /// ```
+    #[must_use]
+    pub const fn new(probabilities: &'a [f32], threshold: f32) -> Self {
+        Self {
+            probabilities,
+            threshold,
+        }
+    }
+}
