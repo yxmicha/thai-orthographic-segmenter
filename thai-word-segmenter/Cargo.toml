@@ -1,0 +1,42 @@
+[package]
+name = "thai-word-segmenter"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+documentation = "https://docs.rs/thai-word-segmenter"
+categories.workspace = true
+keywords = ["thai", "word", "tokenizer", "nlp", "segmentation"]
+description = "Source-preserving Thai word segmentation bundled with trained contextual model"
+readme = "README.md"
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+# Exposes the `network` module, the Burn network that trains the model, and
+# `InferenceModel::new`, which converts one. Their signatures use Burn types.
+burn = ["dep:burn", "dep:burn-nn", "dep:burn-pack"]
+
+[lib]
+path = "src/thai-word-segmenter.rs"
+
+[dependencies]
+burn = { workspace = true, optional = true }
+burn-nn = { workspace = true, optional = true }
+burn-pack = { workspace = true, optional = true }
+serde.workspace = true
+serde_json.workspace = true
+thai-syllable-rules.workspace = true
+thai-syllable-segmenter.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+safetensors.workspace = true
+tempfile.workspace = true

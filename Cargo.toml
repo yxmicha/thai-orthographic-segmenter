@@ -2,6 +2,7 @@
 members = [
     "thai-syllable-rules",
     "thai-syllable-segmenter",
+    "thai-word-segmenter",
 ]
 resolver = "3"
 
