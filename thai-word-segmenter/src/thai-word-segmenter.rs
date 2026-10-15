@@ -59,3 +59,5 @@
 //! A [`WordSegmenter`] is `Send + Sync`. Building one takes about 40 ms, so build one and share
 //! it.
 
+/// Boundary decoding and punctuation attachment.
+pub mod decoding;
