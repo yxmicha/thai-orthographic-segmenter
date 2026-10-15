@@ -1,6 +1,8 @@
 //! Model-independent boundary decisions and source-preserving punctuation attachment.
 
 
+use crate::{Error, dictionary::ClusterDictionary};
+
 /// Contextual probabilities and their validation-selected decision threshold.
 ///
 /// # Examples
@@ -39,5 +41,52 @@ impl<'a> BoundaryScores<'a> {
             probabilities,
             threshold,
         }
+    }
+
+    /// Applies accepted dictionary protection after thresholding contextual BREAK scores.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Scores`] when the threshold is outside `0.0..=1.0`, or when the
+    /// probabilities are not finite, outside `0.0..=1.0`, and one per syllable.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::{decoding::BoundaryScores, dictionary::ClusterDictionary};
+    ///
+    /// let dictionary = ClusterDictionary::read("".as_bytes())?;
+    /// let breaks = BoundaryScores::new(&[0.9, 0.1, 0.9], 0.5).select_breaks(&["ก", "ข", "ค"], &dictionary)?;
+    /// // The last syllable never breaks; the middle one is below the threshold.
+    /// assert_eq!(breaks, [true, false, false]);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn select_breaks<S: AsRef<str>>(
+        &self,
+        syllables: &[S],
+        dictionary: &ClusterDictionary,
+    ) -> Result<Vec<bool>, Error> {
+        let probabilities = self.probabilities;
+        if !self.threshold.is_finite() || !(0.0..=1.0).contains(&self.threshold) {
+            return Err(Error::Scores("decision threshold is outside 0.0..=1.0"));
+        }
+        if probabilities.len() != syllables.len()
+            || probabilities
+                .iter()
+                .any(|score| !score.is_finite() || !(0.0..=1.0).contains(score))
+        {
+            return Err(Error::Scores(
+                "probabilities must be finite, in 0.0..=1.0, and one per syllable",
+            ));
+        }
+        let protected = dictionary.protected_gaps(syllables);
+        Ok(probabilities
+            .iter()
+            .zip(protected)
+            .enumerate()
+            .map(|(index, (probability, keep))| {
+                index + 1 < syllables.len() && *probability >= self.threshold && !keep
+            })
+            .collect())
     }
 }

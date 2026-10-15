@@ -65,3 +65,5 @@ pub mod decoding;
 pub mod dictionary;
 
 mod error;
+
+pub use error::Error;
