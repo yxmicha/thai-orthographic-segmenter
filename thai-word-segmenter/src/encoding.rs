@@ -13,3 +13,4 @@
 /// assert_eq!(CHARACTER_VOCABULARY_SIZE, 130);
 /// ```
 pub const CHARACTER_VOCABULARY_SIZE: usize = 130;
+const OTHER_CHARACTER_ID: i64 = 129;
