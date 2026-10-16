@@ -105,3 +105,19 @@ impl<'a> BoundaryScores<'a> {
 /// ```
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SourceText<'a>(&'a str);
+
+impl<'a> SourceText<'a> {
+    /// Wraps the original `text`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::decoding::SourceText;
+    ///
+    /// assert_eq!(SourceText::new("abc"), SourceText::new("abc"));
+    /// ```
+    #[must_use]
+    pub const fn new(text: &'a str) -> Self {
+        Self(text)
+    }
+}
