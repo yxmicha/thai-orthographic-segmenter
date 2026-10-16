@@ -144,3 +144,7 @@ impl<'a> SourceText<'a> {
         Ok(allowed)
     }
 }
+
+fn horizontal_space(character: char) -> bool {
+    character.is_whitespace() && !matches!(character, '\n' | '\r')
+}
