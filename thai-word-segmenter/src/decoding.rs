@@ -1,5 +1,6 @@
 //! Model-independent boundary decisions and source-preserving punctuation attachment.
 
+use std::ops::Range;
 
 use crate::{Error, dictionary::ClusterDictionary};
 
@@ -119,5 +120,27 @@ impl<'a> SourceText<'a> {
     #[must_use]
     pub const fn new(text: &'a str) -> Self {
         Self(text)
+    }
+
+    /// Flags each byte offset where `ranges` end, after checking that they partition the text.
+    fn break_allowed_after(&self, ranges: &[Range<usize>]) -> Result<Vec<bool>, Error> {
+        let text = self.0;
+        let mut allowed = vec![false; text.len() + 1];
+        let mut cursor = 0;
+        for range in ranges {
+            if range.start != cursor
+                || range.end <= range.start
+                || range.end > text.len()
+                || !text.is_char_boundary(range.end)
+            {
+                return Err(Error::Ranges("ranges do not partition the original source"));
+            }
+            allowed[range.end] = true;
+            cursor = range.end;
+        }
+        if cursor != text.len() {
+            return Err(Error::Ranges("ranges omit source text"));
+        }
+        Ok(allowed)
     }
 }
