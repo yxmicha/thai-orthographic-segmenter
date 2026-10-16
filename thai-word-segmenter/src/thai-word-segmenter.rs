@@ -63,6 +63,8 @@
 pub mod decoding;
 /// Dictionary protection for known lexical clusters.
 pub mod dictionary;
+/// Shared training and inference encoding.
+pub mod encoding;
 
 mod error;
 
