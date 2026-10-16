@@ -122,6 +122,39 @@ impl<'a> SourceText<'a> {
         Self(text)
     }
 
+    /// Removes breaks adjacent to attached punctuation; every source character is retained.
+    ///
+    /// `ranges` must partition the text exactly, ending on character boundaries.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Ranges`] when `ranges` do not partition the text on character boundaries.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::decoding::SourceText;
+    ///
+    /// let ranges = SourceText::new("ก (ข)").attach_punctuation(&[0..3, 3..4, 4..5, 5..8, 8..9])?;
+    /// // The parentheses and the word between them become one range.
+    /// assert_eq!(ranges, [0..3, 3..4, 4..9]);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn attach_punctuation(&self, ranges: &[Range<usize>]) -> Result<Vec<Range<usize>>, Error> {
+        let text = self.0;
+        let mut allowed = self.break_allowed_after(ranges)?;
+        self.remove_punctuation_breaks(&mut allowed);
+        let mut result = Vec::new();
+        let mut start = 0;
+        for (end, boundary) in allowed.iter().enumerate().skip(1) {
+            if *boundary || end == text.len() {
+                result.push(start..end);
+                start = end;
+            }
+        }
+        Ok(result)
+    }
+
     /// Flags each byte offset where `ranges` end, after checking that they partition the text.
     fn break_allowed_after(&self, ranges: &[Range<usize>]) -> Result<Vec<bool>, Error> {
         let text = self.0;
