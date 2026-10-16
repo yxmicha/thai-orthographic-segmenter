@@ -101,6 +101,22 @@ impl ClusterDictionary {
         self.entries
     }
 
+    /// Returns whether no accepted entries were loaded.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::dictionary::ClusterDictionary;
+    ///
+    /// assert!(ClusterDictionary::read("".as_bytes())?.is_empty());
+    /// assert!(!ClusterDictionary::read("ปฐมกาล\n".as_bytes())?.is_empty());
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.entries == 0
+    }
+
     /// Selects nonoverlapping leftmost-longest matches in syllable coordinates.
     ///
     /// # Examples
