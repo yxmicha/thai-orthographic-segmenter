@@ -143,6 +143,64 @@ impl<'a> SourceText<'a> {
         }
         Ok(allowed)
     }
+
+    /// Clears the break flags that would separate punctuation from the word it attaches to.
+    fn remove_punctuation_breaks(&self, allowed: &mut [bool]) {
+        let text = self.0;
+        let mut double_quote_open = false;
+        let mut single_quote_open = false;
+        for (start, character) in text.char_indices() {
+            let end = start + character.len_utf8();
+            let apostrophe = character == '\''
+                && text[..start]
+                    .chars()
+                    .next_back()
+                    .is_some_and(char::is_alphanumeric)
+                && text[end..]
+                    .chars()
+                    .next()
+                    .is_some_and(char::is_alphanumeric);
+            let straight_quote = matches!(character, '"' | '\'') && !apostrophe;
+            let quote_opens = match character {
+                '"' => {
+                    double_quote_open = !double_quote_open;
+                    double_quote_open
+                }
+                '\'' if !apostrophe => {
+                    single_quote_open = !single_quote_open;
+                    single_quote_open
+                }
+                _ => false,
+            };
+            if matches!(character, '(' | '[' | '{' | '“' | '‘' | '«' | '‹') || quote_opens {
+                let join_end = text.len() - text[end..].trim_start_matches(horizontal_space).len();
+                allowed[end..=join_end].fill(false);
+            }
+            if matches!(
+                character,
+                ')' | ']'
+                    | '}'
+                    | '”'
+                    | '’'
+                    | '»'
+                    | '›'
+                    | ','
+                    | '.'
+                    | '!'
+                    | '?'
+                    | ':'
+                    | ';'
+                    | '%'
+                    | 'ๆ'
+                    | 'ฯ'
+                    | '…'
+            ) || (straight_quote && !quote_opens)
+            {
+                let join_start = text[..start].trim_end_matches(horizontal_space).len();
+                allowed[join_start..=start].fill(false);
+            }
+        }
+    }
 }
 
 fn horizontal_space(character: char) -> bool {
