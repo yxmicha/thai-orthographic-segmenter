@@ -90,3 +90,18 @@ impl<'a> BoundaryScores<'a> {
             .collect())
     }
 }
+
+/// Original source text whose characters every attached cluster must retain.
+///
+/// # Examples
+///
+/// ```
+/// use thai_word_segmenter::decoding::SourceText;
+///
+/// let text = "ก, ข";
+/// let attached = SourceText::new(text).attach_punctuation(&[0..3, 3..5, 5..8])?;
+/// assert_eq!(attached, [0..5, 5..8]); // the comma stays with the word before it
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct SourceText<'a>(&'a str);
