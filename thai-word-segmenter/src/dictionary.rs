@@ -3,6 +3,9 @@
 use std::ops::Range;
 use std::{collections::BTreeMap, io::BufRead};
 
+use crate::Error;
+use thai_syllable_rules::ThaiScalar;
+
 /// Reusable lexical trie; selection is leftmost-longest with no overlapping chains.
 ///
 /// # Examples
@@ -29,6 +32,59 @@ impl std::fmt::Debug for ClusterDictionary {
 }
 
 impl ClusterDictionary {
+    /// Reads one Thai-only accepted cluster per line, retaining short and long forms.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::DictionaryRead`] when a line cannot be read, or
+    /// [`Error::DictionaryEntry`] when an entry is empty or contains non-Thai characters.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::{Error, dictionary::ClusterDictionary};
+    ///
+    /// assert_eq!(ClusterDictionary::read("ปฐมกาล\n".as_bytes())?.len(), 1);
+    /// assert!(matches!(
+    ///     ClusterDictionary::read("abc\n".as_bytes()),
+    ///     Err(Error::DictionaryEntry(_))
+    /// ));
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn read(reader: impl BufRead) -> Result<Self, Error> {
+        let mut result = Self {
+            nodes: vec![Node::default()],
+            entries: 0,
+        };
+        for line in reader.lines() {
+            let word = line.map_err(Error::DictionaryRead)?;
+            if word.is_empty()
+                || !word
+                    .chars()
+                    .all(|character| ThaiScalar::new(character).is_accepted())
+            {
+                return Err(Error::DictionaryEntry(word));
+            }
+            let mut node = 0;
+            for character in word.chars() {
+                let next = if let Some(next) = result.nodes[node].children.get(&character).copied()
+                {
+                    next
+                } else {
+                    let next = result.nodes.len();
+                    result.nodes.push(Node::default());
+                    result.nodes[node].children.insert(character, next);
+                    next
+                };
+                node = next;
+            }
+            if !result.nodes[node].terminal {
+                result.nodes[node].terminal = true;
+                result.entries += 1;
+            }
+        }
+        Ok(result)
+    }
 
     /// Selects nonoverlapping leftmost-longest matches in syllable coordinates.
     ///
