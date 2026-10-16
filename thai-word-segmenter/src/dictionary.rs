@@ -86,6 +86,21 @@ impl ClusterDictionary {
         Ok(result)
     }
 
+    /// Returns the number of unique accepted entries.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::dictionary::ClusterDictionary;
+    ///
+    /// assert_eq!(ClusterDictionary::read("ปฐมกาล\nพระวาทะ\n".as_bytes())?.len(), 2);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    #[must_use]
+    pub const fn len(&self) -> usize {
+        self.entries
+    }
+
     /// Selects nonoverlapping leftmost-longest matches in syllable coordinates.
     ///
     /// # Examples
