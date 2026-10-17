@@ -14,3 +14,5 @@
 /// ```
 pub const CHARACTER_VOCABULARY_SIZE: usize = 130;
 const OTHER_CHARACTER_ID: i64 = 129;
+/// FNV-1a offset basis and prime, hashing syllable bytes into embedding buckets.
+const FNV_OFFSET_BASIS: u64 = 0xcbf2_9ce4_8422_2325;
