@@ -65,6 +65,8 @@ pub mod decoding;
 pub mod dictionary;
 /// Shared training and inference encoding.
 pub mod encoding;
+/// Model dimensions and the checkpoint configuration.
+pub mod model;
 
 mod error;
 
