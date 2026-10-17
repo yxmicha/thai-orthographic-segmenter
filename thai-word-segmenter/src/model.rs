@@ -2,6 +2,17 @@
 
 use serde::{Deserialize, Serialize};
 
+/// Syllables whose following gaps one inference window decides.
+///
+/// # Examples
+///
+/// ```
+/// use thai_word_segmenter::model::OWNED_SYLLABLES;
+///
+/// assert_eq!(OWNED_SYLLABLES, 96);
+/// ```
+pub const OWNED_SYLLABLES: usize = 96;
+
 /// Model dimensions serialized alongside each checkpoint.
 ///
 /// Start from the defaults with [`ClusterModelConfig::new`] and override what differs with the
