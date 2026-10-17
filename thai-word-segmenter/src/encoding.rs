@@ -32,3 +32,19 @@ const FNV_PRIME: u64 = 0x100_0000_01b3;
 /// ```
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct SyllableFeatures<'a>(&'a str);
+
+impl<'a> SyllableFeatures<'a> {
+    /// Wraps one `syllable`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::encoding::SyllableFeatures;
+    ///
+    /// assert_eq!(SyllableFeatures::new("กา"), SyllableFeatures::new("กา"));
+    /// ```
+    #[must_use]
+    pub const fn new(syllable: &'a str) -> Self {
+        Self(syllable)
+    }
+}
