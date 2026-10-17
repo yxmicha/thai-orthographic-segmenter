@@ -47,4 +47,25 @@ impl<'a> SyllableFeatures<'a> {
     pub const fn new(syllable: &'a str) -> Self {
         Self(syllable)
     }
+
+    /// Whole-syllable hash bucket in `1..=buckets`; bucket 0 is reserved for padding.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::encoding::SyllableFeatures;
+    ///
+    /// // Stable across runs and platforms; bucket 0 is reserved for padding.
+    /// let bucket = SyllableFeatures::new("กา").bucket(16383);
+    /// assert_eq!(bucket, SyllableFeatures::new("กา").bucket(16383));
+    /// assert!(bucket >= 1);
+    /// ```
+    #[must_use]
+    pub fn bucket(&self, buckets: u64) -> u64 {
+        let mut hash = FNV_OFFSET_BASIS;
+        for byte in self.0.bytes() {
+            hash = (hash ^ u64::from(byte)).wrapping_mul(FNV_PRIME);
+        }
+        hash % buckets + 1
+    }
 }
