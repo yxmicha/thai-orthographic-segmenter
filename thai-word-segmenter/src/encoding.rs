@@ -68,4 +68,34 @@ impl<'a> SyllableFeatures<'a> {
         }
         hash % buckets + 1
     }
+
+    /// Character IDs for the first `slots` ordered slots. A syllable longer than `slots`
+    /// characters keeps both ends. Slots past the returned length are padding, ID 0.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::encoding::SyllableFeatures;
+    ///
+    /// // One id per character slot, as many as the syllable has characters up to `slots`.
+    /// let ids = SyllableFeatures::new("กา").character_ids(4).collect::<Vec<_>>();
+    /// assert_eq!(ids.len(), 2);
+    /// assert!(ids.iter().all(|id| *id > 0));
+    /// ```
+    pub fn character_ids(&self, slots: usize) -> impl Iterator<Item = i64> {
+        let characters = self.0.chars().collect::<Vec<_>>();
+        (0..slots.min(characters.len())).map(move |slot| {
+            let source = if characters.len() > slots && slot >= slots / 2 {
+                characters.len() - slots + slot
+            } else {
+                slot
+            };
+            let value = u32::from(characters[source]);
+            if (0x0e00..=0x0e7f).contains(&value) {
+                i64::from(value - 0x0e00 + 1)
+            } else {
+                OTHER_CHARACTER_ID
+            }
+        })
+    }
 }
