@@ -12,6 +12,16 @@ use serde::{Deserialize, Serialize};
 /// assert_eq!(OWNED_SYLLABLES, 96);
 /// ```
 pub const OWNED_SYLLABLES: usize = 96;
+/// Syllables of surrounding context on each side of the owned syllables.
+///
+/// # Examples
+///
+/// ```
+/// use thai_word_segmenter::model::CONTEXT_SYLLABLES;
+///
+/// assert_eq!(CONTEXT_SYLLABLES, 16);
+/// ```
+pub const CONTEXT_SYLLABLES: usize = 16;
 
 /// Model dimensions serialized alongside each checkpoint.
 ///
