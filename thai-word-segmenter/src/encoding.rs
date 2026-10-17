@@ -99,3 +99,38 @@ impl<'a> SyllableFeatures<'a> {
         })
     }
 }
+
+/// Backend-independent arrays; one allocation scope per optimizer/inference batch. Needs the
+/// `burn` feature, since its only consumer is [`crate::network::ClusterInput`].
+///
+/// # Examples
+///
+/// ```
+/// # use thai_word_segmenter::model::ClusterModelConfig;
+/// # let config = ClusterModelConfig::new()
+/// #     .with_model_dimension(32)
+/// #     .with_feed_forward_dimension(64)
+/// #     .with_heads(4)
+/// #     .with_layers(2)
+/// #     .with_character_dimension(4)
+/// #     .with_syllable_dimension(8)
+/// #     .with_max_characters(6)
+/// #     .with_syllable_buckets(64)
+/// #     .with_dropout(0.0);
+/// use thai_word_segmenter::encoding::EncodedBatch;
+///
+/// let batch = EncodedBatch::new(&[&["การ", "เรียน"][..], &["ฉัน"][..]], &config)?;
+/// // The sequences are padded to a common length that is a multiple of eight.
+/// assert!(format!("{batch:?}").contains("length: 8"));
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+#[cfg(feature = "burn")]
+#[derive(Clone, Debug)]
+pub struct EncodedBatch {
+    pub(crate) rows: usize,
+    pub(crate) length: usize,
+    pub(crate) characters: Vec<i64>,
+    pub(crate) syllables: Vec<i64>,
+    pub(crate) positions: Vec<i64>,
+    pub(crate) padding: Vec<bool>,
+}
