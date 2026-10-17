@@ -17,3 +17,18 @@ const OTHER_CHARACTER_ID: i64 = 129;
 /// FNV-1a offset basis and prime, hashing syllable bytes into embedding buckets.
 const FNV_OFFSET_BASIS: u64 = 0xcbf2_9ce4_8422_2325;
 const FNV_PRIME: u64 = 0x100_0000_01b3;
+
+/// Hashed and ordered character features of one syllable, shared by every encoder so training
+/// and inference see identical inputs.
+///
+/// # Examples
+///
+/// ```
+/// use thai_word_segmenter::encoding::SyllableFeatures;
+///
+/// let features = SyllableFeatures::new("กา");
+/// assert!((1..=16383).contains(&features.bucket(16383)));
+/// assert_eq!(features.character_ids(4).count(), 2);
+/// ```
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct SyllableFeatures<'a>(&'a str);
