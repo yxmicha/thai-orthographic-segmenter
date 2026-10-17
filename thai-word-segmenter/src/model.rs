@@ -22,6 +22,16 @@ pub const OWNED_SYLLABLES: usize = 96;
 /// assert_eq!(CONTEXT_SYLLABLES, 16);
 /// ```
 pub const CONTEXT_SYLLABLES: usize = 16;
+/// Syllable capacity of every model: the owned syllables plus context on both sides.
+///
+/// # Examples
+///
+/// ```
+/// use thai_word_segmenter::model::{CONTEXT_SYLLABLES, OWNED_SYLLABLES, WINDOW_SYLLABLES};
+///
+/// assert_eq!(WINDOW_SYLLABLES, OWNED_SYLLABLES + 2 * CONTEXT_SYLLABLES);
+/// ```
+pub const WINDOW_SYLLABLES: usize = OWNED_SYLLABLES + 2 * CONTEXT_SYLLABLES;
 
 /// Model dimensions serialized alongside each checkpoint.
 ///
