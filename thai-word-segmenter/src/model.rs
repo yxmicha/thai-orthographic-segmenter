@@ -2,6 +2,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::Error;
+
 /// Syllables whose following gaps one inference window decides.
 ///
 /// # Examples
@@ -120,5 +122,50 @@ impl ClusterModelConfig {
             dropout: 0.1,
             break_threshold: 0.5,
         }
+    }
+
+    /// Rejects dimensions that cannot be encoded or attended safely.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Config`] when a dimension is zero or out of range, the model dimension is
+    /// not a multiple of the head count, or the dropout or break threshold is outside its range.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::{Error, model::ClusterModelConfig};
+    ///
+    /// assert!(ClusterModelConfig::new().validate().is_ok());
+    /// // The model dimension must divide evenly among the heads.
+    /// assert!(matches!(
+    ///     ClusterModelConfig::new().with_heads(7).validate(),
+    ///     Err(Error::Config(_))
+    /// ));
+    /// ```
+    pub fn validate(&self) -> Result<(), Error> {
+        if [
+            self.max_syllables,
+            self.max_characters,
+            self.character_dimension,
+            self.syllable_dimension,
+            self.model_dimension,
+            self.feed_forward_dimension,
+            self.heads,
+            self.layers,
+        ]
+        .contains(&0)
+            || self.syllable_buckets < 2
+            || self.max_syllables != WINDOW_SYLLABLES
+            || self.max_characters > MAX_CHARACTER_SLOTS
+            || !self.model_dimension.is_multiple_of(self.heads)
+            || !self.dropout.is_finite()
+            || !(0.0..1.0).contains(&self.dropout)
+            || !self.break_threshold.is_finite()
+            || !(0.0..=1.0).contains(&self.break_threshold)
+        {
+            return Err(Error::Config("invalid lexical cluster model dimensions"));
+        }
+        Ok(())
     }
 }
