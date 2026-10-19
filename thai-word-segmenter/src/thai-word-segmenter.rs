@@ -65,6 +65,8 @@ pub mod decoding;
 pub mod dictionary;
 /// Shared training and inference encoding.
 pub mod encoding;
+/// Fast CPU inference for a trained contextual model.
+pub mod inference;
 /// Model dimensions and the checkpoint configuration.
 pub mod model;
 
