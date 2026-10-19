@@ -32,6 +32,16 @@ pub const CONTEXT_SYLLABLES: usize = 16;
 /// assert_eq!(WINDOW_SYLLABLES, OWNED_SYLLABLES + 2 * CONTEXT_SYLLABLES);
 /// ```
 pub const WINDOW_SYLLABLES: usize = OWNED_SYLLABLES + 2 * CONTEXT_SYLLABLES;
+/// Upper bound on ordered character slots per syllable.
+///
+/// # Examples
+///
+/// ```
+/// use thai_word_segmenter::model::MAX_CHARACTER_SLOTS;
+///
+/// assert_eq!(MAX_CHARACTER_SLOTS, 128);
+/// ```
+pub const MAX_CHARACTER_SLOTS: usize = 128;
 
 /// Model dimensions serialized alongside each checkpoint.
 ///
