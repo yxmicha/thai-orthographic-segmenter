@@ -103,4 +103,12 @@ impl SlotFeatures {
             padding_tail,
         })
     }
+
+    /// Features of the character with `id` in `slot`.
+    fn character(&self, slot: usize, id: usize) -> Result<&[f32], Error> {
+        let start = (slot * CHARACTER_VOCABULARY_SIZE + id) * self.model_dimension;
+        self.characters
+            .get(start..start + self.model_dimension)
+            .ok_or(Error::Batch("character slot outside the model"))
+    }
 }
