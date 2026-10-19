@@ -6,8 +6,42 @@
     reason = "runtime CPU-feature dispatch only works when every callee is inlined into the `#[target_feature]` function"
 )]
 
+use thai_syllable_segmenter::inference::{
+    BlockPool, Checkpoint, EncoderLayer, InputBlocks, PackedMatrix, Scratch, WeightMatrix,
+    run_on_cpu,
+};
+
 /// Rows processed together by one forward pass; bounds scratch memory and keeps it cache-sized.
 const ROW_BUDGET: usize = 512;
+
+/// Inference weights read from a trained checkpoint.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use thai_word_segmenter::{inference::InferenceModel, model::ClusterModelConfig};
+/// # let config: ClusterModelConfig = serde_json::from_slice(&std::fs::read("config.json")?)?;
+/// # let inference = InferenceModel::from_weight_bytes(&config, &std::fs::read("model.safetensors")?)?;
+/// let scores = inference.differences(&[&["การ", "เรียน"][..], &["ฉัน"][..]])?;
+/// assert_eq!(scores.iter().map(Vec::len).collect::<Vec<_>>(), [2, 1]);
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+pub struct InferenceModel {
+    model_dimension: usize,
+    character_slots: usize,
+    syllable_buckets: u64,
+    max_syllables: usize,
+    slot_features: SlotFeatures,
+    /// `[bucket][syllable_dimension]`.
+    whole_embeddings: Vec<f32>,
+    whole_projection: PackedMatrix,
+    input_bias: Vec<f32>,
+    /// `[position][model_dimension]`.
+    positions: Vec<f32>,
+    layers: Vec<EncoderLayer>,
+    boundary: PackedMatrix,
+    blocks: BlockPool,
+}
 
 /// Character embeddings already multiplied by the input-projection rows of their slot, so the
 /// ordered character features of a syllable are a sum of table rows.
