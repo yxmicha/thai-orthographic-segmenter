@@ -8,3 +8,14 @@
 
 /// Rows processed together by one forward pass; bounds scratch memory and keeps it cache-sized.
 const ROW_BUDGET: usize = 512;
+
+/// Character embeddings already multiplied by the input-projection rows of their slot, so the
+/// ordered character features of a syllable are a sum of table rows.
+struct SlotFeatures {
+    model_dimension: usize,
+    /// `[slot][character id][model_dimension]`.
+    characters: Vec<f32>,
+    /// `[first padded slot][model_dimension]`: summed features of the padding character in every slot
+    /// from the index to the last one.
+    padding_tail: Vec<f32>,
+}
