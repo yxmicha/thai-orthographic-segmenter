@@ -311,4 +311,65 @@ impl InferenceModel {
         }
         Self::from_checkpoint(config, Checkpoint::from_tensors(tensors)?)
     }
+
+    /// Input features for stacked windows: bias, position, ordered character features and the
+    /// whole-syllable embedding projection.
+    #[inline(always)]
+    fn embed<const FMA: bool>(
+        &self,
+        windows: &[&[&str]],
+        scratch: &mut Scratch,
+    ) -> Result<Vec<f32>, Error> {
+        let model_dimension = self.model_dimension;
+        let whole_dimension = self.whole_projection.inputs();
+        let rows = windows.iter().map(|window| window.len()).sum::<usize>();
+        let mut state = vec![0.0; rows * model_dimension];
+        let mut whole = vec![0.0; rows * whole_dimension];
+        let syllables = windows.iter().flat_map(|window| window.iter().enumerate());
+        let targets = state
+            .chunks_exact_mut(model_dimension)
+            .zip(whole.chunks_exact_mut(whole_dimension));
+        for ((position, syllable), (target, whole_target)) in syllables.zip(targets) {
+            let features = SyllableFeatures::new(syllable);
+            let bucket = usize::try_from(features.bucket(self.syllable_buckets))
+                .map_err(|_| Error::Batch("syllable hash overflow"))?;
+            whole_target.copy_from_slice(
+                self.whole_embeddings
+                    .get(bucket * whole_dimension..(bucket + 1) * whole_dimension)
+                    .ok_or(Error::Batch("syllable bucket outside the model"))?,
+            );
+            let position_features = self
+                .positions
+                .get(position * model_dimension..(position + 1) * model_dimension)
+                .ok_or(Error::Batch("syllable position outside the model"))?;
+            for ((value, bias), position_feature) in target
+                .iter_mut()
+                .zip(&self.input_bias)
+                .zip(position_features)
+            {
+                *value = bias + position_feature;
+            }
+            let mut length = 0;
+            for (slot, id) in features.character_ids(self.character_slots).enumerate() {
+                let id = usize::try_from(id).map_err(|_| Error::Batch("character ID"))?;
+                for (value, feature) in target
+                    .iter_mut()
+                    .zip(self.slot_features.character(slot, id)?)
+                {
+                    *value += feature;
+                }
+                length = slot + 1;
+            }
+            for (value, feature) in target.iter_mut().zip(self.slot_features.padding(length)?) {
+                *value += feature;
+            }
+        }
+        let mut projected = vec![0.0; rows * model_dimension];
+        self.whole_projection
+            .multiply_into::<FMA>(&whole, scratch.blocks_mut(), &mut projected)?;
+        for (value, update) in state.iter_mut().zip(&projected) {
+            *value += update;
+        }
+        Ok(state)
+    }
 }
