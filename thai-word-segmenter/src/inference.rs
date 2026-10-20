@@ -119,3 +119,11 @@ impl SlotFeatures {
             .ok_or(Error::Batch("padding slot outside the model"))
     }
 }
+
+impl std::fmt::Debug for InferenceModel {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("InferenceModel")
+            .finish_non_exhaustive()
+    }
+}
