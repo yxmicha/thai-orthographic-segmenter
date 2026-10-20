@@ -127,3 +127,95 @@ impl std::fmt::Debug for InferenceModel {
             .finish_non_exhaustive()
     }
 }
+
+impl InferenceModel {
+
+    /// Builds a model from the named tensors of `checkpoint`, folding the character embeddings
+    /// into the input projection.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Config`] when `config` is invalid, [`Error::Checkpoint`] when the
+    /// checkpoint lacks a tensor of these dimensions or holds an unused one, or another
+    /// [`Error`] when the weights do not fit the engine.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use thai_syllable_segmenter::inference::Checkpoint;
+    /// use thai_word_segmenter::{inference::InferenceModel, model::ClusterModelConfig};
+    ///
+    /// let config: ClusterModelConfig = serde_json::from_slice(&std::fs::read("config.json")?)?;
+    /// let checkpoint = Checkpoint::from_bytes(&std::fs::read("model.safetensors")?)?;
+    /// let model = InferenceModel::from_checkpoint(&config, checkpoint)?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn from_checkpoint(
+        config: &ClusterModelConfig,
+        mut checkpoint: Checkpoint,
+    ) -> Result<Self, Error> {
+        config.validate()?;
+        let ordered_width = config
+            .max_characters
+            .checked_mul(config.character_dimension)
+            .and_then(|width| width.checked_add(config.syllable_dimension))
+            .ok_or(Error::Config("cluster input width overflow"))?;
+        let embeddings = checkpoint
+            .embedding(
+                "characters",
+                CHARACTER_VOCABULARY_SIZE,
+                config.character_dimension,
+            )?
+            .into_values();
+        let whole_embeddings = checkpoint
+            .embedding(
+                "syllables",
+                config.syllable_buckets,
+                config.syllable_dimension,
+            )?
+            .into_values();
+        let projection = checkpoint.linear("projection", ordered_width, config.model_dimension)?;
+        let positions = checkpoint
+            .embedding("positions", config.max_syllables, config.model_dimension)?
+            .into_values();
+        let layers = (0..config.layers)
+            .map(|index| {
+                checkpoint.encoder_layer(
+                    &format!("encoder.layers.{index}"),
+                    config.model_dimension,
+                    config.feed_forward_dimension,
+                    config.heads,
+                )
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        let boundary = checkpoint.linear("boundary", config.model_dimension, 2)?;
+        checkpoint.finish()?;
+        let slot_features = SlotFeatures::new(&embeddings, &projection, config)?;
+        let whole_start =
+            config.max_characters * config.character_dimension * config.model_dimension;
+        let whole_weights = projection
+            .values()
+            .get(whole_start..)
+            .ok_or(Error::Config("projection has no whole-syllable rows"))?;
+        Ok(Self {
+            model_dimension: config.model_dimension,
+            character_slots: config.max_characters,
+            syllable_buckets: u64::try_from(config.syllable_buckets - 1)
+                .map_err(|_| Error::Batch("syllable vocabulary overflow"))?,
+            max_syllables: config.max_syllables,
+            slot_features,
+            whole_embeddings,
+            whole_projection: PackedMatrix::new(
+                whole_weights,
+                config.syllable_dimension,
+                config.model_dimension,
+                vec![0.0; config.model_dimension],
+            )?,
+            input_bias: projection.into_bias(),
+            positions,
+            layers,
+            boundary: boundary.try_into()?,
+            blocks: BlockPool::default(),
+        })
+    }
+}
