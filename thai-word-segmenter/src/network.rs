@@ -16,6 +16,43 @@ use burn_nn::{
     transformer::{TransformerEncoder, TransformerEncoderConfig, TransformerEncoderInput},
 };
 
+/// Padded features consumed by the contextual model.
+///
+/// # Examples
+///
+/// ```
+/// # use burn::tensor::Device;
+/// # use thai_word_segmenter::model::ClusterModelConfig;
+/// # let config = ClusterModelConfig::new()
+/// #     .with_model_dimension(32)
+/// #     .with_feed_forward_dimension(64)
+/// #     .with_heads(4)
+/// #     .with_layers(2)
+/// #     .with_character_dimension(4)
+/// #     .with_syllable_dimension(8)
+/// #     .with_max_characters(6)
+/// #     .with_syllable_buckets(64)
+/// #     .with_dropout(0.0);
+/// # let device = Device::flex();
+/// use thai_word_segmenter::{encoding::EncodedBatch, network::{ClusterInput, ClusterModel}};
+///
+/// let input = ClusterInput::new(EncodedBatch::new(&[&["การ", "เรียน"][..]], &config)?, &device);
+/// let logits = ClusterModel::new(&config, &device)?.forward(input);
+/// assert_eq!(logits.dims(), [1, 8, 2]); // syllables are padded to a multiple of eight
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+#[derive(Clone, Debug)]
+pub struct ClusterInput {
+    /// Character IDs with shape `[batch, syllables * character_slots]`.
+    pub(crate) characters: Tensor<2, Int>,
+    /// Whole-syllable hashes with shape `[batch, syllables]`.
+    pub(crate) syllables: Tensor<2, Int>,
+    /// Relative syllable positions.
+    pub(crate) positions: Tensor<2, Int>,
+    /// Padding mask, true at missing syllables.
+    pub(crate) padding: Tensor<2, Bool>,
+}
+
 /// Scores KEEP/BREAK after each syllable while retaining its internal character order.
 ///
 /// # Examples
