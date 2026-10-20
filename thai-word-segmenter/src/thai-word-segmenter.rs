@@ -69,6 +69,9 @@ pub mod encoding;
 pub mod inference;
 /// Model dimensions and the checkpoint configuration.
 pub mod model;
+/// The Burn network that trains the model. Needs the `burn` feature.
+#[cfg(feature = "burn")]
+pub mod network;
 
 mod error;
 
