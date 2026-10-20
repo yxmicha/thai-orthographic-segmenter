@@ -111,4 +111,11 @@ impl SlotFeatures {
             .get(start..start + self.model_dimension)
             .ok_or(Error::Batch("character slot outside the model"))
     }
+
+    /// Summed features of the padding character in every slot from `first_padded` onward.
+    fn padding(&self, first_padded: usize) -> Result<&[f32], Error> {
+        self.padding_tail
+            .get(first_padded * self.model_dimension..(first_padded + 1) * self.model_dimension)
+            .ok_or(Error::Batch("padding slot outside the model"))
+    }
 }
