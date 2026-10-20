@@ -6,6 +6,8 @@
     reason = "runtime CPU-feature dispatch only works when every callee is inlined into the `#[target_feature]` function"
 )]
 
+#[cfg(feature = "burn")]
+use crate::network::ClusterModel;
 use thai_syllable_segmenter::inference::{
     BlockPool, Checkpoint, EncoderLayer, InputBlocks, PackedMatrix, Scratch, WeightMatrix,
     run_on_cpu,
@@ -240,5 +242,73 @@ impl InferenceModel {
             boundary: boundary.try_into()?,
             blocks: BlockPool::default(),
         })
+    }
+
+    /// Extracts the weights of a trained Burn model, folding character embeddings into the input
+    /// projection. Consumes the model; clone it first to keep using it. Needs the `burn` feature.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Config`] when `config` is invalid, or another [`Error`] when the model's
+    /// weights cannot be serialized or do not fit.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use burn::tensor::Device;
+    /// # use thai_word_segmenter::model::ClusterModelConfig;
+    /// # let config = ClusterModelConfig::new()
+    /// #     .with_model_dimension(32)
+    /// #     .with_feed_forward_dimension(64)
+    /// #     .with_heads(4)
+    /// #     .with_layers(2)
+    /// #     .with_character_dimension(4)
+    /// #     .with_syllable_dimension(8)
+    /// #     .with_max_characters(6)
+    /// #     .with_syllable_buckets(64)
+    /// #     .with_dropout(0.0);
+    /// use thai_word_segmenter::{inference::InferenceModel, network::ClusterModel};
+    ///
+    /// let model = ClusterModel::new(&config, &Device::flex())?;
+    /// let inference = InferenceModel::new(model, &config)?;
+    /// let scores = inference.differences(&[&["การ", "เรียน"][..], &["ฉัน"][..]])?;
+    /// assert_eq!(scores.iter().map(Vec::len).collect::<Vec<_>>(), [2, 1]);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    #[cfg(feature = "burn")]
+    pub fn new(model: ClusterModel, config: &ClusterModelConfig) -> Result<Self, Error> {
+        use burn::module::Module;
+
+        let save_error =
+            |error: Box<dyn std::error::Error + Send + Sync>| Error::CheckpointSave(error);
+        let record = model
+            .into_record()
+            .into_bytes()
+            .map_err(|error| save_error(Box::new(error)))?;
+        let reader =
+            burn_pack::Reader::from_bytes(burn_pack::Bytes::from_bytes_vec(record.to_vec()))
+                .map_err(|error| save_error(Box::new(error)))?;
+        let mut tensors = Vec::new();
+        for tensor in reader
+            .into_tensors()
+            .map_err(|error| save_error(Box::new(error)))?
+        {
+            let (name, dtype, shape, _, data) = tensor
+                .into_parts()
+                .map_err(|error| save_error(Box::new(error)))?;
+            if dtype != burn_pack::DType::F32 {
+                return Err(save_error(
+                    format!("tensor {name} is not 32-bit float").into(),
+                ));
+            }
+            let values = data
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .map(|chunk| f32::from_le_bytes(*chunk))
+                .collect();
+            tensors.push((name, shape.as_slice().to_vec(), values));
+        }
+        Self::from_checkpoint(config, Checkpoint::from_tensors(tensors)?)
     }
 }
