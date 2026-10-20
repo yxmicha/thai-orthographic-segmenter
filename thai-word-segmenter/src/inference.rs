@@ -129,6 +129,29 @@ impl std::fmt::Debug for InferenceModel {
 }
 
 impl InferenceModel {
+    /// Reads a trained model from safetensors checkpoint `bytes`, folding the character embeddings
+    /// into the input projection.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Config`] when `config` is invalid, [`Error::Checkpoint`] when `bytes` are
+    /// not a checkpoint of a model with these dimensions, or another [`Error`] when the weights
+    /// do not fit the engine.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use thai_word_segmenter::{inference::InferenceModel, model::ClusterModelConfig};
+    ///
+    /// let config: ClusterModelConfig = serde_json::from_slice(&std::fs::read("config.json")?)?;
+    /// let model = InferenceModel::from_weight_bytes(&config, &std::fs::read("model.safetensors")?)?;
+    /// let scores = model.differences(&[&["การ", "เรียน"][..]])?;
+    /// assert_eq!(scores[0].len(), 2);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn from_weight_bytes(config: &ClusterModelConfig, bytes: &[u8]) -> Result<Self, Error> {
+        Self::from_checkpoint(config, Checkpoint::from_bytes(bytes)?)
+    }
 
     /// Builds a model from the named tensors of `checkpoint`, folding the character embeddings
     /// into the input projection.
