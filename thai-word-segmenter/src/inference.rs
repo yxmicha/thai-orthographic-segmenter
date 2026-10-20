@@ -312,6 +312,75 @@ impl InferenceModel {
         Self::from_checkpoint(config, Checkpoint::from_tensors(tensors)?)
     }
 
+    /// Scores stacked windows of `rows` syllables in total.
+    #[inline(always)]
+    fn forward<const FMA: bool>(
+        &self,
+        windows: &[&[&str]],
+        wanted: &[Vec<bool>],
+        rows: usize,
+    ) -> Result<Vec<Vec<f32>>, Error> {
+        let mut ranges = Vec::with_capacity(windows.len());
+        let mut offset = 0;
+        for window in windows {
+            ranges.push(offset..offset + window.len());
+            offset += window.len();
+        }
+        let flags = wanted.iter().flatten().copied().collect::<Vec<_>>();
+        let selected = flags
+            .iter()
+            .enumerate()
+            .filter(|(_, flag)| **flag)
+            .map(|(row, _)| row)
+            .collect::<Vec<_>>();
+        let mut scratch = Scratch::new(
+            rows,
+            self.model_dimension,
+            self.layers
+                .first()
+                .map_or(0, EncoderLayer::feed_forward_dimension),
+            self.max_syllables,
+            self.blocks.take(),
+        );
+        let mut state = self.embed::<FMA>(windows, &mut scratch)?;
+        let compact = match self.layers.split_last() {
+            Some((last, others)) => {
+                for layer in others {
+                    layer.forward::<FMA>(&mut state, &ranges, &mut scratch)?;
+                }
+                last.forward_selected::<FMA>(&state, &ranges, &selected, &flags, &mut scratch)?
+            }
+            None => selected
+                .iter()
+                .map(|row| {
+                    state
+                        .get(row * self.model_dimension..(row + 1) * self.model_dimension)
+                        .ok_or(Error::Batch("selected row outside the state"))
+                })
+                .collect::<Result<Vec<_>, _>>()?
+                .concat(),
+        };
+        let mut logits = vec![0.0; selected.len() * 2];
+        self.boundary
+            .multiply_into::<FMA>(&compact, scratch.blocks_mut(), &mut logits)?;
+        self.blocks.give_back(scratch.into_blocks());
+        let mut row_scores = vec![0.0; rows];
+        for (row, [keep, break_logit]) in selected.iter().zip(logits.as_chunks::<2>().0) {
+            if let Some(score) = row_scores.get_mut(*row) {
+                *score = keep - break_logit;
+            }
+        }
+        ranges
+            .into_iter()
+            .map(|range| {
+                row_scores
+                    .get(range)
+                    .map(<[f32]>::to_vec)
+                    .ok_or(Error::Batch("window outside the scored rows"))
+            })
+            .collect()
+    }
+
     /// Input features for stacked windows: bias, position, ordered character features and the
     /// whole-syllable embedding projection.
     #[inline(always)]
