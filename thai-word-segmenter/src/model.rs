@@ -184,6 +184,20 @@ impl ClusterModelConfig {
         self
     }
 
+    /// Width of each character embedding.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// assert_eq!(ClusterModelConfig::new().character_dimension(), 16);
+    /// ```
+    #[must_use]
+    pub const fn character_dimension(&self) -> usize {
+        self.character_dimension
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
