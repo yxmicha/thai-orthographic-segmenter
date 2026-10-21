@@ -214,6 +214,20 @@ impl ClusterModelConfig {
         self
     }
 
+    /// Number of stable syllable hash buckets, including padding.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// assert_eq!(ClusterModelConfig::new().syllable_buckets(), 16384);
+    /// ```
+    #[must_use]
+    pub const fn syllable_buckets(&self) -> usize {
+        self.syllable_buckets
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
