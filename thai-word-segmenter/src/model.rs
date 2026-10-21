@@ -154,6 +154,20 @@ impl ClusterModelConfig {
         self
     }
 
+    /// Ordered character slots per syllable; longer forms retain both ends.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// assert_eq!(ClusterModelConfig::new().max_characters(), 48);
+    /// ```
+    #[must_use]
+    pub const fn max_characters(&self) -> usize {
+        self.max_characters
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
