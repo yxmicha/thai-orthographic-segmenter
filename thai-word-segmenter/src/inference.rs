@@ -312,6 +312,79 @@ impl InferenceModel {
         Self::from_checkpoint(config, Checkpoint::from_tensors(tensors)?)
     }
 
+    /// Like [`Self::differences`], but the last layer runs only for syllables flagged in
+    /// `wanted` (one flag per syllable of each window). Their scores are identical to those of
+    /// [`Self::differences`]; the other syllables still inform every score but are reported
+    /// as `0.0`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Batch`] when a window is empty or longer than the model capacity or
+    /// `wanted` does not hold one flag per syllable, or another [`Error`] when the engine rejects
+    /// the operands.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use thai_word_segmenter::{inference::InferenceModel, model::ClusterModelConfig};
+    /// # let config: ClusterModelConfig = serde_json::from_slice(&std::fs::read("config.json")?)?;
+    /// # let inference = InferenceModel::from_weight_bytes(&config, &std::fs::read("model.safetensors")?)?;
+    /// let windows = [&["การ", "เรียน"][..]];
+    /// let all = inference.differences(&windows)?;
+    /// let some = inference.differences_wanted(&windows, &[vec![true, false]])?;
+    /// assert_eq!(some[0][0], all[0][0]); // wanted scores are identical
+    /// assert_eq!(some[0][1], 0.0); // unwanted ones are reported as zero
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn differences_wanted(
+        &self,
+        windows: &[&[&str]],
+        wanted: &[Vec<bool>],
+    ) -> Result<Vec<Vec<f32>>, Error> {
+        if windows
+            .iter()
+            .any(|window| window.is_empty() || window.len() > self.max_syllables)
+        {
+            return Err(Error::Batch(
+                "cluster sequence length outside model capacity",
+            ));
+        }
+        if wanted.len() != windows.len()
+            || windows
+                .iter()
+                .zip(wanted)
+                .any(|(window, flags)| window.len() != flags.len())
+        {
+            return Err(Error::Batch("one wanted flag is required per syllable"));
+        }
+        // Consecutive windows scored together, up to the row budget.
+        let mut chunks = Vec::new();
+        let (mut first, mut rows) = (0, 0);
+        for (index, window) in windows.iter().enumerate() {
+            if rows > 0 && rows + window.len() > ROW_BUDGET {
+                chunks.push(first..index);
+                (first, rows) = (index, 0);
+            }
+            rows += window.len();
+        }
+        chunks.push(first..windows.len());
+        let mut results = Vec::with_capacity(windows.len());
+        for chunk in chunks {
+            let (Some(windows), Some(wanted)) = (windows.get(chunk.clone()), wanted.get(chunk))
+            else {
+                return Err(Error::Batch("window chunk outside the batch"));
+            };
+            let rows = windows.iter().map(|window| window.len()).sum();
+            results.extend(run_on_cpu(
+                #[inline(always)]
+                || self.forward::<true>(windows, wanted, rows),
+                #[inline(always)]
+                || self.forward::<false>(windows, wanted, rows),
+            )?);
+        }
+        Ok(results)
+    }
+
     /// Scores stacked windows of `rows` syllables in total.
     #[inline(always)]
     fn forward<const FMA: bool>(
