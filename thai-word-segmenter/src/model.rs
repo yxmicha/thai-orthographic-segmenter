@@ -198,6 +198,22 @@ impl ClusterModelConfig {
         self.character_dimension
     }
 
+    /// Sets the width of each character embedding.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// let config = ClusterModelConfig::new().with_character_dimension(4);
+    /// assert_eq!(config.character_dimension(), 4);
+    /// ```
+    #[must_use]
+    pub const fn with_character_dimension(mut self, character_dimension: usize) -> Self {
+        self.character_dimension = character_dimension;
+        self
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
