@@ -312,6 +312,36 @@ impl InferenceModel {
         Self::from_checkpoint(config, Checkpoint::from_tensors(tensors)?)
     }
 
+    /// Returns `keep logit - break logit` for every syllable of every window. Each window holds
+    /// between 1 and the model's syllable capacity of syllables and is scored independently.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Batch`] when a window is empty or longer than the model capacity, or
+    /// another [`Error`] when the engine rejects the operands.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use thai_word_segmenter::{inference::InferenceModel, model::ClusterModelConfig};
+    /// # let config: ClusterModelConfig = serde_json::from_slice(&std::fs::read("config.json")?)?;
+    /// # let inference = InferenceModel::from_weight_bytes(&config, &std::fs::read("model.safetensors")?)?;
+    /// use thai_word_segmenter::Error;
+    ///
+    /// let scores = inference.differences(&[&["การ", "เรียน"][..]])?;
+    /// assert_eq!(scores[0].len(), 2); // keep logit minus break logit per syllable
+    /// // A window must hold between one syllable and the model capacity.
+    /// assert!(matches!(inference.differences(&[&[][..]]), Err(Error::Batch(_))));
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn differences(&self, windows: &[&[&str]]) -> Result<Vec<Vec<f32>>, Error> {
+        let wanted = windows
+            .iter()
+            .map(|window| vec![true; window.len()])
+            .collect::<Vec<_>>();
+        self.differences_wanted(windows, &wanted)
+    }
+
     /// Like [`Self::differences`], but the last layer runs only for syllables flagged in
     /// `wanted` (one flag per syllable of each window). Their scores are identical to those of
     /// [`Self::differences`]; the other syllables still inform every score but are reported
