@@ -85,3 +85,49 @@ pub struct ClusterModel {
     pub(crate) encoder: TransformerEncoder,
     pub(crate) boundary: Linear,
 }
+
+impl ClusterModel {
+
+    /// Returns two-class logits with shape `[batch, syllables, 2]`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use burn::tensor::Device;
+    /// # use thai_word_segmenter::{model::ClusterModelConfig, network::ClusterModel};
+    /// # let config = ClusterModelConfig::new()
+    /// #     .with_model_dimension(32)
+    /// #     .with_feed_forward_dimension(64)
+    /// #     .with_heads(4)
+    /// #     .with_layers(2)
+    /// #     .with_character_dimension(4)
+    /// #     .with_syllable_dimension(8)
+    /// #     .with_max_characters(6)
+    /// #     .with_syllable_buckets(64)
+    /// #     .with_dropout(0.0);
+    /// # let device = Device::flex();
+    /// use thai_word_segmenter::{encoding::EncodedBatch, network::ClusterInput};
+    ///
+    /// let input = ClusterInput::new(EncodedBatch::new(&[&["การ", "เรียน"][..]], &config)?, &device);
+    /// let logits = ClusterModel::new(&config, &device)?.forward(input);
+    /// assert_eq!(logits.dims(), [1, 8, 2]); // KEEP and BREAK logits per syllable slot
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    #[must_use]
+    pub fn forward(&self, input: ClusterInput) -> Tensor<3> {
+        let [batch, length] = input.syllables.dims();
+        let [_, character_slots] = input.characters.dims();
+        let embeddings = self.characters.forward(input.characters);
+        let [_, _, dimension] = embeddings.dims();
+        let ordered = embeddings.reshape([batch, length, character_slots / length * dimension]);
+        let whole = self.syllables.forward(input.syllables);
+        let projected = self
+            .projection
+            .forward(Tensor::cat(vec![ordered, whole], 2))
+            + self.positions.forward(input.positions);
+        let encoded = self
+            .encoder
+            .forward(TransformerEncoderInput::new(projected).mask_pad(input.padding));
+        self.boundary.forward(encoded)
+    }
+}
