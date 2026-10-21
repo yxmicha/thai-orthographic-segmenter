@@ -124,6 +124,20 @@ impl ClusterModelConfig {
         }
     }
 
+    /// Maximum syllables in one contextual window.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// assert_eq!(ClusterModelConfig::new().max_syllables(), 128);
+    /// ```
+    #[must_use]
+    pub const fn max_syllables(&self) -> usize {
+        self.max_syllables
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
