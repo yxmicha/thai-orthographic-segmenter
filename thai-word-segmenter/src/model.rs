@@ -138,6 +138,22 @@ impl ClusterModelConfig {
         self.max_syllables
     }
 
+    /// Sets the maximum syllables in one contextual window.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// let config = ClusterModelConfig::new().with_max_syllables(64);
+    /// assert_eq!(config.max_syllables(), 64);
+    /// ```
+    #[must_use]
+    pub const fn with_max_syllables(mut self, max_syllables: usize) -> Self {
+        self.max_syllables = max_syllables;
+        self
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
