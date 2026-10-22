@@ -318,6 +318,22 @@ impl ClusterModelConfig {
         self.feed_forward_dimension
     }
 
+    /// Sets the transformer feed-forward width.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// let config = ClusterModelConfig::new().with_feed_forward_dimension(64);
+    /// assert_eq!(config.feed_forward_dimension(), 64);
+    /// ```
+    #[must_use]
+    pub const fn with_feed_forward_dimension(mut self, feed_forward_dimension: usize) -> Self {
+        self.feed_forward_dimension = feed_forward_dimension;
+        self
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
