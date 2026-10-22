@@ -364,6 +364,20 @@ impl ClusterModelConfig {
         self
     }
 
+    /// Number of contextual layers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// assert_eq!(ClusterModelConfig::new().layers(), 4);
+    /// ```
+    #[must_use]
+    pub const fn layers(&self) -> usize {
+        self.layers
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
