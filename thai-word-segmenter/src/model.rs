@@ -348,6 +348,22 @@ impl ClusterModelConfig {
         self.heads
     }
 
+    /// Sets the attention heads per layer.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// let config = ClusterModelConfig::new().with_heads(4);
+    /// assert_eq!(config.heads(), 4);
+    /// ```
+    #[must_use]
+    pub const fn with_heads(mut self, heads: usize) -> Self {
+        self.heads = heads;
+        self
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
