@@ -378,6 +378,22 @@ impl ClusterModelConfig {
         self.layers
     }
 
+    /// Sets the number of contextual layers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// let config = ClusterModelConfig::new().with_layers(2);
+    /// assert_eq!(config.layers(), 2);
+    /// ```
+    #[must_use]
+    pub const fn with_layers(mut self, layers: usize) -> Self {
+        self.layers = layers;
+        self
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
