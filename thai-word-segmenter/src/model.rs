@@ -274,6 +274,20 @@ impl ClusterModelConfig {
         self
     }
 
+    /// Transformer width.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// assert_eq!(ClusterModelConfig::new().model_dimension(), 192);
+    /// ```
+    #[must_use]
+    pub const fn model_dimension(&self) -> usize {
+        self.model_dimension
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
