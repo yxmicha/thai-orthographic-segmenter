@@ -334,6 +334,20 @@ impl ClusterModelConfig {
         self
     }
 
+    /// Attention heads per layer.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// assert_eq!(ClusterModelConfig::new().heads(), 6);
+    /// ```
+    #[must_use]
+    pub const fn heads(&self) -> usize {
+        self.heads
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
