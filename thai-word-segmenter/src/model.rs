@@ -244,6 +244,20 @@ impl ClusterModelConfig {
         self
     }
 
+    /// Width of the whole-syllable embedding.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// assert_eq!(ClusterModelConfig::new().syllable_dimension(), 32);
+    /// ```
+    #[must_use]
+    pub const fn syllable_dimension(&self) -> usize {
+        self.syllable_dimension
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
