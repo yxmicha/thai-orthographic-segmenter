@@ -134,6 +134,63 @@ pub struct ClusterModel {
 }
 
 impl ClusterModel {
+    /// Initializes a network with the dimensions of `config`, for CPU inference or training.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Config`] when the configuration is invalid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use burn::tensor::Device;
+    /// # use thai_word_segmenter::{model::ClusterModelConfig, network::ClusterModel};
+    /// # let config = ClusterModelConfig::new()
+    /// #     .with_model_dimension(32)
+    /// #     .with_feed_forward_dimension(64)
+    /// #     .with_heads(4)
+    /// #     .with_layers(2)
+    /// #     .with_character_dimension(4)
+    /// #     .with_syllable_dimension(8)
+    /// #     .with_max_characters(6)
+    /// #     .with_syllable_buckets(64)
+    /// #     .with_dropout(0.0);
+    /// # let device = Device::flex();
+    /// let model = ClusterModel::new(&config, &device)?;
+    /// # drop(model);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn new(config: &ClusterModelConfig, device: &Device) -> Result<Self, Error> {
+        config.validate()?;
+        let ordered_width = config
+            .max_characters
+            .checked_mul(config.character_dimension)
+            .and_then(|width| width.checked_add(config.syllable_dimension))
+            .ok_or(Error::Config("cluster input width overflow"))?;
+        let model = Self {
+            characters: EmbeddingConfig::new(CHARACTER_VOCABULARY_SIZE, config.character_dimension)
+                .init(device),
+            syllables: EmbeddingConfig::new(config.syllable_buckets, config.syllable_dimension)
+                .init(device),
+            projection: LinearConfig::new(ordered_width, config.model_dimension).init(device),
+            positions: EmbeddingConfig::new(config.max_syllables, config.model_dimension)
+                .init(device),
+            encoder: TransformerEncoderConfig::new(
+                config.model_dimension,
+                config.feed_forward_dimension,
+                config.heads,
+                config.layers,
+            )
+            .with_dropout(config.dropout)
+            .with_norm_first(true)
+            .init(device),
+            boundary: LinearConfig::new(config.model_dimension, 2).init(device),
+        };
+        // Burn clones uninitialized parameters independently; initialize before a
+        // checkpoint clone can produce different random weights from this model.
+        model.visit(&mut InitializeParameters);
+        Ok(model)
+    }
 
     /// Returns two-class logits with shape `[batch, syllables, 2]`.
     ///
