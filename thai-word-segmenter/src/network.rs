@@ -178,3 +178,5 @@ impl ClusterModel {
         self.boundary.forward(encoded)
     }
 }
+
+struct InitializeParameters;
