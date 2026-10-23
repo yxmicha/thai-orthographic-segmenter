@@ -408,6 +408,22 @@ impl ClusterModelConfig {
         self.dropout
     }
 
+    /// Sets the training dropout; zero for inference.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// let config = ClusterModelConfig::new().with_dropout(0.0);
+    /// assert_eq!(config.dropout(), 0.0);
+    /// ```
+    #[must_use]
+    pub const fn with_dropout(mut self, dropout: f64) -> Self {
+        self.dropout = dropout;
+        self
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
