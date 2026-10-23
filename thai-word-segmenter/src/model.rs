@@ -394,6 +394,20 @@ impl ClusterModelConfig {
         self
     }
 
+    /// Training dropout; zero for inference.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// assert_eq!(ClusterModelConfig::new().dropout(), 0.1);
+    /// ```
+    #[must_use]
+    pub const fn dropout(&self) -> f64 {
+        self.dropout
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
