@@ -16,6 +16,12 @@ use burn_nn::{
     transformer::{TransformerEncoder, TransformerEncoderConfig, TransformerEncoderInput},
 };
 
+use crate::{
+    Error,
+    encoding::{CHARACTER_VOCABULARY_SIZE, EncodedBatch},
+    model::ClusterModelConfig,
+};
+
 /// Padded features consumed by the contextual model.
 ///
 /// # Examples
@@ -51,6 +57,47 @@ pub struct ClusterInput {
     pub(crate) positions: Tensor<2, Int>,
     /// Padding mask, true at missing syllables.
     pub(crate) padding: Tensor<2, Bool>,
+}
+
+impl ClusterInput {
+    /// Materializes tensors on `device` from an encoded batch.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use burn::tensor::Device;
+    /// # use thai_word_segmenter::model::ClusterModelConfig;
+    /// # let config = ClusterModelConfig::new()
+    /// #     .with_model_dimension(32)
+    /// #     .with_feed_forward_dimension(64)
+    /// #     .with_heads(4)
+    /// #     .with_layers(2)
+    /// #     .with_character_dimension(4)
+    /// #     .with_syllable_dimension(8)
+    /// #     .with_max_characters(6)
+    /// #     .with_syllable_buckets(64)
+    /// #     .with_dropout(0.0);
+    /// use thai_word_segmenter::{encoding::EncodedBatch, network::ClusterInput};
+    ///
+    /// let batch = EncodedBatch::new(&[&["การ"][..]], &config)?;
+    /// let input = ClusterInput::new(batch, &Device::flex());
+    /// # drop(input);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    #[must_use]
+    pub fn new(batch: EncodedBatch, device: &Device) -> Self {
+        let shape = [batch.rows, batch.length];
+        let character_slots = batch.characters.len() / batch.rows;
+        Self {
+            characters: Tensor::from_data(
+                TensorData::new(batch.characters, [batch.rows, character_slots]),
+                device,
+            ),
+            syllables: Tensor::from_data(TensorData::new(batch.syllables, shape), device),
+            positions: Tensor::from_data(TensorData::new(batch.positions, shape), device),
+            padding: Tensor::from_data(TensorData::new(batch.padding, shape), device),
+        }
+    }
 }
 
 /// Scores KEEP/BREAK after each syllable while retaining its internal character order.
