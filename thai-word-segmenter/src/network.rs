@@ -180,3 +180,9 @@ impl ClusterModel {
 }
 
 struct InitializeParameters;
+
+impl ModuleVisitor for InitializeParameters {
+    fn visit_float<const D: usize>(&mut self, parameter: &Param<Tensor<D>>) {
+        drop(parameter.val());
+    }
+}
