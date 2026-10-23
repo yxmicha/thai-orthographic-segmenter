@@ -438,6 +438,22 @@ impl ClusterModelConfig {
         self.break_threshold
     }
 
+    /// Sets the validation-selected BREAK probability threshold.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::model::ClusterModelConfig;
+    ///
+    /// let config = ClusterModelConfig::new().with_break_threshold(0.6);
+    /// assert_eq!(config.break_threshold(), 0.6);
+    /// ```
+    #[must_use]
+    pub const fn with_break_threshold(mut self, break_threshold: f32) -> Self {
+        self.break_threshold = break_threshold;
+        self
+    }
+
     /// Rejects dimensions that cannot be encoded or attended safely.
     ///
     /// # Errors
