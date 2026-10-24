@@ -270,6 +270,48 @@ impl ClusterModel {
             .map_err(|error| Error::CheckpointLoad(Box::new(error)))
     }
 
+    /// Loads weights from in-memory burnpack bytes with the configuration that produced them.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::CheckpointLoad`] when `bytes` are not a burnpack record matching the
+    /// configuration, or [`Error::Config`] when the configuration is invalid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use burn::tensor::Device;
+    /// # use thai_word_segmenter::{model::ClusterModelConfig, network::ClusterModel};
+    /// # let config = ClusterModelConfig::new()
+    /// #     .with_model_dimension(32)
+    /// #     .with_feed_forward_dimension(64)
+    /// #     .with_heads(4)
+    /// #     .with_layers(2)
+    /// #     .with_character_dimension(4)
+    /// #     .with_syllable_dimension(8)
+    /// #     .with_max_characters(6)
+    /// #     .with_syllable_buckets(64)
+    /// #     .with_dropout(0.0);
+    /// # let device = Device::flex();
+    /// let directory = tempfile::tempdir()?;
+    /// let path = directory.path().join("model.bpk");
+    /// ClusterModel::new(&config, &device)?.save(&path)?;
+    /// let model = ClusterModel::from_weight_bytes(&config, &std::fs::read(&path)?, &device)?;
+    /// # drop(model);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn from_weight_bytes(
+        config: &ClusterModelConfig,
+        bytes: &[u8],
+        device: &Device,
+    ) -> Result<Self, Error> {
+        let record = ModuleRecord::from_bytes(Bytes::from_bytes_vec(bytes.to_vec()))
+            .map_err(|error| Error::CheckpointLoad(Box::new(error)))?;
+        Self::new(config, device)?
+            .try_load_record(record)
+            .map_err(|error| Error::CheckpointLoad(Box::new(error)))
+    }
+
     /// Returns two-class logits with shape `[batch, syllables, 2]`.
     ///
     /// # Examples
