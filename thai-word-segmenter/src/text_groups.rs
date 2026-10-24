@@ -37,4 +37,9 @@ impl TextGroups {
     pub fn get(&self, index: usize) -> Option<&Range<usize>> {
         self.0.get(index)
     }
+
+    /// Number of groups.
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
 }
