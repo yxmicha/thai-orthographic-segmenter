@@ -32,4 +32,9 @@ impl TextGroups {
         }
         Self(groups)
     }
+
+    /// The text-index range of group `index`, if it exists.
+    pub fn get(&self, index: usize) -> Option<&Range<usize>> {
+        self.0.get(index)
+    }
 }
