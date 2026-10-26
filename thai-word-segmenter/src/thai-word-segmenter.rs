@@ -75,5 +75,6 @@ pub mod network;
 
 mod error;
 mod text_groups;
+mod text_runs;
 
 pub use error::Error;
