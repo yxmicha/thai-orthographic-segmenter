@@ -1,4 +1,6 @@
 use std::ops::Range;
+
+use crate::Error;
 use thai_syllable_rules::ThaiScalar;
 
 /// The syllable pieces of one text, grouped into maximal runs that are entirely Thai or not.
@@ -34,5 +36,52 @@ impl<'a> TextRuns<'a> {
             .iter()
             .filter(|(_, thai)| *thai)
             .filter_map(|(range, _)| self.pieces.get(range.clone()))
+    }
+
+    /// Byte ranges of the text's segments before punctuation attachment. Each Thai run splits
+    /// after the syllables its next entry of `breaks` marks, and the last syllable always ends a
+    /// segment. Non-Thai pieces stay whole, except that closing punctuation at the start of
+    /// one is split off so it can attach to the word before it.
+    pub fn ranges(
+        &self,
+        breaks: &mut impl Iterator<Item = Vec<bool>>,
+    ) -> Result<Vec<Range<usize>>, Error> {
+        let mut ranges = Vec::new();
+        let mut start = 0;
+        for (range, thai) in &self.runs {
+            let run = self
+                .pieces
+                .get(range.clone())
+                .ok_or(Error::Ranges("run outside the pieces"))?;
+            if *thai {
+                let run_breaks = breaks.next().ok_or(Error::Scores("missing run breaks"))?;
+                let mut end = start;
+                for (index, syllable) in run.iter().enumerate() {
+                    end += syllable.len();
+                    if run_breaks.get(index).copied().unwrap_or(false) || index + 1 == run.len() {
+                        ranges.push(start..end);
+                        start = end;
+                    }
+                }
+                continue;
+            }
+            for piece in run {
+                let punctuation_prefix_length = piece
+                    .chars()
+                    .take_while(|character| {
+                        matches!(character, '.' | '…' | '’' | '”' | ')' | ']' | '}')
+                    })
+                    .map(char::len_utf8)
+                    .sum::<usize>();
+                if punctuation_prefix_length > 0 && punctuation_prefix_length < piece.len() {
+                    ranges.push(start..start + punctuation_prefix_length);
+                    ranges.push(start + punctuation_prefix_length..start + piece.len());
+                } else {
+                    ranges.push(start..start + piece.len());
+                }
+                start += piece.len();
+            }
+        }
+        Ok(ranges)
     }
 }
