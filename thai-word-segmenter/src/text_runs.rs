@@ -27,4 +27,12 @@ impl<'a> TextRuns<'a> {
             .collect();
         Self { pieces, runs }
     }
+
+    /// The syllables of every Thai run, in text order.
+    pub fn thai_runs(&self) -> impl Iterator<Item = &[&'a str]> {
+        self.runs
+            .iter()
+            .filter(|(_, thai)| *thai)
+            .filter_map(|(range, _)| self.pieces.get(range.clone()))
+    }
 }
