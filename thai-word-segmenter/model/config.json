@@ -1,0 +1,13 @@
+{
+  "max_syllables": 128,
+  "max_characters": 48,
+  "character_dimension": 16,
+  "syllable_buckets": 16384,
+  "syllable_dimension": 32,
+  "model_dimension": 256,
+  "feed_forward_dimension": 1024,
+  "heads": 8,
+  "layers": 6,
+  "dropout": 0.1,
+  "break_threshold": 0.5
+}
