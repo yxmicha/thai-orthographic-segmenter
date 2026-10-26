@@ -76,5 +76,6 @@ pub mod network;
 mod error;
 mod text_groups;
 mod text_runs;
+mod word_segmenter;
 
 pub use error::Error;
