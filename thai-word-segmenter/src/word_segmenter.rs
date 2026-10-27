@@ -153,6 +153,46 @@ impl WordSegmenter {
         })
     }
 
+    /// Returns the [`Self::ranges`] of every text, scoring all of their Thai runs together.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Syllables`] when a Thai run is longer than 4,096 scalars, or another [`Error`]
+    /// when the model cannot score a window.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::WordSegmenter;
+    ///
+    /// let segmenter = WordSegmenter::new()?;
+    /// assert_eq!(segmenter.ranges_many(&["ในปฐมกาล", "พระวาทะ"])?, [vec![0..24], vec![0..21]]);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn ranges_many(&self, texts: &[&str]) -> Result<Vec<Vec<Range<usize>>>, Error> {
+        let layouts = texts
+            .iter()
+            .map(|text| Ok(TextRuns::new(self.syllables.split(text)?)))
+            .collect::<Result<Vec<_>, Error>>()?;
+        let thai_runs = layouts
+            .iter()
+            .flat_map(TextRuns::thai_runs)
+            .collect::<Vec<_>>();
+        let mut breaks = self.breaks(&thai_runs)?.into_iter();
+        texts
+            .iter()
+            .zip(&layouts)
+            .map(|(text, layout)| {
+                let ranges = layout.ranges(&mut breaks)?;
+                if text.is_empty() {
+                    Ok(ranges)
+                } else {
+                    SourceText::new(text).attach_punctuation(&ranges)
+                }
+            })
+            .collect()
+    }
+
     /// Dictionary-protected BREAK decisions for every syllable of every Thai run.
     fn breaks(&self, runs: &[&[&str]]) -> Result<Vec<Vec<bool>>, Error> {
         let mut spans = Vec::new();
