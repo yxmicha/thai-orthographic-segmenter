@@ -35,3 +35,11 @@ pub struct WordSegmenter {
     model: InferenceModel,
     dictionary: ClusterDictionary,
 }
+
+impl std::fmt::Debug for WordSegmenter {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("WordSegmenter")
+            .finish_non_exhaustive()
+    }
+}
