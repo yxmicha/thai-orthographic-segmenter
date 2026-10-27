@@ -1,3 +1,13 @@
+use std::{
+    fs::File,
+    io::BufReader,
+    num::NonZeroUsize,
+    ops::Range,
+    path::Path,
+    sync::atomic::{AtomicUsize, Ordering},
+    thread,
+};
+
 use thai_syllable_segmenter::SyllableSegmenter;
 
 use crate::{
@@ -90,6 +100,51 @@ impl WordSegmenter {
             serde_json::from_str(BUNDLED_CONFIG).map_err(Error::ConfigFormat)?;
         let dictionary = ClusterDictionary::read(dictionary_text.as_bytes())?;
         let model = InferenceModel::from_weight_bytes(&config, BUNDLED_WEIGHTS)?;
+        Ok(Self {
+            syllables: SyllableSegmenter::new()?,
+            config,
+            model,
+            dictionary,
+        })
+    }
+
+    /// Loads a trained artifact directory containing `config.json`, `dictionary.txt`, and
+    /// `model.safetensors`, in 32-bit floats or the compact 16-bit or 8-bit forms that the
+    /// `convert-checkpoint` example of `thai-syllable-segmenter` writes from a training run's
+    /// burnpack.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Open`] when an artifact file is missing, [`Error::ConfigFormat`] or
+    /// [`Error::Config`] for an invalid configuration, [`Error::DictionaryEntry`] for an invalid
+    /// dictionary entry, or [`Error::CheckpointLoad`] when the weights cannot be read.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use thai_word_segmenter::WordSegmenter;
+    ///
+    /// // An artifact directory holds `config.json`, `dictionary.txt` and `model.safetensors`.
+    /// let segmenter = WordSegmenter::load("path/to/artifact")?;
+    /// let words = segmenter.split("ในปฐมกาล")?;
+    /// assert_eq!(words.concat(), "ในปฐมกาล");
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn load(directory: impl AsRef<Path>) -> Result<Self, Error> {
+        let directory = directory.as_ref();
+        let open = |name: &str| {
+            let path = directory.join(name);
+            File::open(&path).map_err(|source| Error::Open { path, source })
+        };
+        let config: ClusterModelConfig =
+            serde_json::from_reader(open("config.json")?).map_err(Error::ConfigFormat)?;
+        let dictionary = ClusterDictionary::read(BufReader::new(open("dictionary.txt")?))?;
+        let weights_path = directory.join("model.safetensors");
+        let weights = std::fs::read(&weights_path).map_err(|source| Error::Open {
+            path: weights_path,
+            source,
+        })?;
+        let model = InferenceModel::from_weight_bytes(&config, &weights)?;
         Ok(Self {
             syllables: SyllableSegmenter::new()?,
             config,
