@@ -152,4 +152,61 @@ impl WordSegmenter {
             dictionary,
         })
     }
+
+    /// Dictionary-protected BREAK decisions for every syllable of every Thai run.
+    fn breaks(&self, runs: &[&[&str]]) -> Result<Vec<Vec<bool>>, Error> {
+        let mut spans = Vec::new();
+        let mut windows = Vec::new();
+        let mut wanted = Vec::new();
+        for (run_index, run) in runs.iter().enumerate() {
+            let protected = self.dictionary.protected_gaps(run);
+            for start in (0..run.len()).step_by(OWNED_SYLLABLES) {
+                let left = start.saturating_sub(CONTEXT_SYLLABLES);
+                let end = (start + OWNED_SYLLABLES).min(run.len());
+                let right = (end + CONTEXT_SYLLABLES).min(run.len());
+                spans.push((run_index, start..end, start - left));
+                windows.push(
+                    run.get(left..right)
+                        .ok_or(Error::Ranges("window outside the run"))?,
+                );
+                // Only owned gaps that may break are read; the last syllable never breaks.
+                wanted.push(
+                    (left..right)
+                        .map(|index| {
+                            (start..end).contains(&index)
+                                && index + 1 < run.len()
+                                && !protected.get(index).copied().unwrap_or(true)
+                        })
+                        .collect::<Vec<_>>(),
+                );
+            }
+        }
+        let differences = self.model.differences_wanted(&windows, &wanted)?;
+        let mut probabilities = runs
+            .iter()
+            .map(|run| vec![0.0; run.len()])
+            .collect::<Vec<_>>();
+        for ((run_index, owned, skipped), window) in spans.into_iter().zip(&differences) {
+            let owned_differences =
+                window
+                    .get(skipped..skipped + owned.len())
+                    .ok_or(Error::Scores(
+                        "logits are shorter than the inference window",
+                    ))?;
+            let owned_probabilities = probabilities
+                .get_mut(run_index)
+                .and_then(|run| run.get_mut(owned))
+                .ok_or(Error::Scores("owned syllables outside their run"))?;
+            for (probability, difference) in owned_probabilities.iter_mut().zip(owned_differences) {
+                *probability = 1.0 / (1.0 + difference.exp());
+            }
+        }
+        runs.iter()
+            .zip(&probabilities)
+            .map(|(run, probabilities)| {
+                BoundaryScores::new(probabilities, self.config.break_threshold)
+                    .select_breaks(run, &self.dictionary)
+            })
+            .collect()
+    }
 }
