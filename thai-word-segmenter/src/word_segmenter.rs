@@ -45,6 +45,26 @@ impl std::fmt::Debug for WordSegmenter {
 }
 
 impl WordSegmenter {
+    /// Loads the bundled epoch-6 model with its 2-to-3-syllable dictionary.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error`] when the bundled model cannot be loaded, which indicates a corrupt
+    /// build.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::WordSegmenter;
+    ///
+    /// // Building a segmenter takes about 40 ms; build one and reuse it, from any number of threads.
+    /// let segmenter = WordSegmenter::new()?;
+    /// # drop(segmenter);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn new() -> Result<Self, Error> {
+        Self::with_dictionary(BUNDLED_DICTIONARY)
+    }
 
     /// Loads the bundled epoch-6 model with a custom newline-delimited dictionary.
     ///
