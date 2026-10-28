@@ -203,6 +203,39 @@ impl WordSegmenter {
             .unwrap_or_default())
     }
 
+    /// Segments several texts like [`Self::split`], scoring all of their Thai runs together.
+    /// The result is identical to splitting each text on its own but faster, because the model
+    /// weights are read once for many syllables. Memory grows with the total length of `texts`,
+    /// so pass bounded batches.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Syllables`] when a Thai run is longer than 4,096 scalars, or another [`Error`]
+    /// when the model cannot score a window.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::WordSegmenter;
+    ///
+    /// let segmenter = WordSegmenter::new()?;
+    /// let texts = ["ในปฐมกาล", "พระวาทะ"];
+    /// // The same result as splitting each text alone, but faster for many texts.
+    /// assert_eq!(
+    ///     segmenter.split_many(&texts)?,
+    ///     [segmenter.split(texts[0])?, segmenter.split(texts[1])?]
+    /// );
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn split_many<'a>(&self, texts: &[&'a str]) -> Result<Vec<Vec<&'a str>>, Error> {
+        let ranges = self.ranges_many(texts)?;
+        Ok(texts
+            .iter()
+            .zip(ranges)
+            .map(|(text, ranges)| ranges.into_iter().map(|range| &text[range]).collect())
+            .collect())
+    }
+
     /// Returns the [`Self::ranges`] of every text, scoring all of their Thai runs together.
     ///
     /// # Errors
