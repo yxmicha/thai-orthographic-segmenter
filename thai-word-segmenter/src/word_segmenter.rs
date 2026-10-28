@@ -153,6 +153,31 @@ impl WordSegmenter {
         })
     }
 
+    /// Segments text into words, compounds, bound forms, and punctuation-attached units.
+    /// Concatenating the returned slices reconstructs the input text exactly.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Syllables`] when a Thai run is longer than 4,096 scalars, or another [`Error`]
+    /// when the model cannot score a window.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::WordSegmenter;
+    ///
+    /// let segmenter = WordSegmenter::new()?;
+    /// let text = "ในปฐมกาลพระวาทะทรงดำรงอยู่";
+    /// let words = segmenter.split(text)?;
+    /// // Concatenating the slices reconstructs the input exactly.
+    /// assert_eq!(words.concat(), text);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn split<'a>(&self, text: &'a str) -> Result<Vec<&'a str>, Error> {
+        let ranges = self.ranges(text)?;
+        Ok(ranges.into_iter().map(|range| &text[range]).collect())
+    }
+
     /// Returns byte ranges of the [`Self::split`] segments, including preserved whitespace and
     /// non-Thai text.
     ///
