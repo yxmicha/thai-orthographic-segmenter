@@ -236,6 +236,76 @@ impl WordSegmenter {
             .collect())
     }
 
+    /// Like [`Self::ranges_many`], spread over up to `threads` worker threads. Texts are divided
+    /// into consecutive groups of similar total length, and workers claim groups as they finish
+    /// their previous one.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Syllables`] when a Thai run is longer than 4,096 scalars, or another [`Error`]
+    /// when the model cannot score a window.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::num::NonZeroUsize;
+    /// use thai_word_segmenter::WordSegmenter;
+    ///
+    /// let segmenter = WordSegmenter::new()?;
+    /// let texts = ["ในปฐมกาล", "พระวาทะ"];
+    /// let threads = NonZeroUsize::new(2).expect("two is not zero");
+    /// assert_eq!(segmenter.ranges_many_on(&texts, threads)?, [vec![0..24], vec![0..21]]);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn ranges_many_on(
+        &self,
+        texts: &[&str],
+        threads: NonZeroUsize,
+    ) -> Result<Vec<Vec<Range<usize>>>, Error> {
+        let workers = threads.get().min(texts.len()).max(1);
+        if workers == 1 {
+            return self.ranges_many(texts);
+        }
+        // Many small groups, claimed one at a time, keep fast and slow cores equally busy.
+        let groups = TextGroups::plan(texts, workers);
+        let next = AtomicUsize::new(0);
+        thread::scope(|scope| {
+            let handles = (0..workers.min(groups.len()))
+                .map(|_| {
+                    scope.spawn(|| {
+                        let mut finished = Vec::new();
+                        loop {
+                            let index = next.fetch_add(1, Ordering::Relaxed);
+                            let Some(group) = groups.get(index) else {
+                                break;
+                            };
+                            let Some(group_texts) = texts.get(group.clone()) else {
+                                break;
+                            };
+                            finished.push((index, self.ranges_many(group_texts)));
+                        }
+                        finished
+                    })
+                })
+                .collect::<Vec<_>>();
+            let mut by_group = (0..groups.len()).map(|_| None).collect::<Vec<_>>();
+            for handle in handles {
+                match handle.join() {
+                    Ok(finished) => {
+                        for (index, result) in finished {
+                            let ranges = result?;
+                            if let Some(slot) = by_group.get_mut(index) {
+                                *slot = Some(ranges);
+                            }
+                        }
+                    }
+                    Err(panic) => std::panic::resume_unwind(panic),
+                }
+            }
+            Ok(by_group.into_iter().flatten().flatten().collect())
+        })
+    }
+
     /// Returns the [`Self::ranges`] of every text, scoring all of their Thai runs together.
     ///
     /// # Errors
