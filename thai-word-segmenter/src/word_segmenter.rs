@@ -153,6 +153,31 @@ impl WordSegmenter {
         })
     }
 
+    /// Returns byte ranges of the [`Self::split`] segments, including preserved whitespace and
+    /// non-Thai text.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Syllables`] when a Thai run is longer than 4,096 scalars, or another [`Error`]
+    /// when the model cannot score a window.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_word_segmenter::WordSegmenter;
+    ///
+    /// let segmenter = WordSegmenter::new()?;
+    /// assert_eq!(segmenter.ranges("ในปฐมกาล")?, [0..24]);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn ranges(&self, text: &str) -> Result<Vec<Range<usize>>, Error> {
+        Ok(self
+            .ranges_many(&[text])?
+            .into_iter()
+            .next()
+            .unwrap_or_default())
+    }
+
     /// Returns the [`Self::ranges`] of every text, scoring all of their Thai runs together.
     ///
     /// # Errors
