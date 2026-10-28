@@ -236,6 +236,39 @@ impl WordSegmenter {
             .collect())
     }
 
+    /// Like [`Self::split_many`], spread over up to `threads` worker threads that share this
+    /// segmenter. The result is identical to the single-threaded one.
+    ///
+    /// # Errors
+    ///
+    /// [`Error::Syllables`] when a Thai run is longer than 4,096 scalars, or another [`Error`]
+    /// when the model cannot score a window.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::num::NonZeroUsize;
+    /// use thai_word_segmenter::WordSegmenter;
+    ///
+    /// let segmenter = WordSegmenter::new()?;
+    /// let texts = ["ในปฐมกาล", "พระวาทะ"];
+    /// let threads = NonZeroUsize::new(2).expect("two is not zero");
+    /// assert_eq!(segmenter.split_many_on(&texts, threads)?, segmenter.split_many(&texts)?);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn split_many_on<'a>(
+        &self,
+        texts: &[&'a str],
+        threads: NonZeroUsize,
+    ) -> Result<Vec<Vec<&'a str>>, Error> {
+        let ranges = self.ranges_many_on(texts, threads)?;
+        Ok(texts
+            .iter()
+            .zip(ranges)
+            .map(|(text, ranges)| ranges.into_iter().map(|range| &text[range]).collect())
+            .collect())
+    }
+
     /// Like [`Self::ranges_many`], spread over up to `threads` worker threads. Texts are divided
     /// into consecutive groups of similar total length, and workers claim groups as they finish
     /// their previous one.
