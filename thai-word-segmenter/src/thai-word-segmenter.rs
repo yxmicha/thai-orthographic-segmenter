@@ -79,6 +79,7 @@ mod text_runs;
 mod word_segmenter;
 
 pub use error::Error;
+pub use word_segmenter::WordSegmenter;
 
 #[cfg(doctest)]
 #[doc = include_str!("../README.md")]
