@@ -22,3 +22,9 @@ fn public_types_are_thread_safe_and_inspectable() {
     assert_send_sync_debug::<InferenceModel>();
     assert_send_sync_debug::<ClusterModelConfig>();
 }
+
+#[test]
+fn debug_output_is_never_empty() -> Result<(), Error> {
+    assert_ne!(format!("{:?}", WordSegmenter::new()?), "");
+    Ok(())
+}
