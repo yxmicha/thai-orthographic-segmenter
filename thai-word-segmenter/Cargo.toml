@@ -26,6 +26,11 @@ burn = ["dep:burn", "dep:burn-nn", "dep:burn-pack"]
 [lib]
 path = "src/thai-word-segmenter.rs"
 
+[[test]]
+name = "cluster_contracts"
+path = "tests/cluster_contracts.rs"
+required-features = ["burn"]
+
 [dependencies]
 burn = { workspace = true, optional = true }
 burn-nn = { workspace = true, optional = true }
