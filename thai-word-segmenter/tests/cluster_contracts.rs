@@ -1,4 +1,12 @@
 use std::{fs, io::Cursor, path::Path};
+use thai_word_segmenter::{
+    Error, WordSegmenter,
+    decoding::{BoundaryScores, SourceText},
+    dictionary::ClusterDictionary,
+    encoding::EncodedBatch,
+    model::ClusterModelConfig,
+    network::{ClusterInput, ClusterModel},
+};
 
 /// Rewrites a Burn burnpack of 32-bit tensors as the safetensors file `WordSegmenter::load` reads.
 fn burnpack_to_safetensors(
@@ -20,5 +28,23 @@ fn burnpack_to_safetensors(
         })
         .collect::<Result<Vec<_>, _>>()?;
     ::safetensors::serialize_to_file(views, None, safetensors)?;
+    Ok(())
+}
+
+#[test]
+fn dictionary_protects_initial_and_final_forms_without_attaching_the_next_word() -> Result<(), Error>
+{
+    let dictionary = ClusterDictionary::read(Cursor::new("การเรียน\nบริการ\nความสุข\nข้อความ\n"))?;
+    for parts in [
+        vec!["การ", "เรียน", "ดี"],
+        vec!["บริ", "การ", "ดี"],
+        vec!["ความ", "สุข", "ดี"],
+        vec!["ข้อ", "ความ", "ดี"],
+    ] {
+        let syllables = parts.into_iter().map(str::to_owned).collect::<Vec<_>>();
+        let breaks =
+            BoundaryScores::new(&[0.99, 0.99, 0.99], 0.5).select_breaks(&syllables, &dictionary)?;
+        assert_eq!(breaks, [false, true, false]);
+    }
     Ok(())
 }
