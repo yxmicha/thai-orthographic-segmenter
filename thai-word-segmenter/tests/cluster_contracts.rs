@@ -48,3 +48,11 @@ fn dictionary_protects_initial_and_final_forms_without_attaching_the_next_word()
     }
     Ok(())
 }
+
+#[test]
+fn overlapping_dictionary_entries_do_not_chain_into_a_larger_cluster() -> Result<(), Error> {
+    let dictionary = ClusterDictionary::read(Cursor::new("การเรียน\nเรียนรู้\n"))?;
+    let syllables = ["การ", "เรียน", "รู้"].map(str::to_owned);
+    assert_eq!(dictionary.protected_gaps(&syllables), [true, false, false]);
+    Ok(())
+}
