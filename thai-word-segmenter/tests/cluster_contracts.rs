@@ -1,4 +1,6 @@
 use std::{fs, io::Cursor, path::Path};
+
+use burn::tensor::Device;
 use thai_word_segmenter::{
     Error, WordSegmenter,
     decoding::{BoundaryScores, SourceText},
@@ -89,5 +91,58 @@ fn punctuation_attachment_preserves_spaces_quotes_and_original_text() -> Result<
             .attach_punctuation(&[0..2, std::ops::Range { start: 2, end: 1 }, 1..3])
             .is_err()
     );
+    Ok(())
+}
+
+#[test]
+fn full_precision_checkpoint_roundtrip_runs_source_preserving_inference()
+-> Result<(), Box<dyn std::error::Error>> {
+    let directory = tempfile::tempdir()?;
+    let config = ClusterModelConfig::new()
+        .with_model_dimension(32)
+        .with_feed_forward_dimension(64)
+        .with_heads(4)
+        .with_layers(1)
+        .with_character_dimension(4)
+        .with_syllable_dimension(8)
+        .with_max_characters(8)
+        .with_syllable_buckets(16)
+        .with_dropout(0.0);
+    let device = Device::flex();
+    let model = ClusterModel::new(&config, &device)?;
+    model.save(directory.path().join("model.bpk"))?;
+    burnpack_to_safetensors(
+        &directory.path().join("model.bpk"),
+        &directory.path().join("model.safetensors"),
+    )?;
+    fs::write(
+        directory.path().join("config.json"),
+        serde_json::to_string(&config)?,
+    )?;
+    fs::write(directory.path().join("dictionary.txt"), "การเรียน\nบริการ\n")?;
+    let restored = ClusterModel::load(&config, directory.path().join("model.bpk"), &device)?;
+    let syllables = ["การ".to_owned(), "เรียน".to_owned()];
+    let encoded = ClusterInput::new(EncodedBatch::new(&[&syllables], &config)?, &device);
+    let before = model
+        .forward(encoded.clone())
+        .into_data()
+        .try_to_vec::<f32>()?;
+    let after = restored.forward(encoded).into_data().try_to_vec::<f32>()?;
+    assert!(
+        before
+            .iter()
+            .zip(&after)
+            .all(|(left, right)| (left - right).abs() < 1.0e-6),
+        "before={before:?} after={after:?}"
+    );
+    let segmenter = WordSegmenter::load(directory.path())?;
+    let text = "“การเรียน” ดี! English 123 และบริการ";
+    assert_eq!(segmenter.split(text)?.concat(), text);
+    assert_eq!(segmenter.split("")?, [] as [&str; 0]);
+
+    assert!(matches!(
+        WordSegmenter::with_dictionary("การเรียน\nabc\n"),
+        Err(Error::DictionaryEntry(entry)) if entry == "abc"
+    ));
     Ok(())
 }
