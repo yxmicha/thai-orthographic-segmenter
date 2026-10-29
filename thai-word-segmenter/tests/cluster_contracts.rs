@@ -56,3 +56,38 @@ fn overlapping_dictionary_entries_do_not_chain_into_a_larger_cluster() -> Result
     assert_eq!(dictionary.protected_gaps(&syllables), [true, false, false]);
     Ok(())
 }
+
+#[test]
+fn punctuation_attachment_preserves_spaces_quotes_and_original_text() -> Result<(), Error> {
+    for (parts, expected) in [
+        (
+            vec!["“", "การเรียน", "” ", "ดี", "!"],
+            vec!["“การเรียน” ", "ดี!"],
+        ),
+        (vec!["\" ", "คำ", " \""], vec!["\" คำ \""]),
+    ] {
+        let text = parts.concat();
+        let mut cursor = 0;
+        let ranges = parts
+            .iter()
+            .map(|part| {
+                let start = cursor;
+                cursor += part.len();
+                start..cursor
+            })
+            .collect::<Vec<_>>();
+        let attached = SourceText::new(&text).attach_punctuation(&ranges)?;
+        let pieces = attached
+            .into_iter()
+            .map(|range| &text[range])
+            .collect::<Vec<_>>();
+        assert_eq!(pieces.concat(), text);
+        assert_eq!(pieces, expected);
+    }
+    assert!(
+        SourceText::new("abc")
+            .attach_punctuation(&[0..2, std::ops::Range { start: 2, end: 1 }, 1..3])
+            .is_err()
+    );
+    Ok(())
+}
