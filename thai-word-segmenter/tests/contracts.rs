@@ -32,3 +32,10 @@ fn quotation_marks_attach_to_their_words() -> Result<(), Error> {
     assert!(words.last().is_some_and(|word| word.ends_with('”')));
     Ok(())
 }
+
+#[test]
+fn custom_dictionary_protects_specified_word() -> Result<(), Error> {
+    let segmenter = WordSegmenter::with_dictionary("การเรียนรู้\n")?;
+    assert_eq!(segmenter.split("การเรียนรู้")?, vec!["การเรียนรู้"]);
+    Ok(())
+}
