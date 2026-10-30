@@ -47,3 +47,23 @@ fn splits_as_soon_as_non_thai_excluding_dots_begins() -> Result<(), Error> {
     assert_eq!(segmenter.split("ลง’1:51")?, vec!["ลง’", "1:51"]);
     Ok(())
 }
+
+#[test]
+fn one_segmenter_gives_identical_results_on_every_thread() -> Result<(), Error> {
+    let segmenter = WordSegmenter::new()?;
+    let split_all = || {
+        SAMPLE_TEXTS
+            .iter()
+            .map(|text| segmenter.split(text).ok())
+            .collect::<Vec<_>>()
+    };
+    let expected = split_all();
+    assert!(expected.iter().all(Option::is_some));
+    std::thread::scope(|scope| {
+        let workers = (0..4).map(|_| scope.spawn(split_all)).collect::<Vec<_>>();
+        for worker in workers {
+            assert_eq!(worker.join().expect("worker thread panicked"), expected);
+        }
+    });
+    Ok(())
+}
