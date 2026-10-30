@@ -1,3 +1,5 @@
+use std::num::NonZeroUsize;
+
 use thai_word_segmenter::{Error, WordSegmenter};
 
 const SAMPLE_TEXTS: [&str; 3] = ["ในปฐมกาลพระวาทะทรงดำรงอยู่", "“การเรียนสำคัญ”", "ฉันกินข้าว สวัสดี!"];
@@ -93,5 +95,27 @@ fn split_many_matches_splitting_each_text_alone() -> Result<(), Error> {
     for (text, ranges) in texts.iter().zip(ranges) {
         assert_eq!(ranges, segmenter.ranges(text)?);
     }
+    Ok(())
+}
+
+#[test]
+fn worker_threads_give_the_same_result_as_one_thread() -> Result<(), Error> {
+    let segmenter = WordSegmenter::new()?;
+    // Enough text for several groups, so workers must claim more than one.
+    let long = SAMPLE_TEXTS[0].repeat(4);
+    let texts = std::iter::repeat_n(long.as_str(), 8)
+        .chain(SAMPLE_TEXTS)
+        .chain(["", "English"])
+        .collect::<Vec<_>>();
+    let expected = segmenter.split_many(&texts)?;
+    for threads in [1, 3, 100] {
+        let threads = NonZeroUsize::new(threads).expect("nonzero thread count");
+        assert_eq!(segmenter.split_many_on(&texts, threads)?, expected);
+    }
+    let one = NonZeroUsize::MIN;
+    assert_eq!(
+        segmenter.split_many_on(&[], one)?,
+        [] as [std::vec::Vec<&str>; 0]
+    );
     Ok(())
 }
