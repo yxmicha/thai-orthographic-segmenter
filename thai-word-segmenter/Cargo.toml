@@ -31,6 +31,11 @@ name = "cluster_contracts"
 path = "tests/cluster_contracts.rs"
 required-features = ["burn"]
 
+[[test]]
+name = "inference"
+path = "tests/inference.rs"
+required-features = ["burn"]
+
 [dependencies]
 burn = { workspace = true, optional = true }
 burn-nn = { workspace = true, optional = true }
