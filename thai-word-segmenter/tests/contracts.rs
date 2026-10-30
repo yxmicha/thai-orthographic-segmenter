@@ -67,3 +67,31 @@ fn one_segmenter_gives_identical_results_on_every_thread() -> Result<(), Error> 
     });
     Ok(())
 }
+
+#[test]
+fn split_many_matches_splitting_each_text_alone() -> Result<(), Error> {
+    let segmenter = WordSegmenter::new()?;
+    // More than one inference window of syllables, plus empty, non-Thai, and mixed texts.
+    let long = SAMPLE_TEXTS[0].repeat(10);
+    let texts = [
+        SAMPLE_TEXTS[0],
+        "",
+        "English only 123",
+        SAMPLE_TEXTS[1],
+        long.as_str(),
+        SAMPLE_TEXTS[2],
+        "ปฐก.28:12",
+    ];
+    let batched = segmenter.split_many(&texts)?;
+    assert_eq!(batched.len(), texts.len());
+    for (text, words) in texts.iter().zip(&batched) {
+        assert_eq!(words, &segmenter.split(text)?);
+        assert_eq!(words.concat(), *text);
+    }
+    assert_eq!(segmenter.split_many(&[])?, [] as [std::vec::Vec<&str>; 0]);
+    let ranges = segmenter.ranges_many(&texts)?;
+    for (text, ranges) in texts.iter().zip(ranges) {
+        assert_eq!(ranges, segmenter.ranges(text)?);
+    }
+    Ok(())
+}
