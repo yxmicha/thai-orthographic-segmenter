@@ -39,3 +39,11 @@ fn custom_dictionary_protects_specified_word() -> Result<(), Error> {
     assert_eq!(segmenter.split("การเรียนรู้")?, vec!["การเรียนรู้"]);
     Ok(())
 }
+
+#[test]
+fn splits_as_soon_as_non_thai_excluding_dots_begins() -> Result<(), Error> {
+    let segmenter = WordSegmenter::new()?;
+    assert_eq!(segmenter.split("ปฐก.28:12")?, vec!["ปฐก.", "28:12"]);
+    assert_eq!(segmenter.split("ลง’1:51")?, vec!["ลง’", "1:51"]);
+    Ok(())
+}
