@@ -89,3 +89,41 @@ fn windows_outside_the_model_capacity_are_rejected() -> Result<(), Error> {
     ));
     Ok(())
 }
+
+#[test]
+fn skipping_unwanted_syllables_leaves_the_wanted_scores_unchanged() -> Result<(), Error> {
+    let config = small_config();
+    let model = ClusterModel::new(&config, &Device::flex())?;
+    let inference = InferenceModel::new(model, &config)?;
+    let first = ["การ", "เรียน", "สำคัญ", "ดี", "มาก"];
+    let second = ["ฉัน", "กิน", "ข้าว"];
+    let windows: [&[&str]; 2] = [&first, &second];
+    let all = inference.differences(&windows)?;
+    let wanted = vec![
+        vec![false, true, false, true, false],
+        vec![true, false, false],
+    ];
+    let some = inference.differences_wanted(&windows, &wanted)?;
+    for ((all, some), flags) in all.iter().zip(&some).zip(&wanted) {
+        for ((all, some), flag) in all.iter().zip(some).zip(flags) {
+            if *flag {
+                assert!((all - some).abs() < 1.0e-5, "{all} differs from {some}");
+            } else {
+                assert_eq!(*some, 0.0);
+            }
+        }
+    }
+    let none = vec![vec![false; 5], vec![false; 3]];
+    assert!(
+        inference
+            .differences_wanted(&windows, &none)?
+            .iter()
+            .flatten()
+            .all(|score| *score == 0.0)
+    );
+    assert!(matches!(
+        inference.differences_wanted(&windows, &[vec![true]]),
+        Err(Error::Batch(_))
+    ));
+    Ok(())
+}
