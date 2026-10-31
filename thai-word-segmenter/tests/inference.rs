@@ -72,3 +72,20 @@ fn windows_are_scored_independently_of_their_neighbours() -> Result<(), Error> {
     assert_eq!(together[1], alone[0]);
     Ok(())
 }
+
+#[test]
+fn windows_outside_the_model_capacity_are_rejected() -> Result<(), Error> {
+    let config = small_config();
+    let model = ClusterModel::new(&config, &Device::flex())?;
+    let inference = InferenceModel::new(model.clone(), &config)?;
+    let too_long = vec!["ก"; config.max_syllables() + 1];
+    assert!(matches!(
+        inference.differences(&[&too_long]),
+        Err(Error::Batch(_))
+    ));
+    assert!(matches!(
+        inference.differences(&[&[]]),
+        Err(Error::Batch(_))
+    ));
+    Ok(())
+}
