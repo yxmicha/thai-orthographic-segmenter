@@ -58,3 +58,56 @@ proptest! {
         prop_assert_eq!(together, alone);
     }
 }
+
+proptest! {
+    #[test]
+    fn attaching_punctuation_keeps_a_partition_for_any_partition(
+        source in text(),
+        cuts in proptest::collection::vec(any::<proptest::sample::Index>(), 0..6),
+    ) {
+        let mut offsets = (0..=source.len())
+            .filter(|offset| source.is_char_boundary(*offset))
+            .collect::<Vec<_>>();
+        let mut chosen = cuts
+            .iter()
+            .map(|cut| offsets[cut.index(offsets.len())])
+            .filter(|offset| *offset > 0 && *offset < source.len())
+            .collect::<Vec<_>>();
+        chosen.sort_unstable();
+        chosen.dedup();
+        offsets.clear();
+        let mut start = 0;
+        let mut ranges = Vec::new();
+        for cut in chosen.into_iter().chain([source.len()]) {
+            if cut > start {
+                ranges.push(start..cut);
+                start = cut;
+            }
+        }
+        let attached = SourceText::new(&source).attach_punctuation(&ranges)?;
+        let mut end = 0;
+        for range in &attached {
+            prop_assert_eq!(range.start, end);
+            end = range.end;
+        }
+        prop_assert_eq!(end, source.len());
+    }
+
+    #[test]
+    fn dictionaries_of_arbitrary_lines_are_rejected_or_built_never_panic(lines in text()) {
+        let _ = ClusterDictionary::read(lines.as_bytes());
+    }
+
+    #[test]
+    fn breaking_scores_never_panic_and_never_break_the_last_syllable(
+        scores in proptest::collection::vec(-0.5_f32..1.5, 1..12),
+        threshold in -0.5_f32..1.5,
+    ) {
+        let dictionary = ClusterDictionary::read("".as_bytes()).expect("an empty dictionary");
+        let syllables = vec!["ก"; scores.len()];
+        if let Ok(breaks) = BoundaryScores::new(&scores, threshold).select_breaks(&syllables, &dictionary) {
+            prop_assert_eq!(breaks.len(), scores.len());
+            prop_assert!(!breaks[breaks.len() - 1]);
+        }
+    }
+}
