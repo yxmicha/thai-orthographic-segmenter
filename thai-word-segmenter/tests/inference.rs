@@ -59,3 +59,16 @@ fn inference_model_matches_burn_forward_for_stacked_windows() -> Result<(), Erro
     }
     Ok(())
 }
+
+#[test]
+fn windows_are_scored_independently_of_their_neighbours() -> Result<(), Error> {
+    let config = small_config();
+    let model = ClusterModel::new(&config, &Device::flex())?;
+    let inference = InferenceModel::new(model.clone(), &config)?;
+    let first = ["การ", "เรียน", "ดี"];
+    let second = ["ฉัน", "กิน", "ข้าว", "เย็น"];
+    let together = inference.differences(&[&first, &second])?;
+    let alone = inference.differences(&[&second])?;
+    assert_eq!(together[1], alone[0]);
+    Ok(())
+}
