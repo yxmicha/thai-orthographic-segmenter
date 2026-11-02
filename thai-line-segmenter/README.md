@@ -4,3 +4,11 @@ Prepares Thai and mixed text for line breaking. It attaches punctuation to the t
 it and inserts zero-width joiners (U+200D) and zero-width spaces (U+200B) so that layout
 engines break lines only at word boundaries.
 
+## Installation
+
+```sh
+cargo add thai-line-segmenter
+```
+
+The minimum supported Rust version is 1.95.
+
