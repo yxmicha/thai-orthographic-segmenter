@@ -1,0 +1,28 @@
+[package]
+name = "thai-line-segmenter"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license = "(MIT OR Apache-2.0) AND Unicode-3.0"
+repository.workspace = true
+documentation = "https://docs.rs/thai-line-segmenter"
+categories.workspace = true
+keywords = ["thai", "line-breaking", "unicode", "nlp", "text"]
+description = "Thai line segmenter with script-aware punctuation attachment and zero-width joiner insertion"
+readme = "README.md"
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/thai-line-segmenter.rs"
+
+[dependencies]
+cedarwood.workspace = true
+regex.workspace = true
+thai-word-segmenter.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true

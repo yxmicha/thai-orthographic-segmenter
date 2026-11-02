@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "thai-line-segmenter",
     "thai-syllable-rules",
     "thai-syllable-segmenter",
     "thai-word-segmenter",
