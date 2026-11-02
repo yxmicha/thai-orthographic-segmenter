@@ -33,3 +33,24 @@ replaces the bundled ICU word list, a newline-delimited list of 26,390 entries. 
 constants `NON_BREAKING_SPACE`, `ZERO_WIDTH_JOINER` and `ZERO_WIDTH_SPACE` are public. Errors
 are `thai_line_segmenter::Error` (`Words` wraps a word-segmentation failure).
 
+## What it does
+
+The input is cut into Thai runs, punctuation prefixes and suffixes, and other text.
+
+1. **Other text** (Latin and so on) is copied unchanged. Attached punctuation is
+   concatenated.
+2. **Thai runs** are first cleaned: existing zero-width characters (U+200B, U+200C, U+200D,
+   U+FEFF) are removed and special spaces (U+00A0, U+202F, U+2009, U+200A, U+205F) become
+   ordinary spaces. The run is then split into words by
+   [`thai-word-segmenter`](https://docs.rs/thai-word-segmenter).
+3. Words are joined with **U+200B**, the break opportunities.
+4. Inside each word, the longest ICU dictionary words are found and joined with **U+200D**,
+   so a layout engine's own dictionary breaker cannot split the word there. A part of the word
+   the dictionary does not cover gets U+200D between each pair of neighbouring characters
+   that it could otherwise break apart.
+5. **Punctuation** prefixes (opening quotes and brackets, `$`, digits, dashes, ellipsis and
+   similar) and suffixes (closing quotes and brackets, `, . ! ? : ; % ๆ ฯ` and similar) are
+   joined to their Thai run with U+200D. Inside the attached punctuation, spaces become
+   non-breaking spaces (U+00A0), and neighbouring characters are joined with U+200D except
+   digit pairs and pairs touching an ordinary space.
+
