@@ -54,3 +54,11 @@ The input is cut into Thai runs, punctuation prefixes and suffixes, and other te
    non-breaking spaces (U+00A0), and neighbouring characters are joined with U+200D except
    digit pairs and pairs touching an ordinary space.
 
+## What it preserves
+
+Output differs from the input only by inserted U+200B and U+200D, spaces inside attached
+punctuation becoming U+00A0, and the cleaning of Thai runs described above (their existing
+zero-width characters are removed and special spaces become ordinary spaces). So for input
+without zero-width or special-space characters, deleting U+200B and U+200D and turning U+00A0
+back into U+0020 recovers the input.
+
