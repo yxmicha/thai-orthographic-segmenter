@@ -41,3 +41,4 @@
 //! A [`LineSegmenter`] is `Send + Sync`. Building one loads a word model, which takes about
 //! 40 ms, so build one and share it.
 
+mod error;
