@@ -62,3 +62,10 @@ zero-width characters are removed and special spaces become ordinary spaces). So
 without zero-width or special-space characters, deleting U+200B and U+200D and turning U+00A0
 back into U+0020 recovers the input.
 
+## Licence
+
+The code is licensed under MIT or Apache-2.0, at your option. The bundled word list
+`data/icu/th-icu.txt` is ICU's Thai dictionary (`thaidict.txt`), which is distributed under the
+[Unicode License v3](data/icu/LICENSE); that file holds the copyright and permission notice that
+the licence requires to accompany every copy. The crate's licence expression is therefore
+`(MIT OR Apache-2.0) AND Unicode-3.0`.
