@@ -42,3 +42,5 @@
 //! 40 ms, so build one and share it.
 
 mod error;
+/// Longest-match dictionary for ICU Thai break patterns.
+pub mod icu_dictionary;
