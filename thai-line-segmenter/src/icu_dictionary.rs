@@ -76,4 +76,63 @@ impl IcuDictionary {
         }
         Ok(Self { cedar })
     }
+
+    /// Finds the longest matching prefix word that leaves either nothing or a text that can itself
+    /// start with a dictionary word. Falls back to the longest match when none does.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_line_segmenter::icu_dictionary::IcuDictionary;
+    ///
+    /// let dictionary = IcuDictionary::new("ปฐม\nกาล\n")?;
+    /// assert_eq!(dictionary.longest_word("ปฐมกาล"), Some("ปฐม"));
+    /// assert_eq!(dictionary.longest_word("xyz"), None);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    #[must_use]
+    pub fn longest_word<'a>(&self, text: &'a str) -> Option<&'a str> {
+        let mut buffer = [0usize; INLINE_MATCHES];
+        let mut count = 0;
+        let mut overflow = Vec::new();
+
+        for (_, end_index) in self.cedar.common_prefix_iter(text) {
+            if count < buffer.len() {
+                buffer[count] = end_index;
+                count += 1;
+            } else if overflow.is_empty() {
+                overflow.reserve(buffer.len() * 2);
+                overflow.extend_from_slice(&buffer);
+                overflow.push(end_index);
+            } else {
+                overflow.push(end_index);
+            }
+        }
+
+        let slice = if overflow.is_empty() {
+            &mut buffer[..count]
+        } else {
+            &mut overflow[..]
+        };
+
+        if slice.is_empty() {
+            return None;
+        }
+
+        slice.sort_unstable_by(|left, right| right.cmp(left));
+        let longest = slice[0];
+        let end_index = slice
+            .iter()
+            .copied()
+            .find(|&end_index| {
+                let remaining_text = &text[end_index + 1..];
+                remaining_text.is_empty()
+                    || self
+                        .cedar
+                        .common_prefix_iter(remaining_text)
+                        .any(|(_, end_index)| end_index > MINIMUM_FOLLOWING_WORD_END_INDEX)
+            })
+            .unwrap_or(longest);
+        Some(&text[..=end_index])
+    }
 }
