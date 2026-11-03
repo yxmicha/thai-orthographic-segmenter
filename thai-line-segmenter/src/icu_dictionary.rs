@@ -2,6 +2,8 @@
 
 use cedarwood::Cedar;
 
+use crate::Error;
+
 /// A following dictionary word must end beyond this byte index, which means it spans more than one
 /// Thai character, for the preceding match to be accepted as a word boundary.
 const MINIMUM_FOLLOWING_WORD_END_INDEX: usize = 3;
@@ -46,4 +48,32 @@ pub struct IcuSegmentation<'a> {
     pub words: Vec<&'a str>,
     /// Text after the last dictionary word, or `None` when the words cover the whole text.
     pub remainder: Option<&'a str>,
+}
+
+impl IcuDictionary {
+    /// Creates an ICU dictionary from newline-separated word entries. Fails for an entry that
+    /// contains a NUL character.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::IcuDictionary`] when an entry contains a NUL character.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_line_segmenter::{Error, icu_dictionary::IcuDictionary};
+    ///
+    /// assert!(IcuDictionary::new("ปฐม\nกาล\n").is_ok());
+    /// // A NUL character cannot be stored in the trie.
+    /// assert!(matches!(IcuDictionary::new("a\0b"), Err(Error::IcuDictionary(_))));
+    /// ```
+    pub fn new(words: &str) -> Result<Self, Error> {
+        let mut cedar = Cedar::new();
+        for word in words.split('\n').filter(|word| !word.is_empty()) {
+            cedar
+                .update(word, ENTRY_VALUE)
+                .map_err(|error| Error::IcuDictionary(Box::new(error)))?;
+        }
+        Ok(Self { cedar })
+    }
 }
