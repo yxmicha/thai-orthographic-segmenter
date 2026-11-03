@@ -135,4 +135,30 @@ impl IcuDictionary {
             .unwrap_or(longest);
         Some(&text[..=end_index])
     }
+
+    /// Segments text using longest-match dictionary lookup.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_line_segmenter::icu_dictionary::IcuDictionary;
+    ///
+    /// let dictionary = IcuDictionary::new("ปฐม\nกาล\n")?;
+    /// let segmentation = dictionary.longest_words("ปฐมกาลxyz");
+    /// assert_eq!(segmentation.words, ["ปฐม", "กาล"]);
+    /// assert_eq!(segmentation.remainder, Some("xyz"));
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    #[must_use]
+    pub fn longest_words<'a>(&self, mut text: &'a str) -> IcuSegmentation<'a> {
+        let mut words = vec![];
+        while let Some(word) = self.longest_word(text) {
+            text = &text[word.len()..];
+            words.push(word);
+        }
+        IcuSegmentation {
+            words,
+            remainder: (!text.is_empty()).then_some(text),
+        }
+    }
 }
