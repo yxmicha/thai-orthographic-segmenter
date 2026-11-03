@@ -7,3 +7,5 @@ const MINIMUM_FOLLOWING_WORD_END_INDEX: usize = 3;
 
 /// Value stored for every entry; `cedarwood` requires one, but matching only uses match lengths.
 const ENTRY_VALUE: i32 = 0;
+/// Dictionary matches of one prefix kept without allocating.
+const INLINE_MATCHES: usize = 32;
