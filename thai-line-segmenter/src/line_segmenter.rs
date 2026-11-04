@@ -187,3 +187,11 @@ pub struct LineSegmenter {
     word_segmenter: WordSegmenter,
     icu_dictionary: IcuDictionary,
 }
+
+impl std::fmt::Debug for LineSegmenter {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("LineSegmenter")
+            .finish_non_exhaustive()
+    }
+}
