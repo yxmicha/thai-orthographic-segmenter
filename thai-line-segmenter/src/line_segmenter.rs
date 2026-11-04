@@ -1,6 +1,7 @@
 use std::{borrow::Cow, sync::LazyLock};
 
 use regex::Regex;
+use thai_word_segmenter::WordSegmenter;
 
 use crate::{
     Error, NON_BREAKING_SPACE, ZERO_WIDTH_JOINER, ZERO_WIDTH_SPACE, icu_dictionary::IcuDictionary,
@@ -166,3 +167,23 @@ static SEGMENT_PATTERN: LazyLock<Result<Regex, regex::Error>> = LazyLock::new(||
     "#,
     )
 });
+
+/// Thai line segmenter that combines neural word segmentation with punctuation attachment
+/// and ICU zero-width joiner insertion.
+///
+/// # Examples
+///
+/// ```
+/// use thai_line_segmenter::{LineSegmenter, ZERO_WIDTH_JOINER, ZERO_WIDTH_SPACE};
+///
+/// let segmenter = LineSegmenter::new()?;
+/// let marked = segmenter.normalize_line_boundaries("ในปฐมกาลพระวาทะ")?;
+/// // A zero-width space marks the break between words, joiners keep the words together.
+/// assert!(marked.contains(ZERO_WIDTH_SPACE));
+/// assert!(marked.contains(ZERO_WIDTH_JOINER));
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+pub struct LineSegmenter {
+    word_segmenter: WordSegmenter,
+    icu_dictionary: IcuDictionary,
+}
