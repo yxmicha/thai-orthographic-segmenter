@@ -47,3 +47,14 @@ pub mod icu_dictionary;
 mod line_segmenter;
 
 pub use error::Error;
+
+/// Non-breaking space character (U+00A0).
+///
+/// # Examples
+///
+/// ```
+/// use thai_line_segmenter::NON_BREAKING_SPACE;
+///
+/// assert_eq!(NON_BREAKING_SPACE, '\u{a0}');
+/// ```
+pub const NON_BREAKING_SPACE: char = '\u{00A0}';
