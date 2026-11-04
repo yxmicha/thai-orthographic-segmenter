@@ -44,5 +44,6 @@
 mod error;
 /// Longest-match dictionary for ICU Thai break patterns.
 pub mod icu_dictionary;
+mod line_segmenter;
 
 pub use error::Error;
