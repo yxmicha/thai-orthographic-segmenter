@@ -68,3 +68,13 @@ pub const NON_BREAKING_SPACE: char = '\u{00A0}';
 /// assert_eq!(ZERO_WIDTH_JOINER, '\u{200d}');
 /// ```
 pub const ZERO_WIDTH_JOINER: char = '\u{200D}';
+/// Zero-width space character (U+200B) that marks a break opportunity.
+///
+/// # Examples
+///
+/// ```
+/// use thai_line_segmenter::ZERO_WIDTH_SPACE;
+///
+/// assert_eq!(ZERO_WIDTH_SPACE, '\u{200b}');
+/// ```
+pub const ZERO_WIDTH_SPACE: char = '\u{200B}';
