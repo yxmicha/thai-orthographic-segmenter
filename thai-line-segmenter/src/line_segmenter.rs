@@ -11,3 +11,10 @@ const ZERO_WIDTH_CHARACTERS: [char; 4] = [
     ZERO_WIDTH_JOINER,
     ZERO_WIDTH_NO_BREAK_SPACE,
 ];
+const SPECIAL_SPACES: [char; 5] = [
+    NON_BREAKING_SPACE,
+    '\u{202F}',
+    '\u{2009}',
+    '\u{200A}',
+    '\u{205F}',
+];
