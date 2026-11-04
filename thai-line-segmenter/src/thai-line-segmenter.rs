@@ -58,3 +58,13 @@ pub use error::Error;
 /// assert_eq!(NON_BREAKING_SPACE, '\u{a0}');
 /// ```
 pub const NON_BREAKING_SPACE: char = '\u{00A0}';
+/// Zero-width joiner character (U+200D) that keeps adjacent characters on one line.
+///
+/// # Examples
+///
+/// ```
+/// use thai_line_segmenter::ZERO_WIDTH_JOINER;
+///
+/// assert_eq!(ZERO_WIDTH_JOINER, '\u{200d}');
+/// ```
+pub const ZERO_WIDTH_JOINER: char = '\u{200D}';
