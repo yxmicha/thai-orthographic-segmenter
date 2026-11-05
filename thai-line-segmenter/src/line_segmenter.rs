@@ -305,4 +305,29 @@ impl<'a> TextCollector<'a> {
             Cow::Borrowed(text)
         }
     }
+
+    /// Writes `text`, joining neighbouring characters that ICU would otherwise break apart.
+    fn push_joined(&mut self, text: &str) {
+        let is_safe_script_character = |character: char| {
+            matches!(
+                character,
+                '\u{0E01}'..='\u{0E2E}'
+                    | '\u{0E2F}'
+                    | '\u{0E30}'
+                    | '\u{0E32}'
+                    | '\u{0E40}'..='\u{0E44}'
+                    | '\u{0E46}'
+            )
+        };
+        let mut characters = text.chars().peekable();
+        while let Some(character) = characters.next() {
+            self.output.push(character);
+            if let Some(&next_character) = characters.peek()
+                && is_safe_script_character(character)
+                && is_safe_script_character(next_character)
+            {
+                self.output.push(ZERO_WIDTH_JOINER);
+            }
+        }
+    }
 }
