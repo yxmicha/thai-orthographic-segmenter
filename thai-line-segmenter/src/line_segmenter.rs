@@ -257,6 +257,31 @@ struct TextCollector<'a> {
     punctuation_suffix: Option<&'a str>,
 }
 
+impl PunctuationAffix<'_> {
+    /// Replaces spaces with non-breaking spaces and joins every other adjacent pair, except
+    /// digits and pairs touching an ordinary space.
+    fn joined(&self) -> String {
+        let mut result = String::with_capacity(self.0.len() * 2);
+        let mut previous_character: Option<char> = None;
+        for character in self.0.chars() {
+            if let Some(previous_character) = previous_character {
+                let both_digits = previous_character.is_ascii_digit() && character.is_ascii_digit();
+                let has_space = previous_character == ' ' || character == ' ';
+                if !both_digits && !has_space {
+                    result.push(ZERO_WIDTH_JOINER);
+                }
+            }
+            result.push(if character == ' ' || SPECIAL_SPACES.contains(&character) {
+                NON_BREAKING_SPACE
+            } else {
+                character
+            });
+            previous_character = Some(character);
+        }
+        result
+    }
+}
+
 impl<'a> TextCollector<'a> {
 
     /// Drops zero-width characters and turns special spaces into ordinary spaces.
