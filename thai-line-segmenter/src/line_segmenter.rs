@@ -284,6 +284,38 @@ impl PunctuationAffix<'_> {
 
 impl<'a> TextCollector<'a> {
 
+    fn flush(&mut self) -> Result<(), Error> {
+        let prefix = self.punctuation_prefix.take();
+        let suffix = self.punctuation_suffix.take();
+        match self.content.take() {
+            Some(Content::Thai(text)) => {
+                let cleaned = Self::without_invisible_spaces(text);
+                let prefix_joined = prefix.map(|prefix| PunctuationAffix(prefix).joined());
+                let suffix_joined = suffix.map(|suffix| PunctuationAffix(suffix).joined());
+
+                if let Some(prefix_text) = &prefix_joined {
+                    self.output.push_str(prefix_text);
+                    self.output.push(ZERO_WIDTH_JOINER);
+                }
+                self.push_words(&cleaned)?;
+                if let Some(suffix_text) = &suffix_joined {
+                    self.output.push(ZERO_WIDTH_JOINER);
+                    self.output.push_str(suffix_text);
+                }
+            }
+            Some(Content::Untreated(text)) => {
+                self.output.push_str(prefix.unwrap_or_default());
+                self.output.push_str(text);
+                self.output.push_str(suffix.unwrap_or_default());
+            }
+            None => {
+                self.output.push_str(prefix.unwrap_or_default());
+                self.output.push_str(suffix.unwrap_or_default());
+            }
+        }
+        Ok(())
+    }
+
     /// Drops zero-width characters and turns special spaces into ordinary spaces.
     fn without_invisible_spaces(text: &str) -> Cow<'_, str> {
         if text.chars().any(|character| {
