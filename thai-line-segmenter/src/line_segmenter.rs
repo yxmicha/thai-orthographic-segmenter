@@ -240,3 +240,8 @@ impl LineSegmenter {
         })
     }
 }
+
+enum Content<'a> {
+    Thai(&'a str),
+    Untreated(&'a str),
+}
