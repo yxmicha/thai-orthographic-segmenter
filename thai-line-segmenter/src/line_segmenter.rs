@@ -195,3 +195,29 @@ impl std::fmt::Debug for LineSegmenter {
             .finish_non_exhaustive()
     }
 }
+
+impl LineSegmenter {
+
+    /// Creates a new line segmenter with a custom ICU dictionary.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::IcuDictionary`] when an entry contains a NUL character, or
+    /// [`Error::Words`] when the bundled word model cannot be loaded.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_line_segmenter::LineSegmenter;
+    ///
+    /// let segmenter = LineSegmenter::with_icu_dictionary("ปฐม\nกาล\n")?;
+    /// assert_eq!(segmenter.normalize_line_boundaries("")?, "");
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn with_icu_dictionary(icu_dictionary: &str) -> Result<Self, Error> {
+        Ok(Self {
+            word_segmenter: WordSegmenter::new()?,
+            icu_dictionary: IcuDictionary::new(icu_dictionary)?,
+        })
+    }
+}
