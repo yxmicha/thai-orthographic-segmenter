@@ -245,3 +245,11 @@ enum Content<'a> {
     Thai(&'a str),
     Untreated(&'a str),
 }
+
+struct TextCollector<'a> {
+    segmenter: &'a LineSegmenter,
+    output: String,
+    content: Option<Content<'a>>,
+    punctuation_prefix: Option<&'a str>,
+    punctuation_suffix: Option<&'a str>,
+}
