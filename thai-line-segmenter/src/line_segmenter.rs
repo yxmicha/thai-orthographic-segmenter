@@ -197,6 +197,25 @@ impl std::fmt::Debug for LineSegmenter {
 }
 
 impl LineSegmenter {
+    /// Creates a new line segmenter using the bundled epoch-6 word segmenter and default ICU dictionary.
+    ///
+    /// # Errors
+    ///
+    /// Returns an [`Error`] when the bundled word model cannot be loaded.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_line_segmenter::LineSegmenter;
+    ///
+    /// // Building a segmenter takes about 40 ms; build one and reuse it, from any number of threads.
+    /// let segmenter = LineSegmenter::new()?;
+    /// # drop(segmenter);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn new() -> Result<Self, Error> {
+        Self::with_icu_dictionary(DEFAULT_ICU_DICTIONARY)
+    }
 
     /// Creates a new line segmenter with a custom ICU dictionary.
     ///
