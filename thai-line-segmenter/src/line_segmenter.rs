@@ -246,6 +246,9 @@ enum Content<'a> {
     Untreated(&'a str),
 }
 
+/// Punctuation and spaces attached to one side of a text segment.
+struct PunctuationAffix<'a>(&'a str);
+
 struct TextCollector<'a> {
     segmenter: &'a LineSegmenter,
     output: String,
