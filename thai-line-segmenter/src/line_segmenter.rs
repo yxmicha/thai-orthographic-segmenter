@@ -306,6 +306,31 @@ impl<'a> TextCollector<'a> {
         }
     }
 
+    /// Writes the words of `text`, separated by zero-width spaces, each split into its
+    /// dictionary words joined by zero-width joiners.
+    fn push_words(&mut self, text: &str) -> Result<(), Error> {
+        let words = self.segmenter.word_segmenter.split(text)?;
+        for (word_index, word) in words.into_iter().enumerate() {
+            if word_index > 0 {
+                self.output.push(ZERO_WIDTH_SPACE);
+            }
+            let icu_segmentation = self.segmenter.icu_dictionary.longest_words(word);
+            for (icu_word_index, icu_word) in icu_segmentation.words.iter().enumerate() {
+                if icu_word_index > 0 {
+                    self.output.push(ZERO_WIDTH_JOINER);
+                }
+                self.output.push_str(icu_word);
+            }
+            if let Some(remainder) = icu_segmentation.remainder {
+                if !icu_segmentation.words.is_empty() {
+                    self.output.push(ZERO_WIDTH_JOINER);
+                }
+                self.push_joined(remainder);
+            }
+        }
+        Ok(())
+    }
+
     /// Writes `text`, joining neighbouring characters that ICU would otherwise break apart.
     fn push_joined(&mut self, text: &str) {
         let is_safe_script_character = |character: char| {
