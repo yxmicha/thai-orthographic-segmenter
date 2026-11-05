@@ -256,3 +256,28 @@ struct TextCollector<'a> {
     punctuation_prefix: Option<&'a str>,
     punctuation_suffix: Option<&'a str>,
 }
+
+impl<'a> TextCollector<'a> {
+
+    /// Drops zero-width characters and turns special spaces into ordinary spaces.
+    fn without_invisible_spaces(text: &str) -> Cow<'_, str> {
+        if text.chars().any(|character| {
+            ZERO_WIDTH_CHARACTERS.contains(&character) || SPECIAL_SPACES.contains(&character)
+        }) {
+            Cow::Owned(
+                text.chars()
+                    .filter(|character| !ZERO_WIDTH_CHARACTERS.contains(character))
+                    .map(|character| {
+                        if SPECIAL_SPACES.contains(&character) {
+                            ' '
+                        } else {
+                            character
+                        }
+                    })
+                    .collect(),
+            )
+        } else {
+            Cow::Borrowed(text)
+        }
+    }
+}
