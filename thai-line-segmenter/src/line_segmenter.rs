@@ -239,6 +239,64 @@ impl LineSegmenter {
             icu_dictionary: IcuDictionary::new(icu_dictionary)?,
         })
     }
+
+    /// Normalizes line boundaries on the input text by:
+    /// 1. Attaching punctuation prefixes and suffixes to adjacent segments
+    /// 2. Segmenting Thai text with the neural `WordSegmenter`
+    /// 3. Inserting Zero-Width Joiners (`\u{200D}`) within words wherever ICU would split
+    /// 4. Inserting Zero-Width Spaces (`\u{200B}`) at legitimate word boundary break opportunities
+    ///
+    /// Only zero-width characters are inserted, with two exceptions: zero-width characters and
+    /// special spaces already in the input are dropped or become ordinary spaces, and a space
+    /// joined to attached punctuation becomes a non-breaking space ([`crate::NON_BREAKING_SPACE`]).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Words`] when the word segmenter cannot segment a Thai run, or
+    /// [`Error::Pattern`] when the built-in segment pattern failed to compile.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use thai_line_segmenter::{LineSegmenter, ZERO_WIDTH_JOINER, ZERO_WIDTH_SPACE};
+    ///
+    /// let segmenter = LineSegmenter::new()?;
+    /// let marked = segmenter.normalize_line_boundaries("ในปฐมกาลพระวาทะ")?;
+    /// // Only zero-width characters are added; the text is otherwise unchanged.
+    /// let plain: String = marked
+    ///     .chars()
+    ///     .filter(|character| *character != ZERO_WIDTH_SPACE && *character != ZERO_WIDTH_JOINER)
+    ///     .collect();
+    /// assert_eq!(plain, "ในปฐมกาลพระวาทะ");
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn normalize_line_boundaries(&self, input: &str) -> Result<String, Error> {
+        let pattern = SEGMENT_PATTERN
+            .as_ref()
+            .map_err(|error| Error::Pattern(error.clone()))?;
+        let mut collector = TextCollector {
+            segmenter: self,
+            output: String::new(),
+            content: None,
+            punctuation_prefix: None,
+            punctuation_suffix: None,
+        };
+        for segment in pattern.captures_iter(input) {
+            if let Some(punctuation_prefix) = segment.name("punctuation_prefix") {
+                collector.flush()?;
+                collector.punctuation_prefix = Some(punctuation_prefix.as_str());
+            } else if let Some(punctuation_suffix) = segment.name("punctuation_suffix") {
+                collector.punctuation_suffix = Some(punctuation_suffix.as_str());
+                collector.flush()?;
+            } else if let Some(thai) = segment.name("thai") {
+                collector.set_content(Content::Thai(thai.as_str()))?;
+            } else if let Some(untreated) = segment.name("untreated") {
+                collector.set_content(Content::Untreated(untreated.as_str()))?;
+            }
+        }
+        collector.flush()?;
+        Ok(collector.output)
+    }
 }
 
 enum Content<'a> {
