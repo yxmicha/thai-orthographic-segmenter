@@ -78,3 +78,7 @@ pub const ZERO_WIDTH_JOINER: char = '\u{200D}';
 /// assert_eq!(ZERO_WIDTH_SPACE, '\u{200b}');
 /// ```
 pub const ZERO_WIDTH_SPACE: char = '\u{200B}';
+
+#[cfg(doctest)]
+#[doc = include_str!("../README.md")]
+struct ReadmeDoctests;
