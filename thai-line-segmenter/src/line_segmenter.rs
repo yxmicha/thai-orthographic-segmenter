@@ -283,6 +283,13 @@ impl PunctuationAffix<'_> {
 }
 
 impl<'a> TextCollector<'a> {
+    fn set_content(&mut self, content: Content<'a>) -> Result<(), Error> {
+        if self.content.is_some() {
+            self.flush()?;
+        }
+        self.content = Some(content);
+        Ok(())
+    }
 
     fn flush(&mut self) -> Result<(), Error> {
         let prefix = self.punctuation_prefix.take();
