@@ -47,6 +47,7 @@ pub mod icu_dictionary;
 mod line_segmenter;
 
 pub use error::Error;
+pub use line_segmenter::LineSegmenter;
 
 /// Non-breaking space character (U+00A0).
 ///
