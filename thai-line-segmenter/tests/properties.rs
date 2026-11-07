@@ -21,3 +21,20 @@ fn text() -> impl Strategy<Value = String> {
     )
     .prop_map(|characters| characters.into_iter().collect())
 }
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(96))]
+
+    #[test]
+    fn marking_only_adds_zero_width_characters_and_makes_attached_spaces_non_breaking(
+        source in text()
+    ) {
+        let marked = SEGMENTER.normalize_line_boundaries(&source)?;
+        let restored: String = marked
+            .chars()
+            .filter(|character| *character != ZERO_WIDTH_SPACE && *character != ZERO_WIDTH_JOINER)
+            .map(|character| if character == NON_BREAKING_SPACE { ' ' } else { character })
+            .collect();
+        prop_assert_eq!(restored, source);
+    }
+}
