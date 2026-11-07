@@ -27,3 +27,9 @@ fn line_segmenter_inserts_zwsp_at_word_break_opportunities() -> Result<(), Error
     assert!(normalized.contains(ZERO_WIDTH_SPACE));
     Ok(())
 }
+
+#[test]
+fn line_segmenter_returns_empty_text_unchanged() -> Result<(), Error> {
+    assert_eq!(LineSegmenter::new()?.normalize_line_boundaries("")?, "");
+    Ok(())
+}
