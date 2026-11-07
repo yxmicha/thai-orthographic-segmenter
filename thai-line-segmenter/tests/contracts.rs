@@ -56,3 +56,24 @@ fn one_segmenter_gives_identical_results_on_every_thread() -> Result<(), Error> 
     });
     Ok(())
 }
+
+#[test]
+fn thai_block_characters_outside_the_accepted_alphabet_are_never_dropped() -> Result<(), Error> {
+    let segmenter = LineSegmenter::new()?;
+    // Angkhankhu, Khomut and an unassigned code point at the end of the Thai block.
+    for source in [
+        "\u{0e5a}",
+        "\u{0e5b}",
+        "\u{0e7f}",
+        "กา\u{0e5a}กา",
+        "\u{0e5b}\u{0e5c}",
+    ] {
+        let marked = segmenter.normalize_line_boundaries(source)?;
+        let plain: String = marked
+            .chars()
+            .filter(|character| *character != ZERO_WIDTH_SPACE && *character != ZERO_WIDTH_JOINER)
+            .collect();
+        assert_eq!(plain, source);
+    }
+    Ok(())
+}
