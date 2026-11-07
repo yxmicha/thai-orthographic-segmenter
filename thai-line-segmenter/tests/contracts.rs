@@ -11,3 +11,11 @@ fn line_segmenter_initializes_and_normalizes() -> Result<(), Error> {
     assert_eq!(clean, input);
     Ok(())
 }
+
+#[test]
+fn line_segmenter_attaches_punctuation_and_inserts_zwj() -> Result<(), Error> {
+    let segmenter = LineSegmenter::new()?;
+    let normalized = segmenter.normalize_line_boundaries("“ในปฐมกาล”")?;
+    assert!(normalized.contains(ZERO_WIDTH_JOINER));
+    Ok(())
+}
