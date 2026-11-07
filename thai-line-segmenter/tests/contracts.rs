@@ -19,3 +19,11 @@ fn line_segmenter_attaches_punctuation_and_inserts_zwj() -> Result<(), Error> {
     assert!(normalized.contains(ZERO_WIDTH_JOINER));
     Ok(())
 }
+
+#[test]
+fn line_segmenter_inserts_zwsp_at_word_break_opportunities() -> Result<(), Error> {
+    let segmenter = LineSegmenter::new()?;
+    let normalized = segmenter.normalize_line_boundaries("ในปฐมกาลพระวาทะทรงดำรงอยู่")?;
+    assert!(normalized.contains(ZERO_WIDTH_SPACE));
+    Ok(())
+}
