@@ -1,0 +1,28 @@
+[package]
+name = "thai-segmenter-python"
+version.workspace = true
+edition.workspace = true
+description = "Python bindings for the Thai syllable, word and line segmenters"
+readme = "README.md"
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[lib]
+name = "_native"
+path = "src/thai-segmenter-python.rs"
+crate-type = ["cdylib"]
+doctest = false
+test = false
+
+[dependencies]
+pyo3.workspace = true
+thai-line-segmenter.workspace = true
+thai-syllable-rules.workspace = true
+thai-syllable-segmenter.workspace = true
+thai-word-segmenter.workspace = true
