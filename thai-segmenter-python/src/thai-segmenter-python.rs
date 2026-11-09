@@ -6,3 +6,4 @@
 //! `syllable_tokenize`, `word_tokenize` and the other tokenizer functions.
 //! Every call releases the Python interpreter lock while it segments.
 
+mod error;
