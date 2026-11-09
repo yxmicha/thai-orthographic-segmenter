@@ -46,3 +46,14 @@ WordTokenizer.load("path/to/artifact")  # config.json, dictionary.txt, model.saf
 `SyllableTokenizer`, `WordTokenizer` and `LineBreaker(icu_dictionary=None)` take the same text
 and return the same results as the functions through `tokenize`, `spans` and `mark`.
 
+## Behaviour
+
+- **Granularity**: the word model is trained to under-segment, keeping compounds and
+  collocations together, so it returns fewer, longer words than annotation-style word
+  segmenters. See the [word segmenter readme](../thai-word-segmenter/README.md) for the
+  benchmark scores.
+- **One model per level**: there is no choice of engine. A custom dictionary replaces the
+  bundled one rather than extending it.
+- **Failures**: they raise `SegmenterError`, a `ValueError`. A Thai run over 4,096 scalars is
+  rejected by the syllable segmenter.
+
