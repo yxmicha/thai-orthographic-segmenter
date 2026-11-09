@@ -33,4 +33,14 @@ impl LineBreaker {
             .map_err(failure)?;
         Ok(Self { segmenter })
     }
+
+    /// Returns `text` with zero-width spaces and joiners inserted for line breaking.
+    fn mark(&self, py: Python<'_>, text: &str) -> PyResult<String> {
+        py.detach(|| {
+            self.segmenter
+                .normalize_line_boundaries(text)
+                .map_err(|error| describe(&error))
+        })
+        .map_err(failure)
+    }
 }
