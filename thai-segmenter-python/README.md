@@ -57,3 +57,12 @@ and return the same results as the functions through `tokenize`, `spans` and `ma
 - **Failures**: they raise `SegmenterError`, a `ValueError`. A Thai run over 4,096 scalars is
   rejected by the syllable segmenter.
 
+## Build and test
+
+```sh
+uvx maturin develop --manifest-path thai-segmenter-python/Cargo.toml --uv
+uv run --with pytest pytest thai-segmenter-python/tests
+```
+
+`maturin build --release` produces a wheel. The wheel needs nothing beyond the Python
+interpreter that imports it.
