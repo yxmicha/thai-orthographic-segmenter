@@ -7,3 +7,4 @@
 //! Every call releases the Python interpreter lock while it segments.
 
 mod error;
+mod lines;
