@@ -23,3 +23,8 @@ pub(crate) fn describe(error: &dyn Error) -> String {
     }
     message
 }
+
+/// The Python exception for a failure described by [`describe`].
+pub(crate) fn failure(message: String) -> PyErr {
+    SegmenterError::new_err(message)
+}
