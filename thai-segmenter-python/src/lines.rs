@@ -1,6 +1,8 @@
 use pyo3::prelude::*;
 use thai_line_segmenter::LineSegmenter;
 
+use crate::error::{describe, failure};
+
 /// Marks where Thai text may and may not wrap.
 ///
 /// The marked text inserts a zero-width space (U+200B) at each break opportunity between words
@@ -11,4 +13,24 @@ use thai_line_segmenter::LineSegmenter;
 #[pyclass(frozen, module = "thai_orthographic_segmenter")]
 pub(crate) struct LineBreaker {
     segmenter: LineSegmenter,
+}
+
+#[pymethods]
+impl LineBreaker {
+    /// Loads the bundled models. `icu_dictionary` is an optional newline-delimited word list for
+    /// the joiner insertion, replacing the bundled one.
+    #[new]
+    #[pyo3(signature = (icu_dictionary=None))]
+    fn new(py: Python<'_>, icu_dictionary: Option<&str>) -> PyResult<Self> {
+        let segmenter = py
+            .detach(|| {
+                match icu_dictionary {
+                    Some(dictionary) => LineSegmenter::with_icu_dictionary(dictionary),
+                    None => LineSegmenter::new(),
+                }
+                .map_err(|error| describe(&error))
+            })
+            .map_err(failure)?;
+        Ok(Self { segmenter })
+    }
 }
