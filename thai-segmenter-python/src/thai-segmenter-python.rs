@@ -10,3 +10,4 @@ mod error;
 mod lines;
 mod parts;
 mod spans;
+mod syllables;
