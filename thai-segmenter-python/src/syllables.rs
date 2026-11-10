@@ -35,4 +35,15 @@ impl SyllableTokenizer {
         })
         .map_err(failure)
     }
+
+    /// Returns the `(start, end)` code point offsets of each syllable of `text`.
+    fn spans(&self, py: Python<'_>, text: &str) -> PyResult<Vec<(usize, usize)>> {
+        py.detach(|| {
+            self.segmenter
+                .split(text)
+                .map(|pieces| character_spans(text, &consecutive_ranges(pieces)))
+                .map_err(|error| describe(&error))
+        })
+        .map_err(failure)
+    }
 }
