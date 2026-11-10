@@ -23,3 +23,18 @@ pub(crate) fn character_spans(text: &str, ranges: &[Range<usize>]) -> Vec<(usize
         .map(|range| (advance_to(range.start), advance_to(range.end)))
         .collect()
 }
+
+/// The byte ranges of consecutive pieces that together make up their text.
+pub(crate) fn consecutive_ranges<'a>(
+    pieces: impl IntoIterator<Item = &'a str>,
+) -> Vec<Range<usize>> {
+    let mut end = 0;
+    pieces
+        .into_iter()
+        .map(|piece| {
+            let start = end;
+            end += piece.len();
+            start..end
+        })
+        .collect()
+}
