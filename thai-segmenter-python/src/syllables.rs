@@ -24,4 +24,15 @@ impl SyllableTokenizer {
             .map_err(failure)?;
         Ok(Self { segmenter })
     }
+
+    /// Returns the syllables of `text`. Non-Thai text comes back as pieces between them.
+    fn tokenize(&self, py: Python<'_>, text: &str) -> PyResult<Vec<String>> {
+        py.detach(|| {
+            self.segmenter
+                .split(text)
+                .map(|pieces| pieces.into_iter().map(str::to_owned).collect())
+                .map_err(|error| describe(&error))
+        })
+        .map_err(failure)
+    }
 }
