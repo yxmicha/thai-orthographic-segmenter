@@ -8,4 +8,5 @@
 
 mod error;
 mod lines;
+mod parts;
 mod spans;
