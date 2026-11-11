@@ -65,6 +65,17 @@ impl WordTokenizer {
         })
         .map_err(failure)
     }
+
+    /// Returns the `(start, end)` code point offsets of each word of `text`.
+    fn spans(&self, py: Python<'_>, text: &str) -> PyResult<Vec<(usize, usize)>> {
+        py.detach(|| {
+            self.segmenter
+                .ranges(text)
+                .map(|ranges| character_spans(text, &ranges))
+                .map_err(|error| describe(&error))
+        })
+        .map_err(failure)
+    }
 }
 
 impl WordTokenizer {
