@@ -1,6 +1,11 @@
 use pyo3::{exceptions::PyValueError, prelude::*};
 use thai_word_segmenter::WordSegmenter;
 
+use crate::{
+    error::{describe, failure},
+    spans::character_spans,
+};
+
 /// Texts scored together in one call to the model, which holds activations for all of them.
 const BATCH_BYTES: usize = 256 * 1024;
 
@@ -13,4 +18,16 @@ const BATCH_BYTES: usize = 256 * 1024;
 #[pyclass(frozen, module = "thai_orthographic_segmenter")]
 pub(crate) struct WordTokenizer {
     segmenter: WordSegmenter,
+}
+
+impl WordTokenizer {
+    fn build(
+        py: Python<'_>,
+        load: impl FnOnce() -> Result<WordSegmenter, thai_word_segmenter::Error> + Send,
+    ) -> PyResult<Self> {
+        let segmenter = py
+            .detach(|| load().map_err(|error| describe(&error)))
+            .map_err(failure)?;
+        Ok(Self { segmenter })
+    }
 }
