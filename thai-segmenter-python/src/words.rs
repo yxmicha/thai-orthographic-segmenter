@@ -89,3 +89,23 @@ impl WordTokenizer {
         Ok(Self { segmenter })
     }
 }
+
+/// Consecutive groups of `texts`, each holding at most [`BATCH_BYTES`] bytes unless a single text
+/// is longer.
+fn batches(texts: &[String]) -> Vec<&[String]> {
+    let mut groups = Vec::new();
+    let mut start = 0;
+    let mut bytes = 0;
+    for (index, text) in texts.iter().enumerate() {
+        if index > start && bytes + text.len() > BATCH_BYTES {
+            groups.push(&texts[start..index]);
+            start = index;
+            bytes = 0;
+        }
+        bytes += text.len();
+    }
+    if start < texts.len() {
+        groups.push(&texts[start..]);
+    }
+    groups
+}
