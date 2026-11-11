@@ -27,6 +27,20 @@ impl WordTokenizer {
     fn new(py: Python<'_>) -> PyResult<Self> {
         Self::build(py, WordSegmenter::new)
     }
+
+    /// Loads the bundled model with `words` as the dictionary instead of the bundled one.
+    ///
+    /// Each word must be non-empty Thai text. Matching is leftmost-longest: a dictionary match
+    /// is never split.
+    #[staticmethod]
+    #[allow(
+        clippy::needless_pass_by_value,
+        reason = "PyO3 extracts owned arguments and cannot borrow a Python list or path"
+    )]
+    fn with_dictionary(py: Python<'_>, words: Vec<String>) -> PyResult<Self> {
+        let dictionary = words.join("\n");
+        Self::build(py, || WordSegmenter::with_dictionary(&dictionary))
+    }
 }
 
 impl WordTokenizer {
