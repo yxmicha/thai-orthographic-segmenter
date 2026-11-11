@@ -1,3 +1,5 @@
+use std::{num::NonZeroUsize, path::PathBuf, thread};
+
 use pyo3::{exceptions::PyValueError, prelude::*};
 use thai_word_segmenter::WordSegmenter;
 
@@ -40,6 +42,16 @@ impl WordTokenizer {
     fn with_dictionary(py: Python<'_>, words: Vec<String>) -> PyResult<Self> {
         let dictionary = words.join("\n");
         Self::build(py, || WordSegmenter::with_dictionary(&dictionary))
+    }
+
+    /// Loads a trained artifact directory holding `config.json`, `dictionary.txt` and `model.safetensors`.
+    #[staticmethod]
+    #[allow(
+        clippy::needless_pass_by_value,
+        reason = "PyO3 extracts owned arguments and cannot borrow a Python list or path"
+    )]
+    fn load(py: Python<'_>, directory: PathBuf) -> PyResult<Self> {
+        Self::build(py, || WordSegmenter::load(&directory))
     }
 }
 
