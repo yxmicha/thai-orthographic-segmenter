@@ -20,6 +20,15 @@ pub(crate) struct WordTokenizer {
     segmenter: WordSegmenter,
 }
 
+#[pymethods]
+impl WordTokenizer {
+    /// Loads the bundled model with its bundled dictionary of known multi-syllable words.
+    #[new]
+    fn new(py: Python<'_>) -> PyResult<Self> {
+        Self::build(py, WordSegmenter::new)
+    }
+}
+
 impl WordTokenizer {
     fn build(
         py: Python<'_>,
