@@ -88,6 +88,28 @@ impl WordTokenizer {
             .map_err(failure)?;
         Ok(Self { segmenter })
     }
+
+    /// Segments `texts` in consecutive batches of bounded total size.
+    fn tokenize_batches(
+        &self,
+        texts: &[String],
+        threads: NonZeroUsize,
+    ) -> Result<Vec<Vec<String>>, String> {
+        let mut results = Vec::with_capacity(texts.len());
+        for batch in batches(texts) {
+            let views = batch.iter().map(String::as_str).collect::<Vec<_>>();
+            let words = self
+                .segmenter
+                .split_many_on(&views, threads)
+                .map_err(|error| describe(&error))?;
+            results.extend(
+                words
+                    .into_iter()
+                    .map(|words| words.into_iter().map(str::to_owned).collect()),
+            );
+        }
+        Ok(results)
+    }
 }
 
 /// Consecutive groups of `texts`, each holding at most [`BATCH_BYTES`] bytes unless a single text
