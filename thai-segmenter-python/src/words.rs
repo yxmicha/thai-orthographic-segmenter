@@ -53,6 +53,18 @@ impl WordTokenizer {
     fn load(py: Python<'_>, directory: PathBuf) -> PyResult<Self> {
         Self::build(py, || WordSegmenter::load(&directory))
     }
+
+    /// Returns the words of `text`. Non-Thai text and punctuation come back as pieces too, with
+    /// closing punctuation attached to the word before it and opening punctuation to the next.
+    fn tokenize(&self, py: Python<'_>, text: &str) -> PyResult<Vec<String>> {
+        py.detach(|| {
+            self.segmenter
+                .split(text)
+                .map(|words| words.into_iter().map(str::to_owned).collect())
+                .map_err(|error| describe(&error))
+        })
+        .map_err(failure)
+    }
 }
 
 impl WordTokenizer {
