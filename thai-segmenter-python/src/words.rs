@@ -76,6 +76,29 @@ impl WordTokenizer {
         })
         .map_err(failure)
     }
+
+    /// Returns the words of each text, identical to calling [`tokenize`](Self::tokenize) on each
+    /// but faster: the texts are scored together, on up to `jobs` threads (default: every
+    /// available core). Memory use is bounded; texts are processed in batches.
+    #[pyo3(signature = (texts, jobs=None))]
+    #[allow(
+        clippy::needless_pass_by_value,
+        reason = "PyO3 extracts owned arguments and cannot borrow a Python list or path"
+    )]
+    fn tokenize_many(
+        &self,
+        py: Python<'_>,
+        texts: Vec<String>,
+        jobs: Option<usize>,
+    ) -> PyResult<Vec<Vec<String>>> {
+        let threads = match jobs {
+            Some(jobs) => NonZeroUsize::new(jobs)
+                .ok_or_else(|| PyValueError::new_err("jobs must be at least 1"))?,
+            None => thread::available_parallelism().unwrap_or(NonZeroUsize::MIN),
+        };
+        py.detach(|| self.tokenize_batches(&texts, threads))
+            .map_err(failure)
+    }
 }
 
 impl WordTokenizer {
