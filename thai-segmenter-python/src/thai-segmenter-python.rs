@@ -12,3 +12,19 @@ mod parts;
 mod spans;
 mod syllables;
 mod words;
+
+use pyo3::prelude::*;
+
+/// The native half of the `thai_orthographic_segmenter` package.
+#[pymodule(name = "_native")]
+fn native(module: &Bound<'_, PyModule>) -> PyResult<()> {
+    module.add(
+        "SegmenterError",
+        module.py().get_type::<error::SegmenterError>(),
+    )?;
+    module.add_class::<syllables::SyllableTokenizer>()?;
+    module.add_class::<words::WordTokenizer>()?;
+    module.add_class::<lines::LineBreaker>()?;
+    module.add_function(wrap_pyfunction!(parts::orthographic_parts, module)?)?;
+    Ok(())
+}
