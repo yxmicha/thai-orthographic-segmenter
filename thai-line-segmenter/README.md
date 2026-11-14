@@ -1,5 +1,12 @@
 # thai-line-segmenter
 
+[![crates.io](https://img.shields.io/crates/v/thai-line-segmenter.svg)](https://crates.io/crates/thai-line-segmenter)
+[![docs.rs](https://img.shields.io/docsrs/thai-line-segmenter)](https://docs.rs/thai-line-segmenter)
+[![downloads](https://img.shields.io/crates/d/thai-line-segmenter.svg)](https://crates.io/crates/thai-line-segmenter)
+[![MSRV](https://img.shields.io/crates/msrv/thai-line-segmenter.svg)](https://crates.io/crates/thai-line-segmenter)
+[![CI](https://github.com/yxmicha/thai-orthographic-segmenter/actions/workflows/ci.yml/badge.svg)](https://github.com/yxmicha/thai-orthographic-segmenter/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-(MIT%20OR%20Apache--2.0)%20AND%20Unicode--3.0-blue.svg)](https://github.com/yxmicha/thai-orthographic-segmenter/blob/master/thai-line-segmenter/data/icu/LICENSE)
+
 Prepares Thai and mixed text for line breaking. It attaches punctuation to the text next to
 it and inserts zero-width joiners (U+200D) and zero-width spaces (U+200B) so that layout
 engines break lines only at word boundaries.

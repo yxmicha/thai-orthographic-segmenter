@@ -1,6 +1,12 @@
 # thai-orthographic-segmenter (Python)
 
-Python bindings for the [Thai orthographic segmenter](../README.md)
+[![PyPI](https://img.shields.io/pypi/v/thai-orthographic-segmenter.svg)](https://pypi.org/project/thai-orthographic-segmenter/)
+[![Python versions](https://img.shields.io/pypi/pyversions/thai-orthographic-segmenter.svg)](https://pypi.org/project/thai-orthographic-segmenter/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/thai-orthographic-segmenter.svg)](https://pypi.org/project/thai-orthographic-segmenter/)
+[![CI](https://github.com/yxmicha/thai-orthographic-segmenter/actions/workflows/ci.yml/badge.svg)](https://github.com/yxmicha/thai-orthographic-segmenter/actions/workflows/ci.yml)
+[![License](https://img.shields.io/pypi/l/thai-orthographic-segmenter.svg)](https://pypi.org/project/thai-orthographic-segmenter/)
+
+Python bindings for the [Thai orthographic segmenter](https://github.com/yxmicha/thai-orthographic-segmenter#readme)
 crates, as plain tokenizer functions (`word_tokenize`, `syllable_tokenize`, ...). The models are
 bundled in the wheel, so there is nothing to download, and every call releases the interpreter
 lock.
@@ -50,7 +56,7 @@ and return the same results as the functions through `tokenize`, `spans` and `ma
 
 - **Granularity**: the word model is trained to under-segment, keeping compounds and
   collocations together, so it returns fewer, longer words than annotation-style word
-  segmenters. See the [word segmenter readme](../thai-word-segmenter/README.md) for the
+  segmenters. See the [word segmenter readme](https://github.com/yxmicha/thai-orthographic-segmenter/blob/master/thai-word-segmenter/README.md) for the
   benchmark scores.
 - **One model per level**: there is no choice of engine. A custom dictionary replaces the
   bundled one rather than extending it.

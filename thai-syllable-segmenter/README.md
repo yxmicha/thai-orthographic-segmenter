@@ -1,5 +1,12 @@
 # thai-syllable-segmenter
 
+[![crates.io](https://img.shields.io/crates/v/thai-syllable-segmenter.svg)](https://crates.io/crates/thai-syllable-segmenter)
+[![docs.rs](https://img.shields.io/docsrs/thai-syllable-segmenter)](https://docs.rs/thai-syllable-segmenter)
+[![downloads](https://img.shields.io/crates/d/thai-syllable-segmenter.svg)](https://crates.io/crates/thai-syllable-segmenter)
+[![MSRV](https://img.shields.io/crates/msrv/thai-syllable-segmenter.svg)](https://crates.io/crates/thai-syllable-segmenter)
+[![CI](https://github.com/yxmicha/thai-orthographic-segmenter/actions/workflows/ci.yml/badge.svg)](https://github.com/yxmicha/thai-orthographic-segmenter/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](https://github.com/yxmicha/thai-orthographic-segmenter#license)
+
 Source-preserving Thai syllable segmentation. It combines the candidates from
 [`thai-syllable-rules`](https://docs.rs/thai-syllable-rules) with a small contextual Transformer
 and picks the best complete segmentation with a dynamic-programming decoder. It runs on the

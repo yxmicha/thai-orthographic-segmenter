@@ -1,5 +1,12 @@
 # thai-word-segmenter
 
+[![crates.io](https://img.shields.io/crates/v/thai-word-segmenter.svg)](https://crates.io/crates/thai-word-segmenter)
+[![docs.rs](https://img.shields.io/docsrs/thai-word-segmenter)](https://docs.rs/thai-word-segmenter)
+[![downloads](https://img.shields.io/crates/d/thai-word-segmenter.svg)](https://crates.io/crates/thai-word-segmenter)
+[![MSRV](https://img.shields.io/crates/msrv/thai-word-segmenter.svg)](https://crates.io/crates/thai-word-segmenter)
+[![CI](https://github.com/yxmicha/thai-orthographic-segmenter/actions/workflows/ci.yml/badge.svg)](https://github.com/yxmicha/thai-orthographic-segmenter/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](https://github.com/yxmicha/thai-orthographic-segmenter#license)
+
 Source-preserving Thai word segmentation. Orthographic syllables from
 [`thai-syllable-segmenter`](https://docs.rs/thai-syllable-segmenter) are grouped into lexical
 clusters (words, compounds, names, productive bound forms) by a contextual Transformer and a

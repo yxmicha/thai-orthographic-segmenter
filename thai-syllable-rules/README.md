@@ -1,5 +1,12 @@
 # thai-syllable-rules
 
+[![crates.io](https://img.shields.io/crates/v/thai-syllable-rules.svg)](https://crates.io/crates/thai-syllable-rules)
+[![docs.rs](https://img.shields.io/docsrs/thai-syllable-rules)](https://docs.rs/thai-syllable-rules)
+[![downloads](https://img.shields.io/crates/d/thai-syllable-rules.svg)](https://crates.io/crates/thai-syllable-rules)
+[![MSRV](https://img.shields.io/crates/msrv/thai-syllable-rules.svg)](https://crates.io/crates/thai-syllable-rules)
+[![CI](https://github.com/yxmicha/thai-orthographic-segmenter/actions/workflows/ci.yml/badge.svg)](https://github.com/yxmicha/thai-orthographic-segmenter/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](https://github.com/yxmicha/thai-orthographic-segmenter#license)
+
 Deterministic Thai orthographic candidates with explicit attachment uncertainty. It uses no
 model, dictionary, frequency data or training corpus; its only dependency is `winnow`.
 
