@@ -35,6 +35,9 @@ pub fn run_on_cpu<R>(with_fma: impl FnOnce() -> R, baseline: impl FnOnce() -> R)
         // SAFETY: the CPU features enabled on `run_with_fma` were just detected.
         return unsafe { run_with_fma(with_fma) };
     }
+    // Other architectures have no fused multiply-add path to select.
+    #[cfg(not(target_arch = "x86_64"))]
+    let _ = with_fma;
     baseline()
 }
 

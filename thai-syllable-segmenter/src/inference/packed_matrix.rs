@@ -13,6 +13,7 @@ use std::sync::{Mutex, PoisonError};
 /// Output columns held by one packed panel and one micro-kernel accumulator row.
 const PANEL_WIDTH: usize = 16;
 /// Cache lines of the next panel requested ahead of use.
+#[cfg(target_arch = "x86_64")]
 const PREFETCH_LINES: usize = 1024;
 /// Input rows multiplied against a panel by one micro-kernel invocation.
 const BLOCK_ROWS: usize = 6;
@@ -399,6 +400,9 @@ impl PackedMatrix {
                 }
             }
         }
+        // Only x86-64 has the prefetch hint used above.
+        #[cfg(not(target_arch = "x86_64"))]
+        let _ = (panel, block, blocks);
     }
 
     /// Multiplies one packed block of `ROWS` input rows by one weight panel.
