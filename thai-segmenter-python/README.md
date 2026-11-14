@@ -1,7 +1,7 @@
 # thai-orthographic-segmenter (Python)
 
 [![PyPI](https://img.shields.io/pypi/v/thai-orthographic-segmenter.svg)](https://pypi.org/project/thai-orthographic-segmenter/)
-[![Python versions](https://img.shields.io/pypi/pyversions/thai-orthographic-segmenter.svg)](https://pypi.org/project/thai-orthographic-segmenter/)
+[![Python](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fyxmicha%2Fthai-orthographic-segmenter%2Fmaster%2Fthai-segmenter-python%2Fpyproject.toml)](https://github.com/yxmicha/thai-orthographic-segmenter/blob/master/thai-segmenter-python/pyproject.toml)
 [![PyPI downloads](https://img.shields.io/pypi/dm/thai-orthographic-segmenter.svg)](https://pypi.org/project/thai-orthographic-segmenter/)
 [![CI](https://github.com/yxmicha/thai-orthographic-segmenter/actions/workflows/ci.yml/badge.svg)](https://github.com/yxmicha/thai-orthographic-segmenter/actions/workflows/ci.yml)
 [![License](https://img.shields.io/pypi/l/thai-orthographic-segmenter.svg)](https://pypi.org/project/thai-orthographic-segmenter/)

@@ -13,6 +13,13 @@ license-files = ["LICENSE-APACHE", "LICENSE-MIT", "LICENSE-UNICODE"]
 authors = [{ name = "Micha", email = "220009159+yxmicha@users.noreply.github.com" }]
 classifiers = [
     "Natural Language :: Thai",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Rust",
     "Topic :: Text Processing :: Linguistic",
     "Typing :: Typed",

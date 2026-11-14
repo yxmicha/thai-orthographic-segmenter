@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/yxmicha/thai-orthographic-segmenter/actions/workflows/ci.yml/badge.svg)](https://github.com/yxmicha/thai-orthographic-segmenter/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/thai-orthographic-segmenter.svg)](https://pypi.org/project/thai-orthographic-segmenter/)
-[![Python versions](https://img.shields.io/pypi/pyversions/thai-orthographic-segmenter.svg)](https://pypi.org/project/thai-orthographic-segmenter/)
+[![Python](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fyxmicha%2Fthai-orthographic-segmenter%2Fmaster%2Fthai-segmenter-python%2Fpyproject.toml)](https://github.com/yxmicha/thai-orthographic-segmenter/blob/master/thai-segmenter-python/pyproject.toml)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](https://github.com/yxmicha/thai-orthographic-segmenter#license)
 [![MSRV](https://img.shields.io/badge/rustc-1.95%2B-orange.svg)](https://www.rust-lang.org)
 
