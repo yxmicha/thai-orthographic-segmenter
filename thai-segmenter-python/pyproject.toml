@@ -1,5 +1,5 @@
 [build-system]
-requires = ["maturin>=1.7,<2.0"]
+requires = ["maturin>=1.9,<2.0"]
 build-backend = "maturin"
 
 [project]
@@ -8,6 +8,8 @@ dynamic = ["version"]
 description = "Thai syllable, word and line segmentation with bundled models"
 readme = "README.md"
 requires-python = ">=3.10"
+license = "(MIT OR Apache-2.0) AND Unicode-3.0"
+license-files = ["LICENSE-APACHE", "LICENSE-MIT", "LICENSE-UNICODE"]
 authors = [{ name = "Micha", email = "220009159+yxmicha@users.noreply.github.com" }]
 classifiers = [
     "Natural Language :: Thai",
