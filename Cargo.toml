@@ -12,7 +12,7 @@ resolver = "3"
 pedantic = { level = "warn", priority = -1 }
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.95"
 authors = ["Micha <220009159+yxmicha@users.noreply.github.com>"]
@@ -32,10 +32,10 @@ safetensors = "0.8.0"
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 tempfile = "3.27.0"
-thai-line-segmenter = { path = "thai-line-segmenter", version = "0.1.0" }
-thai-syllable-rules = { path = "thai-syllable-rules", version = "0.1.0" }
-thai-syllable-segmenter = { path = "thai-syllable-segmenter", version = "0.1.0" }
-thai-word-segmenter = { path = "thai-word-segmenter", version = "0.1.0" }
+thai-line-segmenter = { path = "thai-line-segmenter", version = "0.1.1" }
+thai-syllable-rules = { path = "thai-syllable-rules", version = "0.1.1" }
+thai-syllable-segmenter = { path = "thai-syllable-segmenter", version = "0.1.1" }
+thai-word-segmenter = { path = "thai-word-segmenter", version = "0.1.1" }
 thiserror = "2.0.21"
 winnow = "1.0.5"
 
