@@ -23,6 +23,13 @@ struct Dependency {
     path: Option<PathBuf>,
 }
 
+/// Whether `path` lies below `directory`. Both are canonicalized, because on Windows
+/// `canonicalize` returns `\\?\`-prefixed paths while `cargo metadata` does not.
+fn is_inside(path: &Path, directory: &Path) -> bool {
+    path.canonicalize()
+        .is_ok_and(|canonical| canonical.starts_with(directory))
+}
+
 #[test]
 fn orthographic_segmenter_crates_depend_only_on_each_other()
 -> Result<(), Box<dyn std::error::Error>> {
@@ -50,7 +57,7 @@ fn orthographic_segmenter_crates_depend_only_on_each_other()
     let members = metadata
         .packages
         .iter()
-        .filter(|package| package.manifest_path.starts_with(&segmenter_directory))
+        .filter(|package| is_inside(&package.manifest_path, &segmenter_directory))
         .collect::<Vec<_>>();
     assert_eq!(
         members.len(),
@@ -61,7 +68,7 @@ fn orthographic_segmenter_crates_depend_only_on_each_other()
     for package in members {
         for dependency in &package.dependencies {
             if let Some(path) = &dependency.path
-                && !path.starts_with(&segmenter_directory)
+                && !is_inside(path, &segmenter_directory)
             {
                 outside.push(format!(
                     "{package} -> {dependency}",
